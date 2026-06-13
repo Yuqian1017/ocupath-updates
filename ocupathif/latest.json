@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "appId": "com.biostateai.ocupathif",
+  "channel": "stable",
+  "version": "0.90.1",
+  "releaseDate": "2026-06-13T04:16:22Z",
+  "releaseNotes": "OcuPathIF v0.90.1 fixes Batch Analyze settings import language and start-state handling, Cell Counts color palette rendering, Cell Counts step/CTA ownership, multi-image Recent Batch Runs result navigation, batch result re-export controls, settings preview readability, and Spatial Analysis exact condition wording and set logic.",
+  "packages": {
+    "darwin-arm64": {
+      "kind": "mac_zip",
+      "url": "https://github.com/Yuqian1017/ocupath-updates/releases/download/v0.90.1/OcupathIF_standalone_v0.90.1_mac.zip",
+      "sha256": "d90bb0283fd23af51da38326500cf114b3773d16699ef1f04dbcac1bfc256d59",
+      "sizeBytes": 1304225462
+    }
+  }
+}

@@ -1,0 +1,8 @@
+version: 0.98.1
+files:
+  - url: https://github.com/Yuqian1017/ocupath-updates/releases/download/v0.98.1/OcupathIF-0.98.1-arm64-mac.zip
+    sha512: wVep4y4I82A0MAulWBxLhW4pgjqt29lvJzxiARN/u3wycdhPMUet47l3H3OsYK1I9nhUq7XogdIzIBiM3/FfnA==
+    size: 1308406418
+path: https://github.com/Yuqian1017/ocupath-updates/releases/download/v0.98.1/OcupathIF-0.98.1-arm64-mac.zip
+sha512: wVep4y4I82A0MAulWBxLhW4pgjqt29lvJzxiARN/u3wycdhPMUet47l3H3OsYK1I9nhUq7XogdIzIBiM3/FfnA==
+releaseDate: '2026-08-05T21:51:06.554Z'

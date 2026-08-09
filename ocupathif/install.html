@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Download OcuPathIF 0.99.1</title>
+  <style>
+    :root { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #172033; background: #f6f8fb; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: radial-gradient(circle at top, #e9fbf8 0, #f6f8fb 38rem); }
+    main { width: min(1040px, calc(100% - 32px)); margin: 0 auto; padding: 72px 0; }
+    header { max-width: 720px; margin: 0 auto 40px; text-align: center; }
+    .brand { color: #087f73; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+    h1 { margin: 10px 0 12px; font-size: clamp(2.2rem, 6vw, 4rem); letter-spacing: -.05em; }
+    .intro { color: #596579; font-size: 1.1rem; line-height: 1.6; }
+    .downloads { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+    .download-card { background: rgba(255,255,255,.94); border: 1px solid #dce4ee; border-radius: 22px; padding: 28px; box-shadow: 0 18px 50px rgba(34,57,83,.08); }
+    .download-card.recommended-card { border: 2px solid #0f9f8f; box-shadow: 0 20px 55px rgba(15,159,143,.16); }
+    .card-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+    .eyebrow { margin: 0 0 6px; color: #087f73; font-size: .78rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+    h2 { margin: 0; font-size: 1.55rem; }
+    .recommended { background: #daf7f2; color: #07675e; border-radius: 999px; padding: 6px 9px; font-size: .72rem; font-weight: 800; }
+    .requirement, .file-meta, .trust { color: #647084; line-height: 1.5; }
+    .download-button { display: block; margin: 24px 0 12px; border-radius: 12px; background: #101827; color: white; padding: 15px 18px; text-align: center; text-decoration: none; font-size: 1.02rem; font-weight: 800; }
+    .download-button:hover, .download-button:focus-visible { background: #087f73; outline: 3px solid rgba(15,159,143,.25); outline-offset: 3px; }
+    .trust { color: #237064; font-weight: 700; }
+    .warning { color: #9a4f00; background: #fff3d6; border: 1px solid #f2c46d; border-radius: 10px; padding: 12px; }
+    details { margin: 18px 0; border-top: 1px solid #e7ebf1; border-bottom: 1px solid #e7ebf1; padding: 14px 0; }
+    summary { cursor: pointer; font-weight: 750; }
+    .filename { overflow-wrap: anywhere; }
+    code { display: block; color: #425069; font-size: .72rem; overflow-wrap: anywhere; }
+    .steps h3 { margin-bottom: 8px; }
+    .steps ol { margin: 0; padding-left: 22px; color: #4f5b6f; line-height: 1.65; }
+    footer { margin-top: 32px; text-align: center; color: #6b7585; }
+    @media (max-width: 760px) { main { padding-top: 42px; } .downloads { grid-template-columns: 1fr; } }
+    @media (prefers-color-scheme: dark) { :root { color: #edf4ff; background: #0b111c; } body { background: radial-gradient(circle at top, #0d3735 0, #0b111c 36rem); } .download-card { background: rgba(18,27,42,.96); border-color: #29364a; } .intro, .requirement, .file-meta, .steps ol, footer { color: #a9b5c8; } details { border-color: #303c50; } code { color: #bbc7d9; } }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <p class="brand">Biostate AI</p>
+      <h1>Download OcuPathIF</h1>
+      <p class="intro">Choose your computer below. Available buttons link directly to the current standalone installer for version 0.99.1.</p>
+    </header>
+    <section class="downloads" aria-label="OcuPathIF downloads">
+      <article class="download-card" data-platform-card="mac">
+        <div class="card-heading">
+          <div>
+            <p class="eyebrow">macOS</p>
+            <h2>OcuPathIF for Mac</h2>
+          </div>
+          <span class="recommended" data-recommended="mac" hidden>Recommended for this device</span>
+        </div>
+        <p class="requirement">macOS 14+ · Apple Silicon</p>
+        <a class="download-button" data-download-platform="mac" href="https://github.com/Yuqian1017/ocupath-updates/releases/download/v0.99.1/OcupathIF-0.99.1-arm64-mac.zip">Download OcuPathIF for macOS</a>
+        <p class="file-meta">Version 0.99.1 · 1.22 GB</p>
+        <p class="trust">Notarized by Apple · Stapled ticket · Gatekeeper accepted</p>
+        <details>
+          <summary>Verify download</summary>
+          <p class="filename">OcupathIF-0.99.1-arm64-mac.zip</p>
+          <code>03d44c0f28471187a47710116db4dcaf2561b38b5df3380566486767afa81dec</code>
+        </details>
+        <section class="steps" aria-labelledby="mac-steps">
+          <h3 id="mac-steps">Install on macOS</h3>
+          <ol><li>Open the downloaded ZIP.</li><li>Drag OcuPathIF into Applications.</li><li>Open OcuPathIF from Applications.</li></ol>
+        </section>
+      </article>
+      <article class="download-card" data-platform-card="windows">
+        <div class="card-heading">
+          <div>
+            <p class="eyebrow">Windows</p>
+            <h2>OcuPathIF for Windows</h2>
+          </div>
+          <span class="recommended" data-recommended="windows" hidden>Recommended for this device</span>
+        </div>
+        <p class="requirement">Windows 10/11 · x64</p>
+        <a class="download-button" data-download-platform="windows" href="https://github.com/Yuqian1017/ocupath-updates/releases/download/v0.99.1/OcupathIF-Setup-0.99.1-x64.exe">Download OcuPathIF for Windows</a>
+        <p class="file-meta">Version 0.99.1 · 1.26 GB</p>
+        <p class="trust"><span class="warning">This Windows installer is not digitally signed. Windows may show Unknown publisher or Microsoft Defender SmartScreen. Verify the filename and SHA-256 before opening it.</span></p>
+        <details>
+          <summary>Verify download</summary>
+          <p class="filename">OcupathIF-Setup-0.99.1-x64.exe</p>
+          <code>f62a863a8eb75f94f13e4cf7a4cb96d52299ce3793013f41854fb950916cfa21</code>
+        </details>
+        <section class="steps" aria-labelledby="windows-steps">
+          <h3 id="windows-steps">Install on Windows</h3>
+          <ol><li>Before opening the installer, verify its filename and SHA-256 below.</li><li>Open the installer. Windows may show Unknown publisher or Microsoft Defender SmartScreen because this package is not digitally signed.</li><li>Continue only if you downloaded it from this official page, then launch OcuPathIF from the Start menu.</li></ol>
+        </section>
+      </article>
+    </section>
+    <footer>Need help? Contact your Biostate AI representative.</footer>
+  </main>
+  <script>
+    (() => {
+      const platform = /Windows/i.test(navigator.userAgent) ? 'windows' : (/Macintosh|Mac OS X/i.test(navigator.userAgent) ? 'mac' : null);
+      if (!platform) return;
+      const card = document.querySelector('[data-platform-card="' + platform + '"]');
+      const badge = document.querySelector('[data-recommended="' + platform + '"]');
+      if (card) card.classList.add('recommended-card');
+      if (badge) badge.hidden = false;
+    })();
+  </script>
+</body>
+</html>

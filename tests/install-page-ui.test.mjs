@@ -57,4 +57,41 @@ assert.equal(
   'Mac and Windows must both use the same prominent button treatment',
 );
 
+const hongKongOrigin = 'https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com';
+assert.equal(
+  (html.match(/data-download-source="hong-kong"/g) ?? []).length,
+  2,
+  'both platforms must expose the Hong Kong mirror as a direct download source',
+);
+assert.match(
+  html,
+  new RegExp(`href="${hongKongOrigin}/OcupathIF-0\\.99\\.1-arm64-mac\\.zip"`),
+  'Mac Hong Kong mirror must target the exact source-protected release asset',
+);
+assert.match(
+  html,
+  new RegExp(`href="${hongKongOrigin}/OcupathIF-Setup-0\\.99\\.1-x64\\.exe"`),
+  'Windows Hong Kong mirror must target the exact source-protected release asset',
+);
+assert.equal(
+  (html.match(/data-download-source="github"/g) ?? []).length,
+  2,
+  'both platforms must retain a visible GitHub fallback',
+);
+assert.equal(
+  (html.match(/class="alternate-download"/g) ?? []).length,
+  2,
+  'the alternate source must be visible without JavaScript or hover',
+);
+assert.match(
+  html,
+  /Hong Kong mirror is recommended for users in mainland China/i,
+  'the page must explain the regional choice in plain language',
+);
+assert.match(
+  html,
+  /If one download source is slow or unavailable, use the other/i,
+  'the page must explain the fallback action without technical jargon',
+);
+
 console.log('install page UI contract: PASS');

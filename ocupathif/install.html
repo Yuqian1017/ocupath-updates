@@ -15,7 +15,6 @@
     .product-logo { width: 88px; height: 88px; border-radius: 22px; box-shadow: 0 14px 34px rgba(19,52,78,.2); }
     h1 { margin: 10px 0 12px; font-size: clamp(2.2rem, 6vw, 4rem); letter-spacing: -.05em; }
     .intro { color: #596579; font-size: 1.1rem; line-height: 1.6; }
-    .source-guidance { margin: 20px auto 0; padding: 14px 18px; max-width: 680px; border: 1px solid #b9ded8; border-radius: 14px; background: rgba(224,248,244,.78); color: #315e59; line-height: 1.55; }
     .downloads { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
     .download-card { background: rgba(255,255,255,.94); border: 1px solid #dce4ee; border-radius: 22px; padding: 28px; box-shadow: 0 18px 50px rgba(34,57,83,.08); }
     .download-card.recommended-card { border: 2px solid #0f9f8f; box-shadow: 0 20px 55px rgba(15,159,143,.16); }
@@ -26,8 +25,6 @@
     .requirement, .file-meta { color: #647084; line-height: 1.5; }
     .download-button { display: block; margin: 24px 0 12px; border: 2px solid #0cae9b; border-radius: 12px; background: #087f73; box-shadow: 0 10px 22px rgba(8,127,115,.28); color: white; padding: 15px 18px; text-align: center; text-decoration: none; font-size: 1.02rem; font-weight: 800; transition: background-color .16s ease, box-shadow .16s ease, transform .16s ease; }
     .download-button:hover, .download-button:focus-visible { background: #0aa896; box-shadow: 0 14px 28px rgba(10,168,150,.38); transform: translateY(-2px); outline: 3px solid rgba(15,159,143,.25); outline-offset: 3px; }
-    .alternate-download { display: block; margin: 0 0 12px; border: 1px solid #aab7c8; border-radius: 12px; background: #eef3f8; color: #26364b; padding: 12px 16px; text-align: center; text-decoration: none; font-weight: 750; transition: background-color .16s ease, border-color .16s ease, transform .16s ease; }
-    .alternate-download:hover, .alternate-download:focus-visible { background: #e0e8f1; border-color: #7b8da5; transform: translateY(-1px); outline: 3px solid rgba(96,117,145,.2); outline-offset: 3px; }
     details { margin: 18px 0; border-top: 1px solid #e7ebf1; border-bottom: 1px solid #e7ebf1; padding: 14px 0; }
     summary { cursor: pointer; font-weight: 750; }
     .filename { overflow-wrap: anywhere; }
@@ -38,7 +35,7 @@
     footer a { color: #087f73; font-weight: 750; text-decoration-thickness: 1px; text-underline-offset: 3px; }
     footer a:hover, footer a:focus-visible { color: #0aa896; }
     @media (max-width: 760px) { main { padding-top: 42px; } .downloads { grid-template-columns: 1fr; } }
-    @media (prefers-color-scheme: dark) { :root { color: #edf4ff; background: #0b111c; } body { background: radial-gradient(circle at top, #0d3735 0, #0b111c 36rem); } .download-card { background: rgba(18,27,42,.96); border-color: #29364a; } .intro, .requirement, .file-meta, .steps ol, footer { color: #a9b5c8; } .source-guidance { background: rgba(17,65,62,.76); border-color: #2f7770; color: #c1e6e1; } .alternate-download { background: #202c3d; border-color: #42526a; color: #edf4ff; } .alternate-download:hover, .alternate-download:focus-visible { background: #2a394e; border-color: #61738d; } details { border-color: #303c50; } code { color: #bbc7d9; } }
+    @media (prefers-color-scheme: dark) { :root { color: #edf4ff; background: #0b111c; } body { background: radial-gradient(circle at top, #0d3735 0, #0b111c 36rem); } .download-card { background: rgba(18,27,42,.96); border-color: #29364a; } .intro, .requirement, .file-meta, .steps ol, footer { color: #a9b5c8; } details { border-color: #303c50; } code { color: #bbc7d9; } }
   </style>
 </head>
 <body>
@@ -46,8 +43,7 @@
     <header>
       <img class="product-logo" src="./ocupathif-logo.png" alt="OcuPathIF logo">
       <h1>Download OcuPathIF</h1>
-      <p class="intro">Choose your computer below. Both download sources provide the same standalone installer for version 0.99.1.</p>
-      <p class="source-guidance"><strong>Hong Kong mirror is recommended for users in mainland China.</strong> If one download source is slow or unavailable, use the other.</p>
+      <p class="intro">Choose your computer below. We will automatically use the download connection best suited to your network.</p>
     </header>
     <section class="downloads" aria-label="OcuPathIF downloads">
       <article class="download-card" data-platform-card="mac">
@@ -59,8 +55,7 @@
           <span class="recommended" data-recommended="mac" hidden>Recommended for this device</span>
         </div>
         <p class="requirement">macOS 14+ · Apple Silicon</p>
-        <a class="download-button" data-download-platform="mac" data-download-source="hong-kong" href="https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com/OcupathIF-0.99.1-arm64-mac.zip">Download for macOS · Hong Kong mirror</a>
-        <a class="alternate-download" data-download-source="github" href="https://github.com/Yuqian1017/ocupath-updates/releases/download/v0.99.1/OcupathIF-0.99.1-arm64-mac.zip">Download for macOS · GitHub</a>
+        <a class="download-button" data-download-platform="mac" data-cn-url="https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com/OcupathIF-0.99.1-arm64-mac.zip" data-global-url="https://github.com/Yuqian1017/ocupath-updates/releases/download/v0.99.1/OcupathIF-0.99.1-arm64-mac.zip" href="https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com/OcupathIF-0.99.1-arm64-mac.zip">Download OcuPathIF for macOS</a>
         <p class="file-meta">Version 0.99.1 · 1.22 GB</p>
         <details>
           <summary>Verify download (SHA-256)</summary>
@@ -81,8 +76,7 @@
           <span class="recommended" data-recommended="windows" hidden>Recommended for this device</span>
         </div>
         <p class="requirement">Windows 10/11 · x64</p>
-        <a class="download-button" data-download-platform="windows" data-download-source="hong-kong" href="https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com/OcupathIF-Setup-0.99.1-x64.exe">Download for Windows · Hong Kong mirror</a>
-        <a class="alternate-download" data-download-source="github" href="https://github.com/Yuqian1017/ocupath-updates/releases/download/v0.99.1/OcupathIF-Setup-0.99.1-x64.exe">Download for Windows · GitHub</a>
+        <a class="download-button" data-download-platform="windows" data-cn-url="https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com/OcupathIF-Setup-0.99.1-x64.exe" data-global-url="https://github.com/Yuqian1017/ocupath-updates/releases/download/v0.99.1/OcupathIF-Setup-0.99.1-x64.exe" href="https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com/OcupathIF-Setup-0.99.1-x64.exe">Download OcuPathIF for Windows</a>
         <p class="file-meta">Version 0.99.1 · 1.26 GB</p>
         <details>
           <summary>Verify download (SHA-256)</summary>
@@ -99,6 +93,38 @@
   </main>
   <script>
     (() => {
+      const downloadButtons = [...document.querySelectorAll('[data-download-platform]')];
+      const applyCountry = (countryCode) => {
+        const normalizedCountry = typeof countryCode === 'string' ? countryCode.trim().toUpperCase() : '';
+        const useGlobalRoute = normalizedCountry !== '' && normalizedCountry !== 'CN';
+        downloadButtons.forEach((button) => {
+          button.href = useGlobalRoute ? button.dataset.globalUrl : button.dataset.cnUrl;
+        });
+        document.documentElement.dataset.downloadRegion = useGlobalRoute ? 'global' : 'cn';
+      };
+
+      window.__ocupathDownloadRouting = { applyCountry };
+      applyCountry();
+
+      if (typeof fetch === 'function' && typeof AbortController === 'function') {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 2500);
+        fetch('https://api.country.is/', {
+          cache: 'no-store',
+          credentials: 'omit',
+          mode: 'cors',
+          referrerPolicy: 'no-referrer',
+          signal: controller.signal,
+        })
+          .then((response) => {
+            if (!response.ok) throw new Error('Country lookup failed');
+            return response.json();
+          })
+          .then((result) => applyCountry(result?.country))
+          .catch(() => applyCountry())
+          .finally(() => clearTimeout(timeout));
+      }
+
       const platform = /Windows/i.test(navigator.userAgent) ? 'windows' : (/Macintosh|Mac OS X/i.test(navigator.userAgent) ? 'mac' : null);
       if (!platform) return;
       const card = document.querySelector('[data-platform-card="' + platform + '"]');

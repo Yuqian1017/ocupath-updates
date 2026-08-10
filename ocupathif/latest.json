@@ -2,22 +2,22 @@
   "schemaVersion": 1,
   "appId": "com.biostateai.ocupathif",
   "channel": "stable",
-  "version": "0.97.1",
-  "releaseDate": "2026-07-28T17:48:31Z",
-  "releaseNotes": "OcuPathIF v0.97.1 updates Tissue Select to the CABR-v2 shared-boundary algorithm, adds configurable fragment cleanup in square micrometres and visible processing progress, and fixes Manual Select reclassification/deletion gaps, restored-overlay alignment, and channel Reset value synchronization. Model save/reload, histories, multi-type/multi-tab training, and Batch Tissue Select behavior are preserved.",
+  "version": "0.99.1",
+  "releaseDate": "2026-08-09T05:15:51.201Z",
+  "releaseNotes": "OcuPathIF v0.99.1 includes the current customer-workflow repairs and the source-hardened standalone packages. macOS 0.98.1 clients use a notarized bootstrap bridge before receiving the exact 0.99.1 package; Windows and legacy clients continue through the Manual Download page.",
   "packages": {
     "darwin-arm64": {
-      "kind": "mac_zip",
-      "url": "https://github.com/Yuqian1017/ocupath-updates/releases/download/v0.97.1/OcupathIF_standalone_v0.97.1_mac.zip",
-      "sha256": "5a84c7a9642bde7bbf3ee6e847bccb299e6d18d8c674ab0930bf58ad4837cad0",
-      "sizeBytes": 1311708310,
+      "kind": "manual_page",
+      "url": "https://updates.ocupath.ai/ocupathif/install.html",
+      "sha256": "03d44c0f28471187a47710116db4dcaf2561b38b5df3380566486767afa81dec",
+      "sizeBytes": 1314515661,
       "signature": "Apple notarized and stapled; Developer ID Application: Biostate AI, Incorporated (6269FUBJZ5)"
     },
     "win32-x64": {
-      "kind": "win_zip",
-      "url": "https://github.com/Yuqian1017/ocupath-updates/releases/download/v0.97.1/OcupathIF_v0.97.1_win.zip",
-      "sha256": "45bc3259ddd498bf9df4335fc567b7f7998b7b319e68f1376790a372022cdb0a",
-      "sizeBytes": 1354379430
+      "kind": "manual_page",
+      "url": "https://updates.ocupath.ai/ocupathif/install.html",
+      "sha256": "f62a863a8eb75f94f13e4cf7a4cb96d52299ce3793013f41854fb950916cfa21",
+      "sizeBytes": 1354645375
     }
   }
 }

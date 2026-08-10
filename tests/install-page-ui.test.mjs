@@ -3,6 +3,18 @@ import { readFileSync } from 'node:fs';
 
 const html = readFileSync(new URL('../ocupathif/install.html', import.meta.url), 'utf8');
 
+assert.match(
+  html,
+  /<img\s+class="product-logo"\s+src="\.\/ocupathif-logo\.png"\s+alt="OcuPathIF logo">/,
+  'page must show the official OcuPathIF logo above the title',
+);
+
+assert.match(
+  html,
+  /href="mailto:contact@ocupath\.ai">contact@ocupath\.ai<\/a>/,
+  'footer must provide the clickable OcuPathIF contact email',
+);
+
 assert.equal(
   html.includes('Notarized by Apple · Stapled ticket · Gatekeeper accepted'),
   false,

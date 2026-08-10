@@ -5,6 +5,12 @@ const html = readFileSync(new URL('../ocupathif/install.html', import.meta.url),
 
 assert.match(
   html,
+  /<link\s+rel="icon"\s+href="\.\/ocupathif-logo\.png">/,
+  'browser tab must reuse the official OcuPathIF logo as its favicon',
+);
+
+assert.match(
+  html,
   /<img\s+class="product-logo"\s+src="\.\/ocupathif-logo\.png"\s+alt="OcuPathIF logo">/,
   'page must show the official OcuPathIF logo above the title',
 );

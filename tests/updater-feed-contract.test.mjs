@@ -24,8 +24,8 @@ assert.doesNotMatch(macFeed, /github\.com|0\.97\.[12]/);
 
 assert.match(bootstrapTargetFeed, /^version: 0\.991\.1$/m);
 assert.match(bootstrapTargetFeed, new RegExp(`url: ${finalMacCosUrl.replaceAll('.', '\\.').replaceAll('/', '\/')}`));
-assert.match(bootstrapTargetFeed, /sha512: A\+t4BImMQkfB0ZP3ToJaqiBMcE85G7w6\+epvMDxhe5peO6HBr83Gx0aLyDrTuVK7tX8Sv9wtHTTqj\/VJ\/a0Ggg==/);
-assert.match(bootstrapTargetFeed, /size: 1313786015/);
+assert.match(bootstrapTargetFeed, /sha512: 6Elg8SONs0xGRJXoeLWPj3xYjmfYlfM0L7gLHGMOjuV6w0hTrQLd6AJyj83aiVhzhRz4Mwft\+MKoSXGL8\/HgKQ==/);
+assert.match(bootstrapTargetFeed, /size: 1313800582/);
 assert.doesNotMatch(bootstrapTargetFeed, /github\.com|0\.97\.[12]/);
 
 assert.equal(legacyManifest.version, '0.991.1');
@@ -33,9 +33,9 @@ assert.equal(legacyManifest.packages['darwin-arm64'].kind, 'manual_page');
 assert.equal(legacyManifest.packages['darwin-arm64'].url, installPageUrl);
 assert.equal(
   legacyManifest.packages['darwin-arm64'].sha256,
-  'aa28c4c8b082346316fd449d1f483d0cdf8d4820529a84215ace50e8db647d7e',
+  '146a0d91eb608083b702a8cd7f970da938eff45f29e67c9d8212da02c96e0897',
 );
-assert.equal(legacyManifest.packages['darwin-arm64'].sizeBytes, 1319589471);
+assert.equal(legacyManifest.packages['darwin-arm64'].sizeBytes, 1318754674);
 assert.notEqual(
   manualMacCosUrl,
   finalMacCosUrl,

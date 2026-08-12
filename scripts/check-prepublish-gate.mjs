@@ -63,6 +63,7 @@ const state = {
       name: asset.name,
       size: asset.size,
       digest: asset.digest,
+      state: asset.state,
     })),
   },
   remoteTagPresent,

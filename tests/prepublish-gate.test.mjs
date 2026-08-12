@@ -28,7 +28,7 @@ function greenState(overrides = {}) {
       draft: true,
       tagName: 'v0.991.1',
       targetCommitish: 'release/0991-two-leg-feed-20260810',
-      assets: Object.entries(exactAssets).map(([name, value]) => ({ name, ...value })),
+    assets: Object.entries(exactAssets).map(([name, value]) => ({ name, ...value, state: 'uploaded' })),
     },
     remoteTagPresent: false,
     liveVersion: '0.99.1',
@@ -85,6 +85,18 @@ test('rejects a same-name asset with different bytes', () => {
   const result = evaluatePrepublishGate(state);
   assert.equal(result.status, 'RED_STOP_LINE');
   assert.deepEqual(result.failures, ['release asset bytes mismatch: OcupathIF-0.991.1-arm64-mac.zip']);
+});
+
+test('rejects a starter asset even when GitHub reports the expected size', () => {
+  const state = greenState();
+  state.release.assets = state.release.assets.map((asset) => (
+    asset.name === 'OcupathIF-0.991.1-arm64-mac.zip'
+      ? { ...asset, state: 'starter', digest: null }
+      : asset
+  ));
+  const result = evaluatePrepublishGate(state);
+  assert.equal(result.status, 'RED_STOP_LINE');
+  assert.deepEqual(result.failures, ['release asset incomplete: OcupathIF-0.991.1-arm64-mac.zip (starter)']);
 });
 
 test('passes only when every frozen publication input is exact', () => {

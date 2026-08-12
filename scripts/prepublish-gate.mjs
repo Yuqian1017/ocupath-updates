@@ -27,6 +27,10 @@ export function evaluatePrepublishGate(state) {
       failures.push(`missing release asset: ${name}`);
       continue;
     }
+    if (actual.state !== 'uploaded') {
+      failures.push(`release asset incomplete: ${name} (${actual.state ?? 'missing state'})`);
+      continue;
+    }
     if (actual.size !== expected.size || actual.digest !== expected.digest) {
       failures.push(`release asset bytes mismatch: ${name}`);
     }

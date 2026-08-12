@@ -75,6 +75,18 @@ test('rejects a tag created before the gate opens', () => {
   assert.deepEqual(result.failures, ['remote tag already exists before publication: v0.991.1']);
 });
 
+test('rejects a same-name asset with different bytes', () => {
+  const state = greenState();
+  state.release.assets = state.release.assets.map((asset) => (
+    asset.name === 'OcupathIF-0.991.1-arm64-mac.zip'
+      ? { ...asset, size: asset.size - 1 }
+      : asset
+  ));
+  const result = evaluatePrepublishGate(state);
+  assert.equal(result.status, 'RED_STOP_LINE');
+  assert.deepEqual(result.failures, ['release asset bytes mismatch: OcupathIF-0.991.1-arm64-mac.zip']);
+});
+
 test('passes only when every frozen publication input is exact', () => {
   const result = evaluatePrepublishGate(greenState());
   assert.deepEqual(result, { status: 'GREEN', failures: [] });

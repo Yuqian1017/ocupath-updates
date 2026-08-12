@@ -5,7 +5,7 @@ import { execFileSync } from 'node:child_process';
 import { evaluatePrepublishGate } from './prepublish-gate.mjs';
 
 const repository = 'Yuqian1017/ocupath-updates';
-const releaseId = '369084603';
+const releaseId = '369530281';
 const expectedTagName = 'v0.991.1';
 const expectedTargetCommitish = 'release/0991-two-leg-feed-20260810';
 

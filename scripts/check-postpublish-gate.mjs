@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import { evaluatePostpublishGate } from './postpublish-gate.mjs';
 
 const repository = 'Yuqian1017/ocupath-updates';
-const releaseId = '369084603';
+const releaseId = '369530281';
 const expectedVersion = '0.991.1';
 const expectedOldVersion = '0.99.1';
 const expectedTagName = 'v0.991.1';

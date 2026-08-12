@@ -1,0 +1,56 @@
+name: Temporary exact OcuPathIF 0.991.1 Windows public draft transfer
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  attach:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download exact private Windows package server-side
+        env:
+          SOURCE_PACKAGE_URL: ${{ secrets.SOURCE_PACKAGE_URL }}
+        run: |
+          set -euo pipefail
+          test -n "$SOURCE_PACKAGE_URL"
+          curl --fail --location --silent --show-error \
+            --output OcupathIF_v0.991.1_win.zip \
+            "$SOURCE_PACKAGE_URL"
+          test "$(stat -c '%s' OcupathIF_v0.991.1_win.zip)" = "1354885544"
+          echo '0297f9359551fd914e718246eed4b0a7903695959250e193699dce1eb838e5b1  OcupathIF_v0.991.1_win.zip' | sha256sum --check --strict
+
+      - name: Extract and verify exact Windows installer
+        run: |
+          set -euo pipefail
+          unzip -j OcupathIF_v0.991.1_win.zip \
+            OcupathIF-Setup-0.991.1-x64.exe \
+            -d exact-installer
+          exe='exact-installer/OcupathIF-Setup-0.991.1-x64.exe'
+          test "$(stat -c '%s' "$exe")" = "1354649495"
+          echo '23c3981ce1b7076040a748c513504595a852c6c7c0e5b0d54499706a7bb0ce2d  exact-installer/OcupathIF-Setup-0.991.1-x64.exe' | sha256sum --check --strict
+
+      - name: Upload exact installer to existing public draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test "$(gh release view v0.991.1 --repo "$GITHUB_REPOSITORY" --json isDraft --jq .isDraft)" = "true"
+          gh release upload v0.991.1 \
+            exact-installer/OcupathIF-Setup-0.991.1-x64.exe \
+            --repo "$GITHUB_REPOSITORY"
+
+      - name: Verify remote draft asset identity
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test "$(gh release view v0.991.1 --repo "$GITHUB_REPOSITORY" --json isDraft --jq .isDraft)" = "true"
+          gh release view v0.991.1 \
+            --repo "$GITHUB_REPOSITORY" \
+            --json assets \
+            --jq '.assets[] | select(.name == "OcupathIF-Setup-0.991.1-x64.exe") | [.size, .digest, .state] | @tsv' \
+            > remote.tsv
+          test "$(cat remote.tsv)" = $'1354649495\tsha256:23c3981ce1b7076040a748c513504595a852c6c7c0e5b0d54499706a7bb0ce2d\tuploaded'

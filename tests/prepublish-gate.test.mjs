@@ -4,9 +4,9 @@ import test from 'node:test';
 import { evaluatePrepublishGate } from '../scripts/prepublish-gate.mjs';
 
 const exactAssets = {
-  'OcupathIF-0.991.1-arm64-mac.zip': {
-    size: 1319589471,
-    digest: 'sha256:aa28c4c8b082346316fd449d1f483d0cdf8d4820529a84215ace50e8db647d7e',
+  'OcupathIF-0.991.1-arm64-mac-standalone.zip': {
+    size: 1318754674,
+    digest: 'sha256:146a0d91eb608083b702a8cd7f970da938eff45f29e67c9d8212da02c96e0897',
   },
   'OcupathIF-Setup-0.991.1-x64.exe': {
     size: 1354649495,
@@ -49,7 +49,7 @@ test('blocks an incomplete draft before any publication mutation', () => {
   const state = greenState({
     release: {
       ...greenState().release,
-      assets: greenState().release.assets.filter((asset) => asset.name !== 'OcupathIF-0.991.1-arm64-mac.zip'),
+      assets: greenState().release.assets.filter((asset) => asset.name !== 'OcupathIF-0.991.1-arm64-mac-standalone.zip'),
     },
     cosObjectsVerified: 0,
     macTwoLegTransaction: 'not-run',
@@ -61,7 +61,7 @@ test('blocks an incomplete draft before any publication mutation', () => {
 
   assert.equal(result.status, 'RED_STOP_LINE');
   assert.deepEqual(result.failures, [
-    'missing release asset: OcupathIF-0.991.1-arm64-mac.zip',
+    'missing release asset: OcupathIF-0.991.1-arm64-mac-standalone.zip',
     'COS exact objects verified: 0/6',
     'Mac two-leg updater transaction: not-run',
     'Windows native validation: evidence-blocked',
@@ -78,25 +78,25 @@ test('rejects a tag created before the gate opens', () => {
 test('rejects a same-name asset with different bytes', () => {
   const state = greenState();
   state.release.assets = state.release.assets.map((asset) => (
-    asset.name === 'OcupathIF-0.991.1-arm64-mac.zip'
+    asset.name === 'OcupathIF-0.991.1-arm64-mac-standalone.zip'
       ? { ...asset, size: asset.size - 1 }
       : asset
   ));
   const result = evaluatePrepublishGate(state);
   assert.equal(result.status, 'RED_STOP_LINE');
-  assert.deepEqual(result.failures, ['release asset bytes mismatch: OcupathIF-0.991.1-arm64-mac.zip']);
+  assert.deepEqual(result.failures, ['release asset bytes mismatch: OcupathIF-0.991.1-arm64-mac-standalone.zip']);
 });
 
 test('rejects a starter asset even when GitHub reports the expected size', () => {
   const state = greenState();
   state.release.assets = state.release.assets.map((asset) => (
-    asset.name === 'OcupathIF-0.991.1-arm64-mac.zip'
+    asset.name === 'OcupathIF-0.991.1-arm64-mac-standalone.zip'
       ? { ...asset, state: 'starter', digest: null }
       : asset
   ));
   const result = evaluatePrepublishGate(state);
   assert.equal(result.status, 'RED_STOP_LINE');
-  assert.deepEqual(result.failures, ['release asset incomplete: OcupathIF-0.991.1-arm64-mac.zip (starter)']);
+  assert.deepEqual(result.failures, ['release asset incomplete: OcupathIF-0.991.1-arm64-mac-standalone.zip (starter)']);
 });
 
 test('passes only when every frozen publication input is exact', () => {

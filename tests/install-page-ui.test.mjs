@@ -61,6 +61,7 @@ assert.equal(
 const hongKongOrigin = 'https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com';
 const githubOrigin = 'https://github.com/Yuqian1017/ocupath-updates/releases/download/v0.991.1';
 const manualMacCosUrl = `${hongKongOrigin}/OcupathIF-0.991.1-arm64-mac-standalone.zip`;
+const manualMacGitHubUrl = `${githubOrigin}/OcupathIF-0.991.1-arm64-mac-standalone.zip`;
 const updaterMacCosUrl = `${hongKongOrigin}/OcupathIF-0.991.1-arm64-mac.zip`;
 assert.equal(
   (html.match(/class="alternate-download"/g) ?? []).length,
@@ -79,8 +80,8 @@ assert.match(
 );
 assert.match(
   html,
-  new RegExp(`data-global-url="${githubOrigin}/OcupathIF-0\\.991\\.1-arm64-mac\\.zip"`),
-  'Mac routing data must retain the exact global GitHub asset',
+  new RegExp(`data-global-url="${manualMacGitHubUrl.replaceAll('.', '\\.')}"`),
+  'Mac routing data must retain the exact customer standalone GitHub asset',
 );
 assert.match(
   html,
@@ -115,7 +116,7 @@ function createRoutingHarness(fetchImpl = () => new Promise(() => {})) {
     {
       dataset: {
         cnUrl: manualMacCosUrl,
-        globalUrl: `${githubOrigin}/OcupathIF-0.991.1-arm64-mac.zip`,
+        globalUrl: manualMacGitHubUrl,
       },
       href: manualMacCosUrl,
     },

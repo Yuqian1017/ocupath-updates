@@ -10,9 +10,9 @@ const expectedTagName = 'v0.991.1';
 const expectedTargetCommitish = 'release/0991-two-leg-feed-20260810';
 
 const expectedAssets = {
-  'OcupathIF-0.991.1-arm64-mac.zip': {
-    size: 1319589471,
-    digest: 'sha256:aa28c4c8b082346316fd449d1f483d0cdf8d4820529a84215ace50e8db647d7e',
+  'OcupathIF-0.991.1-arm64-mac-standalone.zip': {
+    size: 1318754674,
+    digest: 'sha256:146a0d91eb608083b702a8cd7f970da938eff45f29e67c9d8212da02c96e0897',
   },
   'OcupathIF-Setup-0.991.1-x64.exe': {
     size: 1354649495,

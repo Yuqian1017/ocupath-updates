@@ -14,6 +14,7 @@ const installPageUrl = 'https://updates.ocupath.ai/ocupathif/install.html';
 const cosBaseUrl = 'https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com';
 const bridgeCosUrl = `${cosBaseUrl}/OcupathIF-0.991.0-bootstrap-arm64-mac.zip`;
 const finalMacCosUrl = `${cosBaseUrl}/OcupathIF-0.991.1-arm64-mac.zip`;
+const manualMacCosUrl = `${cosBaseUrl}/OcupathIF-0.991.1-arm64-mac-standalone.zip`;
 
 assert.match(macFeed, /^version: 0\.991\.0$/m);
 assert.match(macFeed, new RegExp(`url: ${bridgeCosUrl.replaceAll('.', '\\.').replaceAll('/', '\/')}`));
@@ -35,6 +36,11 @@ assert.equal(
   'aa28c4c8b082346316fd449d1f483d0cdf8d4820529a84215ace50e8db647d7e',
 );
 assert.equal(legacyManifest.packages['darwin-arm64'].sizeBytes, 1319589471);
+assert.notEqual(
+  manualMacCosUrl,
+  finalMacCosUrl,
+  'manual customer ZIP and updater ZIP have different bytes and must use distinct COS object keys',
+);
 assert.equal(legacyManifest.packages['win32-x64'].kind, 'manual_page');
 assert.equal(legacyManifest.packages['win32-x64'].url, installPageUrl);
 assert.equal(

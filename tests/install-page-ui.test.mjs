@@ -59,7 +59,9 @@ assert.equal(
 );
 
 const hongKongOrigin = 'https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com';
-const githubOrigin = 'https://github.com/Yuqian1017/ocupath-updates/releases/download/v0.99.1';
+const githubOrigin = 'https://github.com/Yuqian1017/ocupath-updates/releases/download/v0.991.1';
+const manualMacCosUrl = `${hongKongOrigin}/OcupathIF-0.991.1-arm64-mac-standalone.zip`;
+const updaterMacCosUrl = `${hongKongOrigin}/OcupathIF-0.991.1-arm64-mac.zip`;
 assert.equal(
   (html.match(/class="alternate-download"/g) ?? []).length,
   0,
@@ -72,32 +74,32 @@ assert.equal(
 );
 assert.match(
   html,
-  new RegExp(`data-cn-url="${hongKongOrigin}/OcupathIF-0\\.99\\.1-arm64-mac\\.zip"`),
+  new RegExp(`data-cn-url="${manualMacCosUrl.replaceAll('.', '\\.')}"`),
   'Mac routing data must retain the exact source-protected Hong Kong asset',
 );
 assert.match(
   html,
-  new RegExp(`data-global-url="${githubOrigin}/OcupathIF-0\\.99\\.1-arm64-mac\\.zip"`),
+  new RegExp(`data-global-url="${githubOrigin}/OcupathIF-0\\.991\\.1-arm64-mac\\.zip"`),
   'Mac routing data must retain the exact global GitHub asset',
 );
 assert.match(
   html,
-  new RegExp(`data-cn-url="${hongKongOrigin}/OcupathIF-Setup-0\\.99\\.1-x64\\.exe"`),
+  new RegExp(`data-cn-url="${hongKongOrigin}/OcupathIF-Setup-0\\.991\\.1-x64\\.exe"`),
   'Windows routing data must retain the exact source-protected Hong Kong asset',
 );
 assert.match(
   html,
-  new RegExp(`data-global-url="${githubOrigin}/OcupathIF-Setup-0\\.99\\.1-x64\\.exe"`),
+  new RegExp(`data-global-url="${githubOrigin}/OcupathIF-Setup-0\\.991\\.1-x64\\.exe"`),
   'Windows routing data must retain the exact global GitHub asset',
 );
 assert.match(
   html,
-  new RegExp(`href="${hongKongOrigin}/OcupathIF-0\\.99\\.1-arm64-mac\\.zip"`),
+  new RegExp(`href="${manualMacCosUrl.replaceAll('.', '\\.')}"`),
   'Mac must fail safe to the Hong Kong asset before country detection',
 );
 assert.match(
   html,
-  new RegExp(`href="${hongKongOrigin}/OcupathIF-Setup-0\\.99\\.1-x64\\.exe"`),
+  new RegExp(`href="${hongKongOrigin}/OcupathIF-Setup-0\\.991\\.1-x64\\.exe"`),
   'Windows must fail safe to the Hong Kong asset before country detection',
 );
 assert.doesNotMatch(
@@ -112,17 +114,17 @@ function createRoutingHarness(fetchImpl = () => new Promise(() => {})) {
   const buttons = [
     {
       dataset: {
-        cnUrl: `${hongKongOrigin}/OcupathIF-0.99.1-arm64-mac.zip`,
-        globalUrl: `${githubOrigin}/OcupathIF-0.99.1-arm64-mac.zip`,
+        cnUrl: manualMacCosUrl,
+        globalUrl: `${githubOrigin}/OcupathIF-0.991.1-arm64-mac.zip`,
       },
-      href: `${hongKongOrigin}/OcupathIF-0.99.1-arm64-mac.zip`,
+      href: manualMacCosUrl,
     },
     {
       dataset: {
-        cnUrl: `${hongKongOrigin}/OcupathIF-Setup-0.99.1-x64.exe`,
-        globalUrl: `${githubOrigin}/OcupathIF-Setup-0.99.1-x64.exe`,
+        cnUrl: `${hongKongOrigin}/OcupathIF-Setup-0.991.1-x64.exe`,
+        globalUrl: `${githubOrigin}/OcupathIF-Setup-0.991.1-x64.exe`,
       },
-      href: `${hongKongOrigin}/OcupathIF-Setup-0.99.1-x64.exe`,
+      href: `${hongKongOrigin}/OcupathIF-Setup-0.991.1-x64.exe`,
     },
   ];
   const document = {
@@ -199,3 +201,9 @@ assert.deepEqual(
 );
 
 console.log('install page UI contract: PASS');
+
+assert.notEqual(
+  manualMacCosUrl,
+  updaterMacCosUrl,
+  'manual customer ZIP and updater ZIP have different bytes and must never share one COS object key',
+);

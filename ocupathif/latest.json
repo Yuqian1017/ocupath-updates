@@ -2,22 +2,22 @@
   "schemaVersion": 1,
   "appId": "com.biostateai.ocupathif",
   "channel": "stable",
-  "version": "0.99.1",
-  "releaseDate": "2026-08-09T05:15:51.201Z",
-  "releaseNotes": "OcuPathIF v0.99.1 includes the current customer-workflow repairs and the source-hardened standalone packages. macOS 0.98.1 clients use a notarized bootstrap bridge before receiving the exact 0.99.1 package; Windows and legacy clients continue through the Manual Download page.",
+  "version": "0.991.1",
+  "releaseDate": "2026-08-12T06:29:46.075Z",
+  "releaseNotes": "OcuPathIF v0.991.1 includes the current customer-feedback repairs and source-protected standalone packages. macOS clients use the supported in-app update path; Windows and legacy clients continue through the Manual Download page.",
   "packages": {
     "darwin-arm64": {
       "kind": "manual_page",
       "url": "https://updates.ocupath.ai/ocupathif/install.html",
-      "sha256": "03d44c0f28471187a47710116db4dcaf2561b38b5df3380566486767afa81dec",
-      "sizeBytes": 1314515661,
+      "sha256": "aa28c4c8b082346316fd449d1f483d0cdf8d4820529a84215ace50e8db647d7e",
+      "sizeBytes": 1319589471,
       "signature": "Apple notarized and stapled; Developer ID Application: Biostate AI, Incorporated (6269FUBJZ5)"
     },
     "win32-x64": {
       "kind": "manual_page",
       "url": "https://updates.ocupath.ai/ocupathif/install.html",
-      "sha256": "f62a863a8eb75f94f13e4cf7a4cb96d52299ce3793013f41854fb950916cfa21",
-      "sizeBytes": 1354645375
+      "sha256": "23c3981ce1b7076040a748c513504595a852c6c7c0e5b0d54499706a7bb0ce2d",
+      "sizeBytes": 1354649495
     }
   }
 }

@@ -14,7 +14,7 @@ The macOS direct-update entry feed is:
 https://updates.ocupath.ai/ocupathif/direct/darwin-arm64/latest-mac.yml
 ```
 
-Accepted 0.98.1 clients first receive the notarized 0.99.0 bootstrap bridge below the old native updater's 1 GiB ceiling. The bridge then reads the exact 0.99.1 target feed:
+Accepted older clients first receive the notarized 0.991.0 bootstrap bridge below the old native updater's 1 GiB ceiling. The bridge then reads the exact 0.991.1 target feed:
 
 ```text
 https://updates.ocupath.ai/ocupathif/bootstrap-target/darwin-arm64/latest-mac.yml

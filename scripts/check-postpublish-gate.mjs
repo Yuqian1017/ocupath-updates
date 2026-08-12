@@ -32,6 +32,7 @@ const state = {
   releaseTagName: release.tag_name,
   expectedTagName,
   productionOldVersion: transaction.fromVersion ?? expectedOldVersion,
+  productionTargetVersion: transaction.toVersion,
   expectedOldVersion,
   productionUpdaterTransaction: transaction.status ?? 'not-run',
   automaticRelaunch: transaction.ui?.automaticRelaunchObserved ?? false,

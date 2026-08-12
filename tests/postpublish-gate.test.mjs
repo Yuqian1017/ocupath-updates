@@ -12,6 +12,7 @@ function greenState(overrides = {}) {
     expectedTagName: 'v0.991.1',
     productionOldVersion: '0.99.1',
     expectedOldVersion: '0.99.1',
+    productionTargetVersion: '0.991.1',
     productionUpdaterTransaction: 'PASS',
     automaticRelaunch: true,
     unchangedSentinels: 7,
@@ -53,6 +54,12 @@ test('rejects a transaction that silently falls back to the complete ZIP', () =>
   const result = evaluatePostpublishGate(greenState({ fullZipHttp200Count: 1 }));
   assert.equal(result.status, 'RED_STOP_LINE');
   assert.deepEqual(result.failures, ['full updater ZIP was transferred instead of the differential path']);
+});
+
+test('rejects a transaction that did not land on the released version', () => {
+  const result = evaluatePostpublishGate(greenState({ productionTargetVersion: '0.991.0' }));
+  assert.equal(result.status, 'RED_STOP_LINE');
+  assert.deepEqual(result.failures, ['production updater target mismatch: 0.991.0']);
 });
 
 test('keeps the release open until both public manual downloads and China transactions pass', () => {

@@ -11,6 +11,9 @@ export function evaluatePostpublishGate(state) {
   if (state.productionOldVersion !== state.expectedOldVersion) {
     failures.push(`production updater source mismatch: ${state.productionOldVersion ?? 'missing'}`);
   }
+  if (state.productionTargetVersion !== state.expectedVersion) {
+    failures.push(`production updater target mismatch: ${state.productionTargetVersion ?? 'missing'}`);
+  }
   if (state.productionUpdaterTransaction !== 'PASS') {
     failures.push(
       `production ${state.expectedOldVersion} to ${state.expectedVersion} updater transaction: ${state.productionUpdaterTransaction}`,

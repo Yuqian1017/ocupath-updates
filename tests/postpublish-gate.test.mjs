@@ -18,6 +18,10 @@ function greenState(overrides = {}) {
     expectedSentinels: 7,
     rangeRequestCount: 1,
     fullZipHttp200Count: 0,
+    macManualDownload: 'PASS',
+    windowsManualDownload: 'PASS',
+    chinaMacTransaction: 'PASS',
+    chinaWindowsTransaction: 'PASS',
     ...overrides,
   };
 }
@@ -49,6 +53,22 @@ test('rejects a transaction that silently falls back to the complete ZIP', () =>
   const result = evaluatePostpublishGate(greenState({ fullZipHttp200Count: 1 }));
   assert.equal(result.status, 'RED_STOP_LINE');
   assert.deepEqual(result.failures, ['full updater ZIP was transferred instead of the differential path']);
+});
+
+test('keeps the release open until both public manual downloads and China transactions pass', () => {
+  const result = evaluatePostpublishGate(greenState({
+    macManualDownload: 'not-run',
+    windowsManualDownload: 'evidence-blocked',
+    chinaMacTransaction: 'not-run',
+    chinaWindowsTransaction: 'not-run',
+  }));
+  assert.equal(result.status, 'RED_STOP_LINE');
+  assert.deepEqual(result.failures, [
+    'Mac production Manual Download transaction: not-run',
+    'Windows production Manual Download transaction: evidence-blocked',
+    'China Mac complete download/install/relaunch transaction: not-run',
+    'China Windows complete download/install/relaunch transaction: not-run',
+  ]);
 });
 
 test('passes only after the exact public 0.99.1 app updates through production to 0.991.1', () => {

@@ -24,6 +24,18 @@ export function evaluatePostpublishGate(state) {
   if (state.fullZipHttp200Count !== 0) {
     failures.push('full updater ZIP was transferred instead of the differential path');
   }
+  if (state.macManualDownload !== 'PASS') {
+    failures.push(`Mac production Manual Download transaction: ${state.macManualDownload}`);
+  }
+  if (state.windowsManualDownload !== 'PASS') {
+    failures.push(`Windows production Manual Download transaction: ${state.windowsManualDownload}`);
+  }
+  if (state.chinaMacTransaction !== 'PASS') {
+    failures.push(`China Mac complete download/install/relaunch transaction: ${state.chinaMacTransaction}`);
+  }
+  if (state.chinaWindowsTransaction !== 'PASS') {
+    failures.push(`China Windows complete download/install/relaunch transaction: ${state.chinaWindowsTransaction}`);
+  }
 
   return { status: failures.length === 0 ? 'GREEN' : 'RED_STOP_LINE', failures };
 }

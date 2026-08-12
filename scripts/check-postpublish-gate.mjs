@@ -39,6 +39,10 @@ const state = {
   expectedSentinels: 7,
   rangeRequestCount: transaction.download?.rangeRequestCount ?? 0,
   fullZipHttp200Count: transaction.download?.fullZipHttp200Count ?? 0,
+  macManualDownload: process.env.OCUPATH_MAC_MANUAL_DOWNLOAD ?? 'not-run',
+  windowsManualDownload: process.env.OCUPATH_WINDOWS_MANUAL_DOWNLOAD ?? 'not-run',
+  chinaMacTransaction: process.env.OCUPATH_CHINA_MAC_TRANSACTION ?? 'not-run',
+  chinaWindowsTransaction: process.env.OCUPATH_CHINA_WINDOWS_TRANSACTION ?? 'not-run',
 };
 
 const result = evaluatePostpublishGate(state);

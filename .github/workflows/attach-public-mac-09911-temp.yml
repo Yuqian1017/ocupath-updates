@@ -1,0 +1,47 @@
+name: Temporary exact OcuPathIF 0.991.1 Mac public draft transfer
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  attach:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download and verify exact notarized Mac package from COS
+        env:
+          SOURCE_PACKAGE_URL: ${{ secrets.MAC_09911_COS_URL }}
+        run: |
+          set -euo pipefail
+          test -n "$SOURCE_PACKAGE_URL"
+          curl --fail --location --silent --show-error \
+            --output OcupathIF-0.991.1-arm64-mac.zip \
+            "$SOURCE_PACKAGE_URL"
+          test "$(stat -c '%s' OcupathIF-0.991.1-arm64-mac.zip)" = "1319589471"
+          echo 'aa28c4c8b082346316fd449d1f483d0cdf8d4820529a84215ace50e8db647d7e  OcupathIF-0.991.1-arm64-mac.zip' | sha256sum --check --strict
+
+      - name: Upload exact Mac package to existing public draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test "$(gh release view v0.991.1 --repo "$GITHUB_REPOSITORY" --json isDraft --jq .isDraft)" = "true"
+          test -z "$(gh release view v0.991.1 --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[] | select(.name == "OcupathIF-0.991.1-arm64-mac.zip") | .name')"
+          gh release upload v0.991.1 \
+            OcupathIF-0.991.1-arm64-mac.zip \
+            --repo "$GITHUB_REPOSITORY"
+
+      - name: Verify remote draft asset identity
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test "$(gh release view v0.991.1 --repo "$GITHUB_REPOSITORY" --json isDraft --jq .isDraft)" = "true"
+          gh release view v0.991.1 \
+            --repo "$GITHUB_REPOSITORY" \
+            --json assets \
+            --jq '.assets[] | select(.name == "OcupathIF-0.991.1-arm64-mac.zip") | [.size, .digest, .state] | @tsv' \
+            > remote.tsv
+          test "$(cat remote.tsv)" = $'1319589471\tsha256:aa28c4c8b082346316fd449d1f483d0cdf8d4820529a84215ace50e8db647d7e\tuploaded'

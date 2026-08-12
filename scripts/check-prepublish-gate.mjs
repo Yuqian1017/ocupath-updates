@@ -15,8 +15,8 @@ const expectedAssets = {
     digest: 'sha256:146a0d91eb608083b702a8cd7f970da938eff45f29e67c9d8212da02c96e0897',
   },
   'OcupathIF-Setup-0.991.1-x64.exe': {
-    size: 1354649495,
-    digest: 'sha256:23c3981ce1b7076040a748c513504595a852c6c7c0e5b0d54499706a7bb0ce2d',
+    size: 1354651099,
+    digest: 'sha256:d95666fdb8e225a9527f8cb31d8fe1698c0aa7c064dab5e345458242ba223809',
   },
   'OcuPathIF_v0.991.1_User_Guide_en.pdf': {
     size: 2259757,

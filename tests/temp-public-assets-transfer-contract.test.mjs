@@ -24,9 +24,17 @@ test('temporary transfer waits for exact COS bytes and can only update the unpub
   assert.match(workflow, /\.draft/);
   assert.match(workflow, /\.body == null/);
   assert.match(workflow, /cleanup_invalid_targets/);
-  assert.match(workflow, /--hostname uploads\.github\.com/);
+  assert.match(workflow, /https:\/\/uploads\.github\.com\/repos\/\$GITHUB_REPOSITORY\/releases\/\$RELEASE_ID\/assets\?name=/);
+  assert.match(workflow, /--data-binary "@\$path"/);
+  assert.match(workflow, /--fail-with-body --retry 1/);
+  assert.match(workflow, /POST reconciliation:/);
   assert.match(workflow, /releases\/\$RELEASE_ID\/assets\?name=/);
   assert.match(workflow, /remove_existing_asset/);
+  assert.match(workflow, /Preconditions:/);
+  assert.match(workflow, /Tag refs before transfer:/);
+  assert.match(workflow, /DELETE response:/);
+  assert.match(workflow, /POST response:/);
+  assert.doesNotMatch(workflow, /--hostname uploads\.github\.com/);
   assert.doesNotMatch(workflow, /gh release upload/);
   assert.doesNotMatch(workflow, /git\/ref\/tags|git tag|release edit|--draft=false|git push.*--force/);
   assert.doesNotMatch(workflow, /gh release (?:edit|create)/);

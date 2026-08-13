@@ -14,6 +14,10 @@ test('temporary transfer waits for exact COS bytes and can only update the unpub
   assert.match(workflow, /c18c0d29158f8c24ea8e7861dba52100581dde5e10af3600a8d5127452364009/);
   assert.match(workflow, /1354650736/);
   assert.match(workflow, /3db8fcd6deabbc55e2b37c6e086234bf448d536392703e5700e83ca4803091ac/);
+  assert.match(workflow, /1313793497/);
+  assert.match(workflow, /7acb800aea86d9675078b0497956c905a213544bb95f6229623de52b7d521162/);
+  assert.match(workflow, /1362071/);
+  assert.match(workflow, /e4f027c422a395dd3f88a4562bdd3124df617452fee163f554a6e6240b4e7d10/);
   assert.match(workflow, /remote_length/);
   assert.match(workflow, /sha256sum --check --strict/);
   assert.match(workflow, /\.draft/);

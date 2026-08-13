@@ -24,6 +24,12 @@ jobs:
       WIN_URL: https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com/OcupathIF-Setup-0.991.1-x64.exe
       WIN_BYTES: '1354650736'
       WIN_SHA256: 3db8fcd6deabbc55e2b37c6e086234bf448d536392703e5700e83ca4803091ac
+      UPDATER_URL: https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com/OcupathIF-0.991.1-arm64-mac.zip
+      UPDATER_BYTES: '1313793497'
+      UPDATER_SHA256: 7acb800aea86d9675078b0497956c905a213544bb95f6229623de52b7d521162
+      BLOCKMAP_URL: https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com/OcupathIF-0.991.1-arm64-mac.zip.blockmap
+      BLOCKMAP_BYTES: '1362071'
+      BLOCKMAP_SHA256: e4f027c422a395dd3f88a4562bdd3124df617452fee163f554a6e6240b4e7d10
     steps:
       - name: Wait for both exact COS customer objects
         shell: bash
@@ -39,12 +45,21 @@ jobs:
           for attempt in $(seq 1 240); do
             mac_remote_bytes="$(remote_length "$MAC_URL" || true)"
             win_remote_bytes="$(remote_length "$WIN_URL" || true)"
-            if [[ "$mac_remote_bytes" == "$MAC_BYTES" && "$win_remote_bytes" == "$WIN_BYTES" ]]; then
-              printf 'Both COS objects reached final lengths on attempt %s.\n' "$attempt"
+            updater_remote_bytes="$(remote_length "$UPDATER_URL" || true)"
+            blockmap_remote_bytes="$(remote_length "$BLOCKMAP_URL" || true)"
+            if [[ "$mac_remote_bytes" == "$MAC_BYTES" \
+              && "$win_remote_bytes" == "$WIN_BYTES" \
+              && "$updater_remote_bytes" == "$UPDATER_BYTES" \
+              && "$blockmap_remote_bytes" == "$BLOCKMAP_BYTES" ]]; then
+              printf 'All four COS objects reached final lengths on attempt %s.\n' "$attempt"
               exit 0
             fi
-            printf 'Waiting for final COS objects (attempt %s/240): Mac=%s Windows=%s\n' \
-              "$attempt" "${mac_remote_bytes:-unavailable}" "${win_remote_bytes:-unavailable}"
+            printf 'Waiting for final COS objects (attempt %s/240): Mac=%s Windows=%s Updater=%s Blockmap=%s\n' \
+              "$attempt" \
+              "${mac_remote_bytes:-unavailable}" \
+              "${win_remote_bytes:-unavailable}" \
+              "${updater_remote_bytes:-unavailable}" \
+              "${blockmap_remote_bytes:-unavailable}"
             sleep 30
           done
 
@@ -61,11 +76,21 @@ jobs:
           curl --fail --location --silent --show-error --retry 8 --retry-all-errors \
             --connect-timeout 30 --max-time 3600 \
             --output OcupathIF-Setup-0.991.1-x64.exe "$WIN_URL"
+          curl --fail --location --silent --show-error --retry 8 --retry-all-errors \
+            --connect-timeout 30 --max-time 3600 \
+            --output OcupathIF-0.991.1-arm64-mac.zip "$UPDATER_URL"
+          curl --fail --location --silent --show-error --retry 8 --retry-all-errors \
+            --connect-timeout 30 --max-time 3600 \
+            --output OcupathIF-0.991.1-arm64-mac.zip.blockmap "$BLOCKMAP_URL"
 
           test "$(stat -c '%s' OcupathIF-0.991.1-arm64-mac-standalone.zip)" = "$MAC_BYTES"
           test "$(stat -c '%s' OcupathIF-Setup-0.991.1-x64.exe)" = "$WIN_BYTES"
+          test "$(stat -c '%s' OcupathIF-0.991.1-arm64-mac.zip)" = "$UPDATER_BYTES"
+          test "$(stat -c '%s' OcupathIF-0.991.1-arm64-mac.zip.blockmap)" = "$BLOCKMAP_BYTES"
           printf '%s  %s\n' "$MAC_SHA256" OcupathIF-0.991.1-arm64-mac-standalone.zip | sha256sum --check --strict
           printf '%s  %s\n' "$WIN_SHA256" OcupathIF-Setup-0.991.1-x64.exe | sha256sum --check --strict
+          printf '%s  %s\n' "$UPDATER_SHA256" OcupathIF-0.991.1-arm64-mac.zip | sha256sum --check --strict
+          printf '%s  %s\n' "$BLOCKMAP_SHA256" OcupathIF-0.991.1-arm64-mac.zip.blockmap | sha256sum --check --strict
 
       - name: Replace only the exact assets in the unpublished draft
         env:

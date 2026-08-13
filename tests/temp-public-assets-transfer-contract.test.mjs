@@ -25,7 +25,8 @@ test('temporary transfer waits for exact COS bytes and can only update the unpub
   assert.match(workflow, /\.body == null/);
   assert.match(workflow, /\.permissions\.push/);
   assert.match(workflow, /cleanup_starters/);
-  assert.match(workflow, /tag_after.*tag_before/s);
+  assert.match(workflow, /old_tag_after.*old_tag_before/s);
+  assert.match(workflow, /new_tag_after.*new_tag_before/s);
   assert.match(workflow, /gh release upload/);
   assert.match(workflow, /--clobber/);
   assert.doesNotMatch(workflow, /gh release (?:edit|create)|--draft=false|--draft=false|git push.*--force|git tag/);

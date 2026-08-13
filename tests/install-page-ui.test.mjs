@@ -63,6 +63,8 @@ const githubOrigin = 'https://github.com/Yuqian1017/ocupath-updates/releases/dow
 const manualMacCosUrl = `${hongKongOrigin}/OcupathIF-0.991.1-arm64-mac-standalone.zip`;
 const manualMacGitHubUrl = `${githubOrigin}/OcupathIF-0.991.1-arm64-mac-standalone.zip`;
 const updaterMacCosUrl = `${hongKongOrigin}/OcupathIF-0.991.1-arm64-mac.zip`;
+const manualMacSha256 = 'c18c0d29158f8c24ea8e7861dba52100581dde5e10af3600a8d5127452364009';
+const windowsSha256 = '3db8fcd6deabbc55e2b37c6e086234bf448d536392703e5700e83ca4803091ac';
 assert.equal(
   (html.match(/class="alternate-download"/g) ?? []).length,
   0,
@@ -108,6 +110,8 @@ assert.doesNotMatch(
   />[^<]*(?:Hong Kong|GitHub|mirror)[^<]*</i,
   'customer-visible copy must not ask users to understand download providers',
 );
+assert.match(html, new RegExp(`<code>${manualMacSha256}<\\/code>`), 'Mac checksum must match the final c801 package');
+assert.match(html, new RegExp(`<code>${windowsSha256}<\\/code>`), 'Windows checksum must match the final c801 installer');
 
 const inlineScript = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].at(-1)?.[1] ?? '';
 

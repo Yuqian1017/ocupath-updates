@@ -24,8 +24,8 @@ assert.doesNotMatch(macFeed, /github\.com|0\.97\.[12]/);
 
 assert.match(bootstrapTargetFeed, /^version: 0\.991\.1$/m);
 assert.match(bootstrapTargetFeed, new RegExp(`url: ${finalMacCosUrl.replaceAll('.', '\\.').replaceAll('/', '\/')}`));
-assert.match(bootstrapTargetFeed, /sha512: 6Elg8SONs0xGRJXoeLWPj3xYjmfYlfM0L7gLHGMOjuV6w0hTrQLd6AJyj83aiVhzhRz4Mwft\+MKoSXGL8\/HgKQ==/);
-assert.match(bootstrapTargetFeed, /size: 1313800582/);
+assert.match(bootstrapTargetFeed, /sha512: 5U67IW0fWPXo81VnYftMNQ9ogWbTAqXhFzOMc5gydL7Shppb8iQ5Yf\/kbKOuRmc6\/K5IaenqYpKk79Nb5y2ekw==/);
+assert.match(bootstrapTargetFeed, /size: 1313793497/);
 assert.doesNotMatch(bootstrapTargetFeed, /github\.com|0\.97\.[12]/);
 
 assert.equal(legacyManifest.version, '0.991.1');
@@ -38,9 +38,9 @@ assert.equal(legacyManifest.packages['darwin-arm64'].kind, 'manual_page');
 assert.equal(legacyManifest.packages['darwin-arm64'].url, installPageUrl);
 assert.equal(
   legacyManifest.packages['darwin-arm64'].sha256,
-  '146a0d91eb608083b702a8cd7f970da938eff45f29e67c9d8212da02c96e0897',
+  'c18c0d29158f8c24ea8e7861dba52100581dde5e10af3600a8d5127452364009',
 );
-assert.equal(legacyManifest.packages['darwin-arm64'].sizeBytes, 1318754674);
+assert.equal(legacyManifest.packages['darwin-arm64'].sizeBytes, 1318746948);
 assert.notEqual(
   manualMacCosUrl,
   finalMacCosUrl,
@@ -50,9 +50,9 @@ assert.equal(legacyManifest.packages['win32-x64'].kind, 'manual_page');
 assert.equal(legacyManifest.packages['win32-x64'].url, installPageUrl);
 assert.equal(
   legacyManifest.packages['win32-x64'].sha256,
-  'd95666fdb8e225a9527f8cb31d8fe1698c0aa7c064dab5e345458242ba223809',
+  '3db8fcd6deabbc55e2b37c6e086234bf448d536392703e5700e83ca4803091ac',
 );
-assert.equal(legacyManifest.packages['win32-x64'].sizeBytes, 1354651099);
+assert.equal(legacyManifest.packages['win32-x64'].sizeBytes, 1354650736);
 
 assert.equal(
   existsSync(new URL('../ocupathif/direct/win32-x64/latest.yml', import.meta.url)),

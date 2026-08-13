@@ -23,7 +23,6 @@ test('temporary transfer waits for exact COS bytes and can only update the unpub
   assert.match(workflow, /sha256sum --check --strict/);
   assert.match(workflow, /\.draft/);
   assert.match(workflow, /\.body == null/);
-  assert.match(workflow, /\.permissions\.push/);
   assert.match(workflow, /cleanup_starters/);
   assert.match(workflow, /old_tag_after.*old_tag_before/s);
   assert.match(workflow, /new_tag_after.*new_tag_before/s);

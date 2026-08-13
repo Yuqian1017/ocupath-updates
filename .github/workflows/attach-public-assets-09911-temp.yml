@@ -110,20 +110,43 @@ jobs:
           test "$old_tag_before" = cc725456baec9d31d8c8a80e65a6e1eea41a3871
           test -z "$new_tag_before"
 
-          cleanup_starters() {
+          cleanup_invalid_targets() {
             gh api "repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID/assets" --paginate \
-              --jq '.[] | select(.state == "starter") | select(.name == "OcupathIF-0.991.1-arm64-mac-standalone.zip" or .name == "OcupathIF-Setup-0.991.1-x64.exe") | .id' \
+              --jq ".[] | select(
+                (.name == \"OcupathIF-0.991.1-arm64-mac-standalone.zip\" and
+                  (.state != \"uploaded\" or .size != 1318746948 or .digest != \"sha256:c18c0d29158f8c24ea8e7861dba52100581dde5e10af3600a8d5127452364009\")) or
+                (.name == \"OcupathIF-Setup-0.991.1-x64.exe\" and
+                  (.state != \"uploaded\" or .size != 1354650736 or .digest != \"sha256:3db8fcd6deabbc55e2b37c6e086234bf448d536392703e5700e83ca4803091ac\"))
+              ) | .id" \
               | while read -r asset_id; do
                   [[ -z "$asset_id" ]] || gh api --method DELETE "repos/$GITHUB_REPOSITORY/releases/assets/$asset_id"
                 done
           }
-          trap 'status=$?; trap - EXIT; if [[ $status -ne 0 ]]; then cleanup_starters; fi; exit $status' EXIT
+          trap 'status=$?; trap - EXIT; if [[ $status -ne 0 ]]; then cleanup_invalid_targets; fi; exit $status' EXIT
 
-          gh release upload "$RELEASE_TAG" \
-            OcupathIF-0.991.1-arm64-mac-standalone.zip \
-            OcupathIF-Setup-0.991.1-x64.exe \
-            --repo "$GITHUB_REPOSITORY" \
-            --clobber
+          remove_existing_asset() {
+            local name="$1"
+            jq -r --arg name "$name" '.assets[] | select(.name == $name) | .id' <<<"$before" \
+              | while read -r asset_id; do
+                  [[ -z "$asset_id" ]] || gh api --method DELETE "repos/$GITHUB_REPOSITORY/releases/assets/$asset_id"
+                done
+          }
+          upload_asset() {
+            local path="$1"
+            local content_type="$2"
+            gh api \
+              --hostname uploads.github.com \
+              --method POST \
+              -H "Content-Type: $content_type" \
+              --input "$path" \
+              "repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID/assets?name=$(basename "$path")" \
+              >/dev/null
+          }
+
+          remove_existing_asset OcupathIF-Setup-0.991.1-x64.exe
+          remove_existing_asset OcupathIF-0.991.1-arm64-mac-standalone.zip
+          upload_asset OcupathIF-Setup-0.991.1-x64.exe application/octet-stream
+          upload_asset OcupathIF-0.991.1-arm64-mac-standalone.zip application/zip
 
           after="$(gh api "repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID")"
           old_tag_after="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/v0.991.1" --jq '.object.sha')"

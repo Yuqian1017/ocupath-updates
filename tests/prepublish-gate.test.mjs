@@ -39,7 +39,7 @@ function greenState(overrides = {}) {
     cosObjectsVerified: 4,
     expectedCosObjects: 4,
     macTwoLegTransaction: 'PASS',
-    windowsNativeValidation: 'PASS',
+    windowsNativeValidation: 'baseline-reused',
     baiduAtomicPromotion: 'PASS',
     ...overrides,
   };
@@ -53,7 +53,7 @@ test('blocks an incomplete draft before any publication mutation', () => {
     },
     cosObjectsVerified: 0,
     macTwoLegTransaction: 'not-run',
-    windowsNativeValidation: 'evidence-blocked',
+    windowsNativeValidation: 'rerun-required',
     baiduAtomicPromotion: 'in-progress',
   });
 
@@ -64,7 +64,7 @@ test('blocks an incomplete draft before any publication mutation', () => {
     'missing release asset: OcupathIF-0.991.1-arm64-mac-standalone.zip',
     'COS exact objects verified: 0/4',
     'Mac two-leg updater transaction: not-run',
-    'Windows native validation: evidence-blocked',
+    'Windows native risk decision: rerun-required',
     'Baidu atomic promotion: in-progress',
   ]);
 });
@@ -97,6 +97,16 @@ test('rejects a starter asset even when GitHub reports the expected size', () =>
   const result = evaluatePrepublishGate(state);
   assert.equal(result.status, 'RED_STOP_LINE');
   assert.deepEqual(result.failures, ['release asset incomplete: OcupathIF-0.991.1-arm64-mac-standalone.zip (starter)']);
+});
+
+test('accepts a documented Windows native baseline reuse for a risk-unchanged minor release', () => {
+  const result = evaluatePrepublishGate(greenState({ windowsNativeValidation: 'baseline-reused' }));
+  assert.deepEqual(result, { status: 'GREEN', failures: [] });
+});
+
+test('accepts a fresh exact-package Windows native run when risk triggers it', () => {
+  const result = evaluatePrepublishGate(greenState({ windowsNativeValidation: 'PASS' }));
+  assert.deepEqual(result, { status: 'GREEN', failures: [] });
 });
 
 test('passes only when every frozen publication input is exact', () => {

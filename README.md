@@ -21,3 +21,5 @@ https://updates.ocupath.ai/ocupathif/bootstrap-target/darwin-arm64/latest-mac.ym
 ```
 
 All macOS direct-update bytes are served from the approved Hong Kong COS bucket. Windows does not expose a direct-update feed and uses the Manual Download page instead. Large customer packages are not stored in this repository.
+
+For minor releases with no material Windows-sensitive changes or Windows-specific failure reports, the exact fixed-SHA Windows package still requires provenance, hash, structure, source-boundary, and contract evidence, while native execution may reuse the latest documented real-Windows baseline. Record that decision as `baseline-reused`; use `PASS` only when the exact package has completed a new native run.

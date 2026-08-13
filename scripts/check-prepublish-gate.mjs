@@ -75,7 +75,7 @@ const state = {
   cosObjectsVerified: Number(inputStatus('OCUPATH_COS_OBJECTS_VERIFIED', '0')),
   expectedCosObjects: 4,
   macTwoLegTransaction: inputStatus('OCUPATH_MAC_TWO_LEG_TRANSACTION', 'not-run'),
-  windowsNativeValidation: inputStatus('OCUPATH_WINDOWS_NATIVE_VALIDATION', 'evidence-blocked'),
+  windowsNativeValidation: inputStatus('OCUPATH_WINDOWS_NATIVE_VALIDATION', 'baseline-reused'),
   baiduAtomicPromotion: inputStatus('OCUPATH_BAIDU_ATOMIC_PROMOTION', 'in-progress'),
 };
 

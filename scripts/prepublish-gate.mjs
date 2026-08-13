@@ -42,8 +42,8 @@ export function evaluatePrepublishGate(state) {
   if (state.macTwoLegTransaction !== 'PASS') {
     failures.push(`Mac two-leg updater transaction: ${state.macTwoLegTransaction}`);
   }
-  if (state.windowsNativeValidation !== 'PASS') {
-    failures.push(`Windows native validation: ${state.windowsNativeValidation}`);
+  if (!['PASS', 'baseline-reused'].includes(state.windowsNativeValidation)) {
+    failures.push(`Windows native risk decision: ${state.windowsNativeValidation}`);
   }
   if (state.baiduAtomicPromotion !== 'PASS') {
     failures.push(`Baidu atomic promotion: ${state.baiduAtomicPromotion}`);

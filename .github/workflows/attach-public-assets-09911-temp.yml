@@ -184,12 +184,16 @@ jobs:
                 -H "Authorization: Bearer $GH_TOKEN" \
                 -H "X-GitHub-Api-Version: 2022-11-28" \
                 -H "Content-Type: $content_type" \
-                --data-binary "@$path" \
+                --upload-file "$path" \
                 "https://uploads.github.com/repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID/assets?name=$name")"
               curl_exit=$?
               set -e
               printf 'POST response: attempt=%s name=%s curl_exit=%s http=%s\n' "$attempt" "$name" "$curl_exit" "$http_status"
-              jq '{id,name,size,digest,state,message}' "$response_file" || sed -n '1,40p' "$response_file"
+              if [[ -f "$response_file" ]]; then
+                jq '{id,name,size,digest,state,message}' "$response_file" || sed -n '1,40p' "$response_file"
+              else
+                printf 'POST response body: unavailable\n'
+              fi
 
               current_assets="$(gh api "repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID/assets" --paginate)"
               exact_count="$(jq --arg name "$name" --argjson size "$expected_bytes" --arg digest "$expected_digest" \

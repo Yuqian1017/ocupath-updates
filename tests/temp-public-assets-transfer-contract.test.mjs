@@ -25,7 +25,8 @@ test('temporary transfer waits for exact COS bytes and can only update the unpub
   assert.match(workflow, /\.body == null/);
   assert.match(workflow, /cleanup_invalid_targets/);
   assert.match(workflow, /https:\/\/uploads\.github\.com\/repos\/\$GITHUB_REPOSITORY\/releases\/\$RELEASE_ID\/assets\?name=/);
-  assert.match(workflow, /--data-binary "@\$path"/);
+  assert.match(workflow, /--upload-file "\$path"/);
+  assert.doesNotMatch(workflow, /--data-binary/);
   assert.match(workflow, /--fail-with-body --retry 1/);
   assert.match(workflow, /POST reconciliation:/);
   assert.match(workflow, /releases\/\$RELEASE_ID\/assets\?name=/);

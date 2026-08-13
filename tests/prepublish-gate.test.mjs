@@ -36,8 +36,8 @@ function greenState(overrides = {}) {
     expectedTagName: 'v0.991.1-c801',
     expectedTargetCommitish: 'release/0991-two-leg-feed-20260810',
     expectedAssets: exactAssets,
-    cosObjectsVerified: 6,
-    expectedCosObjects: 6,
+    cosObjectsVerified: 4,
+    expectedCosObjects: 4,
     macTwoLegTransaction: 'PASS',
     windowsNativeValidation: 'PASS',
     baiduAtomicPromotion: 'PASS',
@@ -62,7 +62,7 @@ test('blocks an incomplete draft before any publication mutation', () => {
   assert.equal(result.status, 'RED_STOP_LINE');
   assert.deepEqual(result.failures, [
     'missing release asset: OcupathIF-0.991.1-arm64-mac-standalone.zip',
-    'COS exact objects verified: 0/6',
+    'COS exact objects verified: 0/4',
     'Mac two-leg updater transaction: not-run',
     'Windows native validation: evidence-blocked',
     'Baidu atomic promotion: in-progress',

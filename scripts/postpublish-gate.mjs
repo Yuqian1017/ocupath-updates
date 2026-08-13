@@ -1,3 +1,18 @@
+export function parseUpdaterMetadata(body) {
+  function scalar(key) {
+    const match = body.match(new RegExp(`^\\s*${key}:\\s*(.+)$`, 'm'));
+    if (!match) return undefined;
+    return match[1].trim().replace(/^['"]|['"]$/g, '');
+  }
+
+  return {
+    version: scalar('version'),
+    path: scalar('path'),
+    sha512: scalar('sha512'),
+    size: Number(scalar('size')),
+  };
+}
+
 export function evaluatePostpublishGate(state) {
   const failures = [];
 
@@ -8,6 +23,19 @@ export function evaluatePostpublishGate(state) {
   if (state.releaseTagName !== state.expectedTagName) {
     failures.push(`published release tag mismatch: ${state.releaseTagName ?? 'missing'}`);
   }
+
+  const runtimeFeed = state.productionRuntimeFeed ?? {};
+  const runtimeFeedExact = runtimeFeed.url === runtimeFeed.expectedUrl
+    && runtimeFeed.httpStatus === 200
+    && runtimeFeed.sha256 === runtimeFeed.expectedSha256
+    && runtimeFeed.version === state.expectedVersion
+    && runtimeFeed.path === runtimeFeed.expectedPath
+    && runtimeFeed.sha512 === runtimeFeed.expectedSha512
+    && runtimeFeed.size === runtimeFeed.expectedSize;
+  if (!runtimeFeedExact) {
+    failures.push('production runtime feed is not the exact packaged-app route');
+  }
+
   if (state.productionOldVersion !== state.expectedOldVersion) {
     failures.push(`production updater source mismatch: ${state.productionOldVersion ?? 'missing'}`);
   }

@@ -12,6 +12,7 @@ const legacyManifest = JSON.parse(readFileSync(
 
 const installPageUrl = 'https://updates.ocupath.ai/ocupathif/install.html';
 const cosBaseUrl = 'https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com';
+const productionRuntimeFeedUrl = `${cosBaseUrl}/darwin-arm64/latest-mac.yml`;
 const bridgeCosUrl = `${cosBaseUrl}/OcupathIF-0.991.0-bootstrap-arm64-mac.zip`;
 const finalMacCosUrl = `${cosBaseUrl}/OcupathIF-0.991.1-arm64-mac.zip`;
 const manualMacCosUrl = `${cosBaseUrl}/OcupathIF-0.991.1-arm64-mac-standalone.zip`;
@@ -27,6 +28,13 @@ assert.match(bootstrapTargetFeed, new RegExp(`url: ${finalMacCosUrl.replaceAll('
 assert.match(bootstrapTargetFeed, /sha512: 5U67IW0fWPXo81VnYftMNQ9ogWbTAqXhFzOMc5gydL7Shppb8iQ5Yf\/kbKOuRmc6\/K5IaenqYpKk79Nb5y2ekw==/);
 assert.match(bootstrapTargetFeed, /size: 1313793497/);
 assert.doesNotMatch(bootstrapTargetFeed, /github\.com|0\.97\.[12]/);
+
+const readme = readFileSync(new URL('../README.md', import.meta.url), 'utf8');
+assert.match(
+  readme,
+  new RegExp(productionRuntimeFeedUrl.replaceAll('.', '\\.').replaceAll('/', '\/')),
+  'release operations must record the COS runtime metadata route derived by the packaged updater',
+);
 
 assert.equal(legacyManifest.version, '0.991.1');
 assert.equal(

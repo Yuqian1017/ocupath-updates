@@ -20,6 +20,16 @@ Accepted older clients first receive the notarized 0.991.0 bootstrap bridge belo
 https://updates.ocupath.ai/ocupathif/bootstrap-target/darwin-arm64/latest-mac.yml
 ```
 
+For the production transaction against the Hong Kong COS base, the packaged
+0.99.1 updater appends its platform directory and reads:
+
+```text
+https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com/darwin-arm64/latest-mac.yml
+```
+
+The bucket-root `latest-mac.yml` is an operator-side exact copy. Runtime proof
+comes from the platform path above and the complete update transaction.
+
 All macOS direct-update bytes are served from the approved Hong Kong COS bucket. Windows does not expose a direct-update feed and uses the Manual Download page instead. Large customer packages are not stored in this repository.
 
 For minor releases with no material Windows-sensitive changes or Windows-specific failure reports, the exact fixed-SHA Windows package still requires provenance, hash, structure, source-boundary, and contract evidence, while native execution may reuse the latest documented real-Windows baseline. Record that decision as `baseline-reused`; use `PASS` only when the exact package has completed a new native run.

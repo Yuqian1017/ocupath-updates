@@ -1,0 +1,117 @@
+name: Temporary exact OcuPathIF 0.991.1 public draft transfer
+
+on:
+  push:
+    branches:
+      - release/0991-two-leg-feed-20260810
+    paths:
+      - .github/workflows/attach-public-assets-09911-temp.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  attach:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      RELEASE_ID: '369530281'
+      RELEASE_TAG: v0.991.1
+      MAC_URL: https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com/OcupathIF-0.991.1-arm64-mac-standalone.zip
+      MAC_BYTES: '1318746948'
+      MAC_SHA256: c18c0d29158f8c24ea8e7861dba52100581dde5e10af3600a8d5127452364009
+      WIN_URL: https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com/OcupathIF-Setup-0.991.1-x64.exe
+      WIN_BYTES: '1354650736'
+      WIN_SHA256: 3db8fcd6deabbc55e2b37c6e086234bf448d536392703e5700e83ca4803091ac
+    steps:
+      - name: Wait for both exact COS customer objects
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote_length() {
+            curl --fail --silent --show-error --location --head --max-time 30 "$1" \
+              | tr -d '\r' \
+              | awk 'tolower($1) == "content-length:" { print $2 }' \
+              | tail -n 1
+          }
+
+          for attempt in $(seq 1 240); do
+            mac_remote_bytes="$(remote_length "$MAC_URL" || true)"
+            win_remote_bytes="$(remote_length "$WIN_URL" || true)"
+            if [[ "$mac_remote_bytes" == "$MAC_BYTES" && "$win_remote_bytes" == "$WIN_BYTES" ]]; then
+              printf 'Both COS objects reached final lengths on attempt %s.\n' "$attempt"
+              exit 0
+            fi
+            printf 'Waiting for final COS objects (attempt %s/240): Mac=%s Windows=%s\n' \
+              "$attempt" "${mac_remote_bytes:-unavailable}" "${win_remote_bytes:-unavailable}"
+            sleep 30
+          done
+
+          printf 'Timed out waiting for exact COS object lengths.\n' >&2
+          exit 2
+
+      - name: Download and verify exact c801 customer assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --silent --show-error --retry 8 --retry-all-errors \
+            --connect-timeout 30 --max-time 3600 \
+            --output OcupathIF-0.991.1-arm64-mac-standalone.zip "$MAC_URL"
+          curl --fail --location --silent --show-error --retry 8 --retry-all-errors \
+            --connect-timeout 30 --max-time 3600 \
+            --output OcupathIF-Setup-0.991.1-x64.exe "$WIN_URL"
+
+          test "$(stat -c '%s' OcupathIF-0.991.1-arm64-mac-standalone.zip)" = "$MAC_BYTES"
+          test "$(stat -c '%s' OcupathIF-Setup-0.991.1-x64.exe)" = "$WIN_BYTES"
+          printf '%s  %s\n' "$MAC_SHA256" OcupathIF-0.991.1-arm64-mac-standalone.zip | sha256sum --check --strict
+          printf '%s  %s\n' "$WIN_SHA256" OcupathIF-Setup-0.991.1-x64.exe | sha256sum --check --strict
+
+      - name: Replace only the exact assets in the unpublished draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          before="$(gh api "repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID")"
+          test "$(jq -r '.draft' <<<"$before")" = true
+          test "$(jq -r '.tag_name' <<<"$before")" = "$RELEASE_TAG"
+          test "$(jq -r '.target_commitish' <<<"$before")" = release/0991-two-leg-feed-20260810
+          test "$(jq -r '.body == null' <<<"$before")" = true
+          test -z "$(jq -r '.assets[] | select(.state != "uploaded") | .name' <<<"$before")"
+
+          can_push="$(gh api "repos/$GITHUB_REPOSITORY" --jq '.permissions.push')"
+          if [[ "$can_push" != true ]]; then
+            printf 'GITHUB_TOKEN does not have contents:write permission; draft assets were not changed.\n' >&2
+            exit 3
+          fi
+
+          tag_before="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$RELEASE_TAG" --jq '.object.sha')"
+          test -n "$tag_before"
+
+          cleanup_starters() {
+            gh api "repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID/assets" --paginate \
+              --jq '.[] | select(.state == "starter") | select(.name == "OcupathIF-0.991.1-arm64-mac-standalone.zip" or .name == "OcupathIF-Setup-0.991.1-x64.exe") | .id' \
+              | while read -r asset_id; do
+                  [[ -z "$asset_id" ]] || gh api --method DELETE "repos/$GITHUB_REPOSITORY/releases/assets/$asset_id"
+                done
+          }
+          trap 'status=$?; trap - EXIT; if [[ $status -ne 0 ]]; then cleanup_starters; fi; exit $status' EXIT
+
+          gh release upload "$RELEASE_TAG" \
+            OcupathIF-0.991.1-arm64-mac-standalone.zip \
+            OcupathIF-Setup-0.991.1-x64.exe \
+            --repo "$GITHUB_REPOSITORY" \
+            --clobber
+
+          after="$(gh api "repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID")"
+          tag_after="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$RELEASE_TAG" --jq '.object.sha')"
+          test "$tag_after" = "$tag_before"
+          test "$(jq -r '.draft' <<<"$after")" = true
+          test "$(jq -r '.body == null' <<<"$after")" = true
+          test "$(jq -r '.assets[] | select(.name == "OcupathIF-0.991.1-arm64-mac-standalone.zip") | [.size,.digest,.state] | @tsv' <<<"$after")" = $'1318746948\tsha256:c18c0d29158f8c24ea8e7861dba52100581dde5e10af3600a8d5127452364009\tuploaded'
+          test "$(jq -r '.assets[] | select(.name == "OcupathIF-Setup-0.991.1-x64.exe") | [.size,.digest,.state] | @tsv' <<<"$after")" = $'1354650736\tsha256:3db8fcd6deabbc55e2b37c6e086234bf448d536392703e5700e83ca4803091ac\tuploaded'
+          test "$(jq -r '.assets[] | select(.name == "OcuPathIF_v0.991.1_User_Guide_en.pdf") | [.size,.digest,.state] | @tsv' <<<"$after")" = $'2259757\tsha256:7382634b07486eb0c7439c1e6ed8fd20182a856faeb45f948fb364fffdac23dc\tuploaded'
+          test "$(jq -r '.assets[] | select(.name == "OcuPathIF_v0.991.1_User_Guide_zh.pdf") | [.size,.digest,.state] | @tsv' <<<"$after")" = $'2546526\tsha256:97550c86147300606f5744a648b8c85b15fa4f0937628a14cfc2ae716489581c\tuploaded'
+
+          jq '{draft,tag_name,target_commitish,body,assets:[.assets[]|{name,size,digest,state}]}' <<<"$after"

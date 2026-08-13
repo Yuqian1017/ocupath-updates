@@ -26,14 +26,14 @@ function greenState(overrides = {}) {
   return {
     release: {
       draft: true,
-      tagName: 'v0.991.1',
+      tagName: 'v0.991.1-c801',
       targetCommitish: 'release/0991-two-leg-feed-20260810',
     assets: Object.entries(exactAssets).map(([name, value]) => ({ name, ...value, state: 'uploaded' })),
     },
     remoteTagPresent: false,
     liveVersion: '0.99.1',
     expectedRollbackVersion: '0.99.1',
-    expectedTagName: 'v0.991.1',
+    expectedTagName: 'v0.991.1-c801',
     expectedTargetCommitish: 'release/0991-two-leg-feed-20260810',
     expectedAssets: exactAssets,
     cosObjectsVerified: 6,
@@ -72,7 +72,7 @@ test('blocks an incomplete draft before any publication mutation', () => {
 test('rejects a tag created before the gate opens', () => {
   const result = evaluatePrepublishGate(greenState({ remoteTagPresent: true }));
   assert.equal(result.status, 'RED_STOP_LINE');
-  assert.deepEqual(result.failures, ['remote tag already exists before publication: v0.991.1']);
+  assert.deepEqual(result.failures, ['remote tag already exists before publication: v0.991.1-c801']);
 });
 
 test('rejects a same-name asset with different bytes', () => {

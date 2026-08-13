@@ -9,7 +9,7 @@ const repository = 'Yuqian1017/ocupath-updates';
 const releaseId = '369530281';
 const expectedVersion = '0.991.1';
 const expectedOldVersion = '0.99.1';
-const expectedTagName = 'v0.991.1';
+const expectedTagName = 'v0.991.1-c801';
 
 function run(command, args) {
   return execFileSync(command, args, { encoding: 'utf8' }).trim();

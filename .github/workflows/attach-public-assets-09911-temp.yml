@@ -17,7 +17,7 @@ jobs:
     timeout-minutes: 180
     env:
       RELEASE_ID: '369530281'
-      RELEASE_TAG: v0.991.1
+      RELEASE_TAG: v0.991.1-c801
       MAC_URL: https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com/OcupathIF-0.991.1-arm64-mac-standalone.zip
       MAC_BYTES: '1318746948'
       MAC_SHA256: c18c0d29158f8c24ea8e7861dba52100581dde5e10af3600a8d5127452364009

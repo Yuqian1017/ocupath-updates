@@ -10,6 +10,7 @@ const workflow = readFileSync(
 test('temporary transfer waits for exact COS bytes and can only update the unpublished draft', () => {
   assert.match(workflow, /push:\s*\n\s*branches:\s*\n\s*- release\/0991-two-leg-feed-20260810/);
   assert.match(workflow, /contents:\s*write/);
+  assert.match(workflow, /RELEASE_TAG: v0\.991\.1-c801/);
   assert.match(workflow, /1318746948/);
   assert.match(workflow, /c18c0d29158f8c24ea8e7861dba52100581dde5e10af3600a8d5127452364009/);
   assert.match(workflow, /1354650736/);

@@ -6,7 +6,7 @@ import { evaluatePrepublishGate } from './prepublish-gate.mjs';
 
 const repository = 'Yuqian1017/ocupath-updates';
 const releaseId = '369530281';
-const expectedTagName = 'v0.991.1';
+const expectedTagName = 'v0.991.1-c801';
 const expectedTargetCommitish = 'release/0991-two-leg-feed-20260810';
 
 const expectedAssets = {

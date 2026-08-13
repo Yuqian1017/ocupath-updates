@@ -59,7 +59,7 @@ assert.equal(
 );
 
 const hongKongOrigin = 'https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com';
-const githubOrigin = 'https://github.com/Yuqian1017/ocupath-updates/releases/download/v0.991.1';
+const githubOrigin = 'https://github.com/Yuqian1017/ocupath-updates/releases/download/v0.991.1-c801';
 const manualMacCosUrl = `${hongKongOrigin}/OcupathIF-0.991.1-arm64-mac-standalone.zip`;
 const manualMacGitHubUrl = `${githubOrigin}/OcupathIF-0.991.1-arm64-mac-standalone.zip`;
 const updaterMacCosUrl = `${hongKongOrigin}/OcupathIF-0.991.1-arm64-mac.zip`;

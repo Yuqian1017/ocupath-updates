@@ -29,6 +29,11 @@ assert.match(bootstrapTargetFeed, /size: 1313800582/);
 assert.doesNotMatch(bootstrapTargetFeed, /github\.com|0\.97\.[12]/);
 
 assert.equal(legacyManifest.version, '0.991.1');
+assert.equal(
+  Object.hasOwn(legacyManifest, 'releaseNotes'),
+  false,
+  'release notes are internal evidence and must not be published in the customer update manifest',
+);
 assert.equal(legacyManifest.packages['darwin-arm64'].kind, 'manual_page');
 assert.equal(legacyManifest.packages['darwin-arm64'].url, installPageUrl);
 assert.equal(

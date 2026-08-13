@@ -4,7 +4,6 @@
   "channel": "stable",
   "version": "0.991.1",
   "releaseDate": "2026-08-12T06:29:46.075Z",
-  "releaseNotes": "OcuPathIF v0.991.1 includes the current customer-feedback repairs and source-protected standalone packages. macOS clients use the supported in-app update path; Windows and legacy clients continue through the Manual Download page.",
   "packages": {
     "darwin-arm64": {
       "kind": "manual_page",

@@ -210,11 +210,11 @@ console.log('install page UI contract: PASS');
 
 assert.match(
   html,
-  /OcuPathIF_User_Guide_en\.pdf/,
-  'customer page must link the version-neutral English user guide',
+  /OcuPathIF_v0\.992\.1_User_Guide_en\.pdf/,
+  'customer page must link the versioned English user guide that matches the release',
 );
 assert.match(
   html,
-  /OcuPathIF_User_Guide_zh\.pdf/,
-  'customer page must link the version-neutral Chinese user guide',
+  /OcuPathIF_v0\.992\.1_User_Guide_zh\.pdf/,
+  'customer page must link the versioned Chinese user guide that matches the release',
 );

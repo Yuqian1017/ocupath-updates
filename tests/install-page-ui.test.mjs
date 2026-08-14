@@ -59,8 +59,11 @@ assert.equal(
 );
 
 const githubOrigin = 'https://github.com/Yuqian1017/ocupath-updates/releases/download/v0.992.1';
+const chinaDownloadOrigin = 'https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com';
 const manualMacGitHubUrl = `${githubOrigin}/OcupathIF-0.992.1-arm64-mac-standalone.zip`;
 const windowsGitHubUrl = `${githubOrigin}/OcupathIF-Setup-0.992.1-x64.exe`;
+const manualMacChinaUrl = `${chinaDownloadOrigin}/OcupathIF-0.992.1-arm64-mac-standalone.zip`;
+const windowsChinaUrl = `${chinaDownloadOrigin}/OcupathIF-Setup-0.992.1-x64.exe`;
 const manualMacSha256 = '30361e88cb424b0fdb3a263a8743034c76662c0ab9ed939195ef9c846adc1f9d';
 const windowsSha256 = '385a35a12225d44dc5361c20f21ea43b109b908a08e5b4cdfded4d32e9391193';
 assert.equal(
@@ -75,8 +78,8 @@ assert.equal(
 );
 assert.match(
   html,
-  new RegExp(`data-cn-url="${manualMacGitHubUrl.replaceAll('.', '\\.')}"`),
-  'Mac routing data must use the exact released Mac customer asset',
+  new RegExp(`data-cn-url="${manualMacChinaUrl.replaceAll('.', '\\.')}"`),
+  'Mac China routing data must use the exact COS customer asset',
 );
 assert.match(
   html,
@@ -85,8 +88,8 @@ assert.match(
 );
 assert.match(
   html,
-  new RegExp(`data-cn-url="${windowsGitHubUrl.replaceAll('.', '\\.')}"`),
-  'Windows routing data must use the exact released Windows installer',
+  new RegExp(`data-cn-url="${windowsChinaUrl.replaceAll('.', '\\.')}"`),
+  'Windows China routing data must use the exact COS installer',
 );
 assert.match(
   html,
@@ -117,14 +120,14 @@ function createRoutingHarness(fetchImpl = () => new Promise(() => {})) {
   const buttons = [
     {
       dataset: {
-        cnUrl: manualMacGitHubUrl,
+        cnUrl: manualMacChinaUrl,
         globalUrl: manualMacGitHubUrl,
       },
       href: manualMacGitHubUrl,
     },
     {
       dataset: {
-        cnUrl: windowsGitHubUrl,
+        cnUrl: windowsChinaUrl,
         globalUrl: windowsGitHubUrl,
       },
       href: windowsGitHubUrl,
@@ -165,7 +168,7 @@ deterministic.window.__ocupathDownloadRouting.applyCountry('CN');
 assert.deepEqual(
   deterministic.buttons.map((button) => button.href),
   deterministic.buttons.map((button) => button.dataset.cnUrl),
-  'mainland-China traffic must use the same official release asset for both platforms',
+  'mainland-China traffic must use the COS release asset for both platforms',
 );
 assert.equal(deterministic.document.documentElement.dataset.downloadRegion, 'cn');
 
@@ -181,7 +184,7 @@ deterministic.window.__ocupathDownloadRouting.applyCountry(undefined);
 assert.deepEqual(
   deterministic.buttons.map((button) => button.href),
   deterministic.buttons.map((button) => button.dataset.cnUrl),
-  'lookup failure must keep the exact official release asset',
+  'lookup failure must keep the COS release asset',
 );
 assert.equal(deterministic.document.documentElement.dataset.downloadRegion, 'cn');
 

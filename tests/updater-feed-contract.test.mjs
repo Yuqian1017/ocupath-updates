@@ -13,14 +13,14 @@ const manualManifest = JSON.parse(readFileSync(
 const installPageUrl = 'https://updates.ocupath.ai/ocupathif/install.html';
 const cosBaseUrl = 'https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com';
 const productionRuntimeFeedUrl = `${cosBaseUrl}/darwin-arm64/latest-mac.yml`;
-const bridgeCosUrl = `${cosBaseUrl}/OcupathIF-0.991.0-bootstrap-arm64-mac.zip`;
+const productionMacCosUrl = `${cosBaseUrl}/OcupathIF-0.992.1-arm64-mac.zip`;
 const finalMacCosUrl = `${cosBaseUrl}/OcupathIF-0.991.1-arm64-mac.zip`;
-const manualMacCosUrl = `${cosBaseUrl}/OcupathIF-0.991.1-arm64-mac-standalone.zip`;
+const manualMacCosUrl = `${cosBaseUrl}/OcupathIF-0.992.1-arm64-mac-standalone.zip`;
 
-assert.match(macFeed, /^version: 0\.991\.0$/m);
-assert.match(macFeed, new RegExp(`url: ${bridgeCosUrl.replaceAll('.', '\\.').replaceAll('/', '\/')}`));
-assert.match(macFeed, /sha512: OeHHud6lb9ylVEskqee3lWlVNOkXsixough6CQ4XWOjJYQXiW6h35C\/f\+mnIYqUZCA8C9sLd\+GXLo7EDmkZH8A==/);
-assert.match(macFeed, /size: 480207063/);
+assert.match(macFeed, /^version: 0\.992\.1$/m);
+assert.match(macFeed, new RegExp(`url: ${productionMacCosUrl.replaceAll('.', '\\.').replaceAll('/', '\/')}`));
+assert.match(macFeed, /sha512: CXdBQTzGGTWcdbzJCfntISa4u5xSqnFN0o5Ys47CuWfDyE46ftirjgKZrCLeKmFHbmnbD11kNpGYJWl\/6exSww==/);
+assert.match(macFeed, /size: 1313798897/);
 assert.doesNotMatch(macFeed, /github\.com|0\.97\.[12]/);
 
 assert.match(bootstrapTargetFeed, /^version: 0\.991\.1$/m);
@@ -51,7 +51,7 @@ assert.equal(
 assert.equal(manualManifest.packages['darwin-arm64'].sizeBytes, 1318754214);
 assert.notEqual(
   manualMacCosUrl,
-  finalMacCosUrl,
+  productionMacCosUrl,
   'manual customer ZIP and updater ZIP have different bytes and must use distinct COS object keys',
 );
 assert.equal(manualManifest.packages['win32-x64'].kind, 'manual_page');

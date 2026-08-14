@@ -2,21 +2,21 @@
   "schemaVersion": 1,
   "appId": "com.biostateai.ocupathif",
   "channel": "stable",
-  "version": "0.991.1",
-  "releaseDate": "2026-08-13T07:08:25.515Z",
+  "version": "0.992.1",
+  "releaseDate": "2026-08-14T18:11:57.759Z",
   "packages": {
     "darwin-arm64": {
       "kind": "manual_page",
       "url": "https://updates.ocupath.ai/ocupathif/install.html",
-      "sha256": "c18c0d29158f8c24ea8e7861dba52100581dde5e10af3600a8d5127452364009",
-      "sizeBytes": 1318746948,
+      "sha256": "30361e88cb424b0fdb3a263a8743034c76662c0ab9ed939195ef9c846adc1f9d",
+      "sizeBytes": 1318754214,
       "signature": "Apple notarized and stapled; Developer ID Application: Biostate AI, Incorporated (6269FUBJZ5)"
     },
     "win32-x64": {
       "kind": "manual_page",
       "url": "https://updates.ocupath.ai/ocupathif/install.html",
-      "sha256": "3db8fcd6deabbc55e2b37c6e086234bf448d536392703e5700e83ca4803091ac",
-      "sizeBytes": 1354650736
+      "sha256": "385a35a12225d44dc5361c20f21ea43b109b908a08e5b4cdfded4d32e9391193",
+      "sizeBytes": 1354655261
     }
   }
 }

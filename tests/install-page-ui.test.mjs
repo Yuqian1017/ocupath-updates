@@ -58,13 +58,11 @@ assert.equal(
   'Mac and Windows must both use the same prominent button treatment',
 );
 
-const hongKongOrigin = 'https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com';
-const githubOrigin = 'https://github.com/Yuqian1017/ocupath-updates/releases/download/v0.991.1-c801';
-const manualMacCosUrl = `${hongKongOrigin}/OcupathIF-0.991.1-arm64-mac-standalone.zip`;
-const manualMacGitHubUrl = `${githubOrigin}/OcupathIF-0.991.1-arm64-mac-standalone.zip`;
-const updaterMacCosUrl = `${hongKongOrigin}/OcupathIF-0.991.1-arm64-mac.zip`;
-const manualMacSha256 = 'c18c0d29158f8c24ea8e7861dba52100581dde5e10af3600a8d5127452364009';
-const windowsSha256 = '3db8fcd6deabbc55e2b37c6e086234bf448d536392703e5700e83ca4803091ac';
+const githubOrigin = 'https://github.com/Yuqian1017/ocupath-updates/releases/download/v0.992.1';
+const manualMacGitHubUrl = `${githubOrigin}/OcupathIF-0.992.1-arm64-mac-standalone.zip`;
+const windowsGitHubUrl = `${githubOrigin}/OcupathIF-Setup-0.992.1-x64.exe`;
+const manualMacSha256 = '30361e88cb424b0fdb3a263a8743034c76662c0ab9ed939195ef9c846adc1f9d';
+const windowsSha256 = '385a35a12225d44dc5361c20f21ea43b109b908a08e5b4cdfded4d32e9391193';
 assert.equal(
   (html.match(/class="alternate-download"/g) ?? []).length,
   0,
@@ -77,33 +75,33 @@ assert.equal(
 );
 assert.match(
   html,
-  new RegExp(`data-cn-url="${manualMacCosUrl.replaceAll('.', '\\.')}"`),
-  'Mac routing data must retain the exact source-protected Hong Kong asset',
+  new RegExp(`data-cn-url="${manualMacGitHubUrl.replaceAll('.', '\\.')}"`),
+  'Mac routing data must use the exact released Mac customer asset',
 );
 assert.match(
   html,
   new RegExp(`data-global-url="${manualMacGitHubUrl.replaceAll('.', '\\.')}"`),
-  'Mac routing data must retain the exact customer standalone GitHub asset',
+  'Mac routing data must use the exact released Mac customer asset',
 );
 assert.match(
   html,
-  new RegExp(`data-cn-url="${hongKongOrigin}/OcupathIF-Setup-0\\.991\\.1-x64\\.exe"`),
-  'Windows routing data must retain the exact source-protected Hong Kong asset',
+  new RegExp(`data-cn-url="${windowsGitHubUrl.replaceAll('.', '\\.')}"`),
+  'Windows routing data must use the exact released Windows installer',
 );
 assert.match(
   html,
-  new RegExp(`data-global-url="${githubOrigin}/OcupathIF-Setup-0\\.991\\.1-x64\\.exe"`),
-  'Windows routing data must retain the exact global GitHub asset',
+  new RegExp(`data-global-url="${windowsGitHubUrl.replaceAll('.', '\\.')}"`),
+  'Windows routing data must use the exact released Windows installer',
 );
 assert.match(
   html,
-  new RegExp(`href="${manualMacCosUrl.replaceAll('.', '\\.')}"`),
-  'Mac must fail safe to the Hong Kong asset before country detection',
+  new RegExp(`href="${manualMacGitHubUrl.replaceAll('.', '\\.')}"`),
+  'Mac must default to the exact released customer asset',
 );
 assert.match(
   html,
-  new RegExp(`href="${hongKongOrigin}/OcupathIF-Setup-0\\.991\\.1-x64\\.exe"`),
-  'Windows must fail safe to the Hong Kong asset before country detection',
+  new RegExp(`href="${windowsGitHubUrl.replaceAll('.', '\\.')}"`),
+  'Windows must default to the exact released installer',
 );
 assert.doesNotMatch(
   html.match(/<body>[\s\S]*?<\/body>/)?.[0] ?? '',
@@ -119,17 +117,17 @@ function createRoutingHarness(fetchImpl = () => new Promise(() => {})) {
   const buttons = [
     {
       dataset: {
-        cnUrl: manualMacCosUrl,
+        cnUrl: manualMacGitHubUrl,
         globalUrl: manualMacGitHubUrl,
       },
-      href: manualMacCosUrl,
+      href: manualMacGitHubUrl,
     },
     {
       dataset: {
-        cnUrl: `${hongKongOrigin}/OcupathIF-Setup-0.991.1-x64.exe`,
-        globalUrl: `${githubOrigin}/OcupathIF-Setup-0.991.1-x64.exe`,
+        cnUrl: windowsGitHubUrl,
+        globalUrl: windowsGitHubUrl,
       },
-      href: `${hongKongOrigin}/OcupathIF-Setup-0.991.1-x64.exe`,
+      href: windowsGitHubUrl,
     },
   ];
   const document = {
@@ -167,7 +165,7 @@ deterministic.window.__ocupathDownloadRouting.applyCountry('CN');
 assert.deepEqual(
   deterministic.buttons.map((button) => button.href),
   deterministic.buttons.map((button) => button.dataset.cnUrl),
-  'mainland-China traffic must use Hong Kong COS for both platforms',
+  'mainland-China traffic must use the same official release asset for both platforms',
 );
 assert.equal(deterministic.document.documentElement.dataset.downloadRegion, 'cn');
 
@@ -175,7 +173,7 @@ deterministic.window.__ocupathDownloadRouting.applyCountry('US');
 assert.deepEqual(
   deterministic.buttons.map((button) => button.href),
   deterministic.buttons.map((button) => button.dataset.globalUrl),
-  'non-China traffic must use GitHub for both platforms',
+  'non-China traffic must use the same official release asset for both platforms',
 );
 assert.equal(deterministic.document.documentElement.dataset.downloadRegion, 'global');
 
@@ -183,7 +181,7 @@ deterministic.window.__ocupathDownloadRouting.applyCountry(undefined);
 assert.deepEqual(
   deterministic.buttons.map((button) => button.href),
   deterministic.buttons.map((button) => button.dataset.cnUrl),
-  'lookup failure must keep the working Hong Kong COS fallback',
+  'lookup failure must keep the exact official release asset',
 );
 assert.equal(deterministic.document.documentElement.dataset.downloadRegion, 'cn');
 
@@ -207,8 +205,13 @@ assert.deepEqual(
 
 console.log('install page UI contract: PASS');
 
-assert.notEqual(
-  manualMacCosUrl,
-  updaterMacCosUrl,
-  'manual customer ZIP and updater ZIP have different bytes and must never share one COS object key',
+assert.match(
+  html,
+  /OcuPathIF_User_Guide_en\.pdf/,
+  'customer page must link the version-neutral English user guide',
+);
+assert.match(
+  html,
+  /OcuPathIF_User_Guide_zh\.pdf/,
+  'customer page must link the version-neutral Chinese user guide',
 );

@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "version": "0.993.1",
+  "releaseDate": "__PENDING_RELEASE_DATE__",
+  "previousLiveVersion": "0.992.1",
+  "release": {
+    "repository": "Yuqian1017/ocupath-updates",
+    "tagName": "v0.993.1",
+    "targetCommitish": "release/09931-production-publish-20260818",
+    "draftReleaseId": "__PENDING_GITHUB_DRAFT_RELEASE_ID__"
+  },
+  "origins": {
+    "public": "https://updates.ocupath.ai/ocupathif",
+    "cos": "https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com"
+  },
+  "publication": {
+    "expectedCosObjects": 4,
+    "cosAssetKeys": [
+      "macManual",
+      "macUpdater",
+      "macUpdaterBlockmap",
+      "windowsInstaller"
+    ]
+  },
+  "assets": {
+    "macManual": {
+      "fileName": "OcupathIF-0.993.1-arm64-mac-standalone.zip",
+      "sizeBytes": "__PENDING_MAC_MANUAL_SIZE_BYTES__",
+      "sha256": "__PENDING_MAC_MANUAL_SHA256__"
+    },
+    "macUpdater": {
+      "fileName": "OcupathIF-0.993.1-arm64-mac.zip",
+      "sizeBytes": "__PENDING_MAC_UPDATER_SIZE_BYTES__",
+      "sha256": "__PENDING_MAC_UPDATER_SHA256__",
+      "sha512": "__PENDING_MAC_UPDATER_SHA512__"
+    },
+    "macUpdaterBlockmap": {
+      "fileName": "OcupathIF-0.993.1-arm64-mac.zip.blockmap",
+      "sizeBytes": "__PENDING_MAC_UPDATER_BLOCKMAP_SIZE_BYTES__",
+      "sha256": "__PENDING_MAC_UPDATER_BLOCKMAP_SHA256__"
+    },
+    "windowsInstaller": {
+      "fileName": "OcupathIF-Setup-0.993.1-x64.exe",
+      "sizeBytes": "__PENDING_WINDOWS_EXE_SIZE_BYTES__",
+      "sha256": "__PENDING_WINDOWS_EXE_SHA256__",
+      "sha512": "__PENDING_WINDOWS_EXE_SHA512__"
+    },
+    "guideEn": {
+      "fileName": "OcuPathIF_v0.993.1_User_Guide_en.pdf",
+      "sizeBytes": 2256745,
+      "sha256": "00979793eae523f0fb8922d56880672fffcf743437eb497ea6e5127a2f8a294c"
+    },
+    "guideZh": {
+      "fileName": "OcuPathIF_v0.993.1_User_Guide_zh.pdf",
+      "sizeBytes": 2535248,
+      "sha256": "67d2f1844142927b40b2cc698d1b99ab359f376fb0b6bec8dc802e0facdafbb1"
+    }
+  },
+  "feeds": {
+    "darwinArm64": {
+      "path": "direct/darwin-arm64/latest-mac.yml",
+      "installMode": "in_app"
+    },
+    "win32X64": {
+      "path": "direct/win32-x64/latest.yml",
+      "installMode": "manual"
+    }
+  }
+}

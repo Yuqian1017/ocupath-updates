@@ -1,32 +1,13 @@
 #!/usr/bin/env node
 
 import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
 import { evaluatePrepublishGate } from './prepublish-gate.mjs';
-
-const repository = 'Yuqian1017/ocupath-updates';
-const releaseId = '369530281';
-const expectedTagName = 'v0.991.1-c801';
-const expectedTargetCommitish = 'release/0991-two-leg-feed-20260810';
-
-const expectedAssets = {
-  'OcupathIF-0.991.1-arm64-mac-standalone.zip': {
-    size: 1318746948,
-    digest: 'sha256:c18c0d29158f8c24ea8e7861dba52100581dde5e10af3600a8d5127452364009',
-  },
-  'OcupathIF-Setup-0.991.1-x64.exe': {
-    size: 1354650736,
-    digest: 'sha256:3db8fcd6deabbc55e2b37c6e086234bf448d536392703e5700e83ca4803091ac',
-  },
-  'OcuPathIF_v0.991.1_User_Guide_en.pdf': {
-    size: 2259757,
-    digest: 'sha256:7382634b07486eb0c7439c1e6ed8fd20182a856faeb45f948fb364fffdac23dc',
-  },
-  'OcuPathIF_v0.991.1_User_Guide_zh.pdf': {
-    size: 2546526,
-    digest: 'sha256:97550c86147300606f5744a648b8c85b15fa4f0937628a14cfc2ae716489581c',
-  },
-};
+import {
+  DEFAULT_STAGING_MANIFEST_URL,
+  loadReleaseManifest,
+} from './release-manifest.mjs';
 
 function run(command, args) {
   return execFileSync(command, args, { encoding: 'utf8' }).trim();
@@ -36,49 +17,83 @@ function inputStatus(name, fallback) {
   return process.env[name] || fallback;
 }
 
-const release = JSON.parse(run('gh', [
-  'api',
-  `repos/${repository}/releases/${releaseId}`,
-]));
-const remoteTagPresent = run('git', [
-  'ls-remote',
-  '--tags',
-  'origin',
-  expectedTagName,
-]) !== '';
-const liveManifest = JSON.parse(run('curl', [
-  '--fail',
-  '--silent',
-  '--show-error',
-  '--location',
-  'https://updates.ocupath.ai/ocupathif/latest.json',
-]));
+function expectedReleaseAssets(manifest) {
+  const keys = ['macManual', 'windowsInstaller', 'guideEn', 'guideZh'];
+  return Object.fromEntries(keys.map((key) => {
+    const asset = manifest.assets[key];
+    return [asset.fileName, {
+      size: asset.sizeBytes,
+      digest: `sha256:${asset.sha256}`,
+    }];
+  }));
+}
 
-const state = {
-  release: {
-    draft: release.draft,
-    tagName: release.tag_name,
-    targetCommitish: release.target_commitish,
-    assets: release.assets.map((asset) => ({
-      name: asset.name,
-      size: asset.size,
-      digest: asset.digest,
-      state: asset.state,
-    })),
-  },
-  remoteTagPresent,
-  liveVersion: liveManifest.version,
-  expectedRollbackVersion: '0.99.1',
-  expectedTagName,
-  expectedTargetCommitish,
-  expectedAssets,
-  cosObjectsVerified: Number(inputStatus('OCUPATH_COS_OBJECTS_VERIFIED', '0')),
-  expectedCosObjects: 4,
-  macTwoLegTransaction: inputStatus('OCUPATH_MAC_TWO_LEG_TRANSACTION', 'not-run'),
-  windowsNativeValidation: inputStatus('OCUPATH_WINDOWS_NATIVE_VALIDATION', 'baseline-reused'),
-  baiduAtomicPromotion: inputStatus('OCUPATH_BAIDU_ATOMIC_PROMOTION', 'in-progress'),
-};
+function stopForConfiguration(error) {
+  const result = {
+    status: 'RED_STOP_LINE',
+    failures: [error instanceof Error ? error.message : String(error)],
+    phase: 'local-publication-inputs',
+  };
+  process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
+  process.exitCode = 2;
+}
 
-const result = evaluatePrepublishGate(state);
-process.stdout.write(`${JSON.stringify({ ...result, state }, null, 2)}\n`);
-if (result.status !== 'GREEN') process.exitCode = 2;
+try {
+  const manifestSource = process.env.OCUPATH_RELEASE_STAGING_MANIFEST || DEFAULT_STAGING_MANIFEST_URL;
+  const manifest = loadReleaseManifest(manifestSource);
+  const manifestPath = manifestSource instanceof URL ? fileURLToPath(manifestSource) : manifestSource;
+  run(process.execPath, [
+    fileURLToPath(new URL('./render-release.mjs', import.meta.url)),
+    manifestPath,
+    '--check',
+  ]);
+
+  const release = JSON.parse(run('gh', [
+    'api',
+    `repos/${manifest.release.repository}/releases/${manifest.release.draftReleaseId}`,
+  ]));
+  const remoteTagPresent = run('git', [
+    'ls-remote',
+    '--tags',
+    'origin',
+    manifest.release.tagName,
+  ]) !== '';
+  const liveManifest = JSON.parse(run('curl', [
+    '--fail',
+    '--silent',
+    '--show-error',
+    '--location',
+    `${manifest.origins.public}/latest.json`,
+  ]));
+
+  const state = {
+    publicationFilesCurrent: true,
+    release: {
+      draft: release.draft,
+      tagName: release.tag_name,
+      targetCommitish: release.target_commitish,
+      assets: release.assets.map((asset) => ({
+        name: asset.name,
+        size: asset.size,
+        digest: asset.digest,
+        state: asset.state,
+      })),
+    },
+    remoteTagPresent,
+    liveVersion: liveManifest.version,
+    expectedRollbackVersion: manifest.previousLiveVersion,
+    expectedTagName: manifest.release.tagName,
+    expectedTargetCommitish: manifest.release.targetCommitish,
+    expectedAssets: expectedReleaseAssets(manifest),
+    cosObjectsVerified: Number(inputStatus('OCUPATH_COS_OBJECTS_VERIFIED', '0')),
+    expectedCosObjects: manifest.publication.expectedCosObjects,
+    macTwoLegTransaction: inputStatus('OCUPATH_MAC_TWO_LEG_TRANSACTION', 'not-run'),
+    windowsNativeValidation: inputStatus('OCUPATH_WINDOWS_NATIVE_VALIDATION', 'baseline-reused'),
+  };
+
+  const result = evaluatePrepublishGate(state);
+  process.stdout.write(`${JSON.stringify({ ...result, state }, null, 2)}\n`);
+  if (result.status !== 'GREEN') process.exitCode = 2;
+} catch (error) {
+  stopForConfiguration(error);
+}

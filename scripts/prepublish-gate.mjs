@@ -6,6 +6,10 @@ export function evaluatePrepublishGate(state) {
   const failures = [];
   const release = state.release ?? {};
 
+  if (state.publicationFilesCurrent !== true) {
+    failures.push('rendered publication files do not match the frozen staging manifest');
+  }
+
   if (release.draft !== true) failures.push('release is not a draft');
   if (release.tagName !== state.expectedTagName) {
     failures.push(`release tag mismatch: ${release.tagName ?? 'missing'}`);
@@ -45,9 +49,5 @@ export function evaluatePrepublishGate(state) {
   if (!['PASS', 'baseline-reused'].includes(state.windowsNativeValidation)) {
     failures.push(`Windows native risk decision: ${state.windowsNativeValidation}`);
   }
-  if (state.baiduAtomicPromotion !== 'PASS') {
-    failures.push(`Baidu atomic promotion: ${state.baiduAtomicPromotion}`);
-  }
-
   return { status: failures.length === 0 ? 'GREEN' : 'RED_STOP_LINE', failures };
 }

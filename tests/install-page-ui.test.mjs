@@ -2,7 +2,11 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 
+import { loadReleaseManifest, releaseUrls } from '../scripts/release-manifest.mjs';
+
 const html = readFileSync(new URL('../ocupathif/install.html', import.meta.url), 'utf8');
+const manifest = loadReleaseManifest(undefined, { requireFinal: false });
+const urls = releaseUrls(manifest);
 
 assert.match(
   html,
@@ -58,14 +62,12 @@ assert.equal(
   'Mac and Windows must both use the same prominent button treatment',
 );
 
-const githubOrigin = 'https://github.com/Yuqian1017/ocupath-updates/releases/download/v0.992.1';
-const chinaDownloadOrigin = 'https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com';
-const manualMacGitHubUrl = `${githubOrigin}/OcupathIF-0.992.1-arm64-mac-standalone.zip`;
-const windowsGitHubUrl = `${githubOrigin}/OcupathIF-Setup-0.992.1-x64.exe`;
-const manualMacChinaUrl = `${chinaDownloadOrigin}/OcupathIF-0.992.1-arm64-mac-standalone.zip`;
-const windowsChinaUrl = `${chinaDownloadOrigin}/OcupathIF-Setup-0.992.1-x64.exe`;
-const manualMacSha256 = '30361e88cb424b0fdb3a263a8743034c76662c0ab9ed939195ef9c846adc1f9d';
-const windowsSha256 = '385a35a12225d44dc5361c20f21ea43b109b908a08e5b4cdfded4d32e9391193';
+const manualMacGitHubUrl = urls.macManualGlobal;
+const windowsGitHubUrl = urls.windowsGlobal;
+const manualMacChinaUrl = urls.macManualCos;
+const windowsChinaUrl = urls.windowsCos;
+const manualMacSha256 = manifest.assets.macManual.sha256;
+const windowsSha256 = manifest.assets.windowsInstaller.sha256;
 assert.equal(
   (html.match(/class="alternate-download"/g) ?? []).length,
   0,
@@ -111,8 +113,8 @@ assert.doesNotMatch(
   />[^<]*(?:Hong Kong|GitHub|mirror)[^<]*</i,
   'customer-visible copy must not ask users to understand download providers',
 );
-assert.match(html, new RegExp(`<code>${manualMacSha256}<\\/code>`), 'Mac checksum must match the final c801 package');
-assert.match(html, new RegExp(`<code>${windowsSha256}<\\/code>`), 'Windows checksum must match the final c801 installer');
+assert.match(html, new RegExp(`<code data-sha256="mac">${manualMacSha256}<\\/code>`), 'Mac checksum must come from the staging manifest');
+assert.match(html, new RegExp(`<code data-sha256="windows">${windowsSha256}<\\/code>`), 'Windows checksum must come from the staging manifest');
 
 const inlineScript = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].at(-1)?.[1] ?? '';
 
@@ -210,11 +212,11 @@ console.log('install page UI contract: PASS');
 
 assert.match(
   html,
-  /OcuPathIF_v0\.992\.1_User_Guide_en\.pdf/,
+  new RegExp(manifest.assets.guideEn.fileName.replaceAll('.', '\\.')),
   'customer page must link the versioned English user guide that matches the release',
 );
 assert.match(
   html,
-  /OcuPathIF_v0\.992\.1_User_Guide_zh\.pdf/,
+  new RegExp(manifest.assets.guideZh.fileName.replaceAll('.', '\\.')),
   'customer page must link the versioned Chinese user guide that matches the release',
 );

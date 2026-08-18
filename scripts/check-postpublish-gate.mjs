@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import {
   buildCosAuthority,
   loadCosEvidence,
+  loadCosUploadLedger,
   validateCosEvidence,
 } from './cos-publication.mjs';
 import {
@@ -18,12 +19,15 @@ import {
   DEFAULT_STAGING_MANIFEST_URL,
   loadReleaseManifest,
   requireExactCommitSha,
+  requirePublicationBranch,
   releaseUrls,
 } from './release-manifest.mjs';
-import { loadWindowsEvidence } from './windows-evidence.mjs';
+import { loadWindowsEvidence, validateWindowsCiApiState } from './windows-evidence.mjs';
 
-function run(command, args) {
-  return execFileSync(command, args, { encoding: 'utf8' }).trim();
+const repoRoot = fileURLToPath(new URL('../', import.meta.url));
+
+function run(command, args, options = {}) {
+  return execFileSync(command, args, { encoding: 'utf8', ...options }).trim();
 }
 
 function fetchTextWithStatus(url) {
@@ -83,12 +87,22 @@ function remoteTagCommitSha(tagName) {
     'origin',
     `refs/tags/${tagName}`,
     `refs/tags/${tagName}^{}`,
-  ]);
+  ], { cwd: repoRoot });
   const rows = output.split('\n').filter(Boolean).map((line) => line.split(/\s+/));
   const peeled = rows.find(([, ref]) => ref === `refs/tags/${tagName}^{}`);
   const direct = rows.find(([, ref]) => ref === `refs/tags/${tagName}`);
   if (!peeled && !direct) throw new Error(`remote tag is missing: ${tagName}`);
   return (peeled || direct)[0];
+}
+
+function remoteBranchSha(branch) {
+  const output = run('git', [
+    'ls-remote', '--heads', 'origin', `refs/heads/${branch}`,
+  ], { cwd: repoRoot });
+  if (!output) return undefined;
+  const [sha, ref] = output.split(/\s+/);
+  if (ref !== `refs/heads/${branch}`) return undefined;
+  return sha;
 }
 
 try {
@@ -98,6 +112,7 @@ try {
     process.env.OCUPATH_RELEASE_TARGET_SHA,
     'OCUPATH_RELEASE_TARGET_SHA',
   );
+  const expectedPublicationBranch = requirePublicationBranch(process.env.OCUPATH_RELEASE_BRANCH);
   const manifestPath = manifestSource instanceof URL ? fileURLToPath(manifestSource) : manifestSource;
   run(process.execPath, [
     fileURLToPath(new URL('./render-release.mjs', import.meta.url)),
@@ -110,15 +125,38 @@ try {
   const cosAuthority = buildCosAuthority(manifest, {
     darwinArm64: readFileSync(macFeedPath, 'utf8'),
   });
+  const cosUploadLedger = loadCosUploadLedger(process.env.OCUPATH_COS_UPLOAD_LEDGER_JSON);
   const cosEvidence = validateCosEvidence(
     cosAuthority,
     loadCosEvidence(process.env.OCUPATH_COS_EVIDENCE_JSON),
+    cosUploadLedger,
   );
-  const windowsEvidence = loadWindowsEvidence(
+  const windowsLoaded = loadWindowsEvidence(
     process.env.OCUPATH_WINDOWS_EVIDENCE_JSON,
     manifest,
-    { phase: 'postpublish' },
-  ).result;
+    {
+      phase: 'postpublish',
+      evidenceUrlExists: (url) => {
+        try {
+          run('curl', ['--fail', '--silent', '--show-error', '--location', '--head', url]);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+    },
+  );
+  const windowsCiApi = validateWindowsCiApiState(windowsLoaded.evidence, {
+    run: JSON.parse(run('gh', ['api', 'repos/Yuqian1017/ocupathif_new/actions/runs/32106608240'])),
+    job: JSON.parse(run('gh', ['api', 'repos/Yuqian1017/ocupathif_new/actions/jobs/95617238460'])),
+  });
+  const windowsEvidence = {
+    ...windowsLoaded.result,
+    status: windowsLoaded.result.status === 'GREEN' && windowsCiApi.status === 'GREEN'
+      ? 'GREEN'
+      : 'RED_STOP_LINE',
+    failures: [...windowsLoaded.result.failures, ...windowsCiApi.failures],
+  };
   const release = JSON.parse(run('gh', [
     'api',
     `repos/${manifest.release.repository}/releases/${manifest.release.draftReleaseId}`,
@@ -136,6 +174,10 @@ try {
   const state = {
     liveVersion: liveManifest.version,
     expectedVersion: manifest.version,
+    localHeadSha: run('git', ['rev-parse', 'HEAD'], { cwd: repoRoot }),
+    localWorktreeClean: run('git', ['status', '--porcelain'], { cwd: repoRoot }) === '',
+    localBranch: run('git', ['branch', '--show-current'], { cwd: repoRoot }),
+    remotePublicationBranchSha: remoteBranchSha(expectedPublicationBranch),
     release: {
       draft: release.draft,
       tagName: release.tag_name,
@@ -149,6 +191,7 @@ try {
     },
     expectedTagName: manifest.release.tagName,
     expectedTargetCommitSha,
+    expectedPublicationBranch,
     remoteTagCommitSha: remoteTagCommitSha(manifest.release.tagName),
     expectedAssets: expectedReleaseAssets(manifest),
     liveManualPublication: {

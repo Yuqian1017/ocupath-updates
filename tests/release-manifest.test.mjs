@@ -11,6 +11,7 @@ import {
   requireExactCommitSha,
   releaseUrls,
   validateReleaseManifest,
+  validateWebsitePublicationManifest,
 } from '../scripts/release-manifest.mjs';
 
 const staging = JSON.parse(readFileSync(DEFAULT_STAGING_MANIFEST_URL, 'utf8'));
@@ -75,7 +76,7 @@ test('prepared public files are reproducibly rendered from the pending manifest'
     '--allow-pending',
     '--check',
   ], { encoding: 'utf8' });
-  assert.match(output, /checked 5 publication files/);
+  assert.match(output, /checked 6 publication files/);
 });
 
 test('renderer and prepublish gate stop before remote work while fields are pending', () => {
@@ -93,7 +94,7 @@ test('renderer and prepublish gate stop before remote work while fields are pend
   const result = JSON.parse(gate.stdout);
   assert.equal(result.status, 'RED_STOP_LINE');
   assert.equal(result.phase, 'local-publication-inputs');
-  assert.match(result.failures[0], /pending publication fields/);
+  assert.match(result.failures[0], /pending website publication fields/);
 
   const postGate = spawnSync(process.execPath, [postpublishPath], { encoding: 'utf8' });
   assert.equal(postGate.status, 2);
@@ -127,6 +128,15 @@ test('release target is external exact SHA input and cannot be stored as a mutab
   );
 });
 
+test('publication branch is explicit runtime input, never inferred from a mutable draft target', async () => {
+  const { requirePublicationBranch } = await import('../scripts/release-manifest.mjs');
+  assert.equal(
+    requirePublicationBranch('release/09931-production-publish-20260818'),
+    'release/09931-production-publish-20260818',
+  );
+  assert.throws(() => requirePublicationBranch('main'), /explicit release/);
+});
+
 test('SHA-512 and releaseDate accept only canonical publication encodings', () => {
   const nonCanonicalSha = finalManifest();
   nonCanonicalSha.assets.macUpdater.sha512 = nonCanonicalSha.assets.macUpdater.sha512.replace(/==$/, '=');
@@ -155,4 +165,19 @@ test('publication object sets are exact and payload-first', () => {
     wrongOrder.publication.cosObjects[0],
   ];
   assert.match(validateReleaseManifest(wrongOrder).failures.join('\n'), /exact six payload-first/);
+});
+
+test('website publication can proceed with manual packages while updater artifacts remain pending', () => {
+  const website = structuredClone(staging);
+  website.releaseDate = '2026-08-18T12:00:00.000Z';
+  website.release.draftReleaseId = '123456789';
+  website.assets.macManual.sizeBytes = 101;
+  website.assets.macManual.sha256 = 'a'.repeat(64);
+  assert.deepEqual(validateWebsitePublicationManifest(website), {
+    status: 'GREEN',
+    failures: [],
+    pending: [],
+  });
+  assert.equal(validateReleaseManifest(website).status, 'RED_STOP_LINE');
+  assert.match(validateReleaseManifest(website).failures.join('\n'), /macUpdater/);
 });

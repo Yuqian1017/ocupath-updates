@@ -35,6 +35,16 @@ export function evaluatePostpublishGate(state) {
   if (state.liveVersion !== state.expectedVersion) {
     failures.push(`live version mismatch: ${state.liveVersion ?? 'missing'}`);
   }
+  if (state.localHeadSha !== state.expectedTargetCommitSha) {
+    failures.push(`local HEAD SHA mismatch: ${state.localHeadSha ?? 'missing'}`);
+  }
+  if (state.localWorktreeClean !== true) failures.push('local updates worktree is dirty');
+  if (state.localBranch !== state.expectedPublicationBranch) {
+    failures.push(`local publication branch mismatch: ${state.localBranch ?? 'missing'}`);
+  }
+  if (state.remotePublicationBranchSha !== state.expectedTargetCommitSha) {
+    failures.push(`remote publication branch SHA mismatch: ${state.remotePublicationBranchSha ?? 'missing'}`);
+  }
   const release = state.release ?? {};
   if (release.draft !== false) failures.push('release is still a draft');
   if (release.tagName !== state.expectedTagName) {

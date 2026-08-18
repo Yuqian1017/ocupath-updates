@@ -1,14 +1,27 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { execFile } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { createServer } from 'node:http';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { promisify } from 'node:util';
 import test from 'node:test';
 
 import {
   buildCosAuthority,
+  buildManualCosAuthority,
+  cosAuthoritySha256,
+  cosUploadLedgerSha256,
   validateCosEvidence,
+  validateCosUploadLedger,
 } from '../scripts/cos-publication.mjs';
 import { DEFAULT_STAGING_MANIFEST_URL } from '../scripts/release-manifest.mjs';
 
 const staging = JSON.parse(readFileSync(DEFAULT_STAGING_MANIFEST_URL, 'utf8'));
+const execFileAsync = promisify(execFile);
+const verifierPath = fileURLToPath(new URL('../scripts/verify-cos-assets.mjs', import.meta.url));
 
 function finalManifest() {
   const manifest = structuredClone(staging);
@@ -30,19 +43,51 @@ function authority() {
   });
 }
 
-function evidence(expected = authority()) {
+function evidence(expected = authority(), ledger = uploadLedger(expected)) {
+  return {
+    schemaVersion: 2,
+    generatedBy: 'scripts/verify-cos-assets.mjs',
+    authoritySha256: cosAuthoritySha256(expected),
+    uploadLedgerSha256: cosUploadLedgerSha256(ledger),
+    version: expected.version,
+    baseUrl: expected.baseUrl,
+    sequencing: expected.sequencing,
+    objects: expected.objects.map((object, index) => {
+      const rangeBytes = Math.min(1024, object.bytes);
+      return {
+        ...object,
+        uploadStatus: ledger.objects[index].uploadStatus,
+        uploadedAt: ledger.objects[index].uploadedAt,
+        verifyStatus: 'PASS',
+        headStatus: 200,
+        contentLength: object.bytes,
+        rangeStatus: 206,
+        contentRange: `bytes 0-${rangeBytes - 1}/${object.bytes}`,
+        rangeBytes,
+        fullBytes: object.bytes,
+        fullSha256: object.sha256,
+      };
+    }),
+    uploadCompletedAt: ledger.uploadCompletedAt,
+    verificationCompletedAt: '2026-08-18T12:00:08.000Z',
+  };
+}
+
+function uploadLedger(expected = authority()) {
   return {
     schemaVersion: 1,
     version: expected.version,
     baseUrl: expected.baseUrl,
     sequencing: expected.sequencing,
+    authoritySha256: cosAuthoritySha256(expected),
     objects: expected.objects.map((object, index) => ({
-      ...object,
+      order: object.order,
+      phase: object.phase,
+      key: object.key,
       uploadStatus: 'PASS',
-      verifyStatus: 'PASS',
       uploadedAt: `2026-08-18T12:00:0${index + 1}.000Z`,
     })),
-    promotionCompletedAt: '2026-08-18T12:00:07.000Z',
+    uploadCompletedAt: '2026-08-18T12:00:07.000Z',
   };
 }
 
@@ -61,7 +106,7 @@ test('COS authority is the exact six-object payload-first metadata-last contract
     order: 5,
     key: 'latest-mac.yml',
   });
-  assert.deepEqual(validateCosEvidence(expected, evidence(expected)), {
+  assert.deepEqual(validateCosEvidence(expected, evidence(expected), uploadLedger(expected)), {
     status: 'GREEN',
     failures: [],
     objectCount: 6,
@@ -73,28 +118,133 @@ test('COS evidence rejects extras, byte drift and reordered or simultaneous uplo
 
   const extra = evidence(expected);
   extra.objects.push({ ...extra.objects.at(-1), key: 'unexpected' });
-  assert.match(validateCosEvidence(expected, extra).failures.join('\n'), /object count mismatch/);
+  assert.match(validateCosEvidence(expected, extra, uploadLedger(expected)).failures.join('\n'), /object count mismatch/);
 
   const drift = evidence(expected);
   drift.objects[1].sha256 = 'f'.repeat(64);
-  assert.match(validateCosEvidence(expected, drift).failures.join('\n'), /object 2 sha256 mismatch/);
+  assert.match(validateCosEvidence(expected, drift, uploadLedger(expected)).failures.join('\n'), /object 2 sha256 mismatch/);
 
   const sameTime = evidence(expected);
   sameTime.objects[4].uploadedAt = sameTime.objects[3].uploadedAt;
-  assert.match(validateCosEvidence(expected, sameTime).failures.join('\n'), /not strictly increasing/);
+  assert.match(validateCosEvidence(expected, sameTime, uploadLedger(expected)).failures.join('\n'), /not strictly increasing/);
 
   const earlyCompletion = evidence(expected);
-  earlyCompletion.promotionCompletedAt = earlyCompletion.objects.at(-1).uploadedAt;
-  assert.match(validateCosEvidence(expected, earlyCompletion).failures.join('\n'), /must follow all six/);
+  earlyCompletion.uploadCompletedAt = earlyCompletion.objects.at(-1).uploadedAt;
+  assert.match(validateCosEvidence(expected, earlyCompletion, uploadLedger(expected)).failures.join('\n'), /must follow every upload/);
 });
 
 test('COS evidence rejects pending values and noncanonical timestamps', () => {
   const expected = authority();
   const pending = evidence(expected);
   pending.objects[0].verifyStatus = '__PENDING_VERIFY__';
-  assert.match(validateCosEvidence(expected, pending).failures.join('\n'), /pending placeholders/);
+  assert.match(validateCosEvidence(expected, pending, uploadLedger(expected)).failures.join('\n'), /pending placeholders/);
 
   const noncanonical = evidence(expected);
   noncanonical.objects[0].uploadedAt = '2026-08-18T12:00:01Z';
-  assert.match(validateCosEvidence(expected, noncanonical).failures.join('\n'), /not canonical UTC ISO/);
+  assert.match(validateCosEvidence(expected, noncanonical, uploadLedger(expected)).failures.join('\n'), /not canonical UTC ISO/);
+});
+
+test('COS evidence requires actual HEAD, Range and full-byte verifier fields', () => {
+  const expected = authority();
+  const handWrittenPass = evidence(expected);
+  delete handWrittenPass.generatedBy;
+  delete handWrittenPass.objects[0].headStatus;
+  delete handWrittenPass.objects[0].fullSha256;
+  const failures = validateCosEvidence(expected, handWrittenPass, uploadLedger(expected)).failures.join('\n');
+  assert.match(failures, /must be generated by/);
+  assert.match(failures, /network verification mismatch/);
+});
+
+test('upload ledger and manual website authority stay separate from full updater publication', () => {
+  const full = authority();
+  assert.equal(validateCosUploadLedger(full, uploadLedger(full)).status, 'GREEN');
+
+  const manual = buildManualCosAuthority(finalManifest());
+  assert.equal(manual.sequencing, 'manual-payloads-only');
+  assert.deepEqual(manual.objects.map((object) => object.key), [
+    'OcupathIF-0.993.1-arm64-mac-standalone.zip',
+    'OcupathIF-Setup-0.993.1-x64.exe',
+  ]);
+  assert.equal(validateCosEvidence(manual, evidence(manual), uploadLedger(manual)).status, 'GREEN');
+
+  const wrongLedger = uploadLedger(full);
+  wrongLedger.objects[4].uploadedAt = wrongLedger.objects[3].uploadedAt;
+  assert.match(validateCosUploadLedger(full, wrongLedger).failures.join('\n'), /not strictly increasing/);
+
+  const evidenceWithDifferentLedger = evidence(full);
+  const changedLedger = uploadLedger(full);
+  changedLedger.objects[0].uploadedAt = '2026-08-18T11:59:59.000Z';
+  assert.match(
+    validateCosEvidence(full, evidenceWithDifferentLedger, changedLedger).failures.join('\n'),
+    /upload ledger digest mismatch/,
+  );
+});
+
+test('verify-cos-assets is the network-backed evidence generator for HEAD, Range and full SHA', async () => {
+  const bodies = new Map([
+    ['/manual-mac.zip', Buffer.from('mac-manual-payload')],
+    ['/manual-win.exe', Buffer.from('windows-manual-payload')],
+  ]);
+  const server = createServer((request, response) => {
+    const body = bodies.get(request.url);
+    if (!body) {
+      response.writeHead(404).end();
+      return;
+    }
+    response.setHeader('content-length', body.length);
+    if (request.headers.range) {
+      const end = body.length - 1;
+      response.writeHead(206, { 'content-range': `bytes 0-${end}/${body.length}` });
+      response.end(body);
+      return;
+    }
+    response.writeHead(200);
+    response.end(request.method === 'HEAD' ? undefined : body);
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  try {
+    const { port } = server.address();
+    const authority = {
+      schemaVersion: 1,
+      version: '0.993.1',
+      baseUrl: `http://127.0.0.1:${port}`,
+      sequencing: 'manual-payloads-only',
+      objects: [...bodies.entries()].map(([key, body], index) => ({
+        order: index + 1,
+        phase: 'payload',
+        key: key.slice(1),
+        bytes: body.length,
+        sha256: createHash('sha256').update(body).digest('hex'),
+      })),
+    };
+    const ledger = {
+      schemaVersion: 1,
+      version: authority.version,
+      baseUrl: authority.baseUrl,
+      sequencing: authority.sequencing,
+      authoritySha256: cosAuthoritySha256(authority),
+      objects: authority.objects.map((object, index) => ({
+        order: object.order,
+        phase: object.phase,
+        key: object.key,
+        uploadStatus: 'PASS',
+        uploadedAt: `2026-01-01T00:00:0${index + 1}.000Z`,
+      })),
+      uploadCompletedAt: '2026-01-01T00:00:03.000Z',
+    };
+    const fixtureRoot = mkdtempSync(join(tmpdir(), 'ocupath-cos-verifier-test-'));
+    const authorityPath = join(fixtureRoot, 'authority.json');
+    const ledgerPath = join(fixtureRoot, 'ledger.json');
+    writeFileSync(authorityPath, `${JSON.stringify(authority, null, 2)}\n`);
+    writeFileSync(ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
+    const { stdout } = await execFileAsync(process.execPath, [verifierPath, authorityPath, ledgerPath]);
+    const generated = JSON.parse(stdout);
+    assert.equal(generated.status, 'PASS');
+    assert.equal(generated.generatedBy, 'scripts/verify-cos-assets.mjs');
+    assert.equal(generated.uploadLedgerSha256, cosUploadLedgerSha256(ledger));
+    assert.equal(validateCosEvidence(authority, generated, ledger).status, 'GREEN');
+    assert.deepEqual(generated.objects.map((object) => object.rangeStatus), [206, 206]);
+  } finally {
+    await new Promise((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())));
+  }
 });

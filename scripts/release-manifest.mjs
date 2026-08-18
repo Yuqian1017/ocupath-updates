@@ -159,6 +159,31 @@ export function validateReleaseManifest(manifest, { requireFinal = true } = {}) 
   };
 }
 
+export function validateWebsitePublicationManifest(manifest) {
+  const base = validateReleaseManifest(manifest, { requireFinal: false });
+  const requiredPaths = new Set([
+    'releaseDate',
+    'release.draftReleaseId',
+    'assets.macManual.sizeBytes',
+    'assets.macManual.sha256',
+    'assets.windowsInstaller.sizeBytes',
+    'assets.windowsInstaller.sha256',
+    'assets.windowsInstaller.sha512',
+    'assets.guideEn.sizeBytes',
+    'assets.guideEn.sha256',
+    'assets.guideZh.sizeBytes',
+    'assets.guideZh.sha256',
+  ]);
+  const websitePending = base.pending.filter((path) => requiredPaths.has(path));
+  const failures = [...base.failures];
+  if (websitePending.length > 0) failures.push(`pending website publication fields: ${websitePending.join(', ')}`);
+  return {
+    status: failures.length === 0 ? 'GREEN' : 'RED_STOP_LINE',
+    failures,
+    pending: websitePending,
+  };
+}
+
 export function loadReleaseManifest(pathOrUrl, options) {
   const source = pathOrUrl || process.env.OCUPATH_RELEASE_STAGING_MANIFEST || DEFAULT_STAGING_MANIFEST_URL;
   const manifest = JSON.parse(readFileSync(source, 'utf8'));
@@ -180,6 +205,13 @@ export function findPendingFields(value) {
 export function requireExactCommitSha(value, label = 'commit SHA') {
   if (typeof value !== 'string' || !/^[a-f0-9]{40}$/.test(value)) {
     throw new Error(`${label} must be an externally supplied exact 40-char lowercase SHA`);
+  }
+  return value;
+}
+
+export function requirePublicationBranch(value) {
+  if (typeof value !== 'string' || !/^release\/[a-z0-9][a-z0-9._/-]*$/.test(value)) {
+    throw new Error('OCUPATH_RELEASE_BRANCH must be an explicit release/* branch name');
   }
   return value;
 }

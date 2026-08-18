@@ -4,6 +4,7 @@ import test from 'node:test';
 import { evaluatePrepublishGate } from '../scripts/prepublish-gate.mjs';
 
 const targetSha = '1'.repeat(40);
+const publicationBranch = 'release/09931-production-publish-20260818';
 
 const exactAssets = {
   'OcupathIF-0.993.1-arm64-mac-standalone.zip': {
@@ -38,10 +39,15 @@ function greenState(overrides = {}) {
     expectedRollbackVersion: '0.992.1',
     expectedTagName: 'v0.993.1',
     expectedTargetCommitSha: targetSha,
+    expectedPublicationBranch: publicationBranch,
+    localHeadSha: targetSha,
+    localWorktreeClean: true,
+    localBranch: publicationBranch,
+    remotePublicationBranchSha: targetSha,
     expectedAssets: exactAssets,
     rollbackAuthority: { status: 'GREEN', failures: [] },
-    cosEvidence: { status: 'GREEN', failures: [] },
-    macTwoLegTransaction: 'PASS',
+    liveRollbackState: { status: 'GREEN', failures: [] },
+    manualCosEvidence: { status: 'GREEN', failures: [] },
     windowsEvidence: { status: 'GREEN', failures: [], proofLabel: 'baseline-reused', nativeExact: false },
     ...overrides,
   };
@@ -53,8 +59,7 @@ test('blocks an incomplete draft before any publication mutation', () => {
       ...greenState().release,
       assets: greenState().release.assets.filter((asset) => asset.name !== 'OcupathIF-0.993.1-arm64-mac-standalone.zip'),
     },
-    cosEvidence: { status: 'RED_STOP_LINE', failures: ['not-run'] },
-    macTwoLegTransaction: 'not-run',
+    manualCosEvidence: { status: 'RED_STOP_LINE', failures: ['not-run'] },
     windowsEvidence: { status: 'RED_STOP_LINE', failures: ['missing'] },
   });
 
@@ -64,8 +69,7 @@ test('blocks an incomplete draft before any publication mutation', () => {
   assert.deepEqual(result.failures, [
     'release asset count mismatch: 3/4',
     'missing release asset: OcupathIF-0.993.1-arm64-mac-standalone.zip',
-    'COS six-object evidence: not-run',
-    'Mac two-leg updater transaction: not-run',
+    'COS manual payload evidence: not-run',
     'Windows durable evidence: missing',
   ]);
 });
@@ -80,6 +84,13 @@ test('rejects stale rendered publication files', () => {
 test('rejects a tag created before the gate opens', () => {
   const result = evaluatePrepublishGate(greenState({ remoteTagPresent: true }));
   assert.deepEqual(result.failures, ['remote tag already exists before publication: v0.993.1']);
+});
+
+test('rejects rollback capture-to-cutover drift before any mutation', () => {
+  const result = evaluatePrepublishGate(greenState({
+    liveRollbackState: { status: 'RED_STOP_LINE', failures: ['ocupathif/latest.json drifted'] },
+  }));
+  assert.deepEqual(result.failures, ['live rollback recheck: ocupathif/latest.json drifted']);
 });
 
 test('rejects a same-name asset with different bytes', () => {
@@ -113,7 +124,11 @@ test('requires the durable Windows evidence verdict instead of a naked status bo
 });
 
 test('website publication does not wait for the parallel Baidu lane', () => {
-  const result = evaluatePrepublishGate(greenState({ baiduAtomicPromotion: 'in-progress' }));
+  const result = evaluatePrepublishGate(greenState({
+    baiduAtomicPromotion: 'in-progress',
+    cosEvidence: { status: 'RED_STOP_LINE', failures: ['updater payloads not uploaded'] },
+    macTwoLegTransaction: 'not-run',
+  }));
   assert.deepEqual(result, { status: 'GREEN', failures: [] });
 });
 
@@ -126,6 +141,21 @@ test('rejects a mutable or different GitHub target', () => {
   state.release.targetCommitish = 'main';
   assert.deepEqual(evaluatePrepublishGate(state).failures, [
     'release target SHA mismatch: main',
+  ]);
+});
+
+test('binds the external target SHA to local HEAD and the exact remote publication branch', () => {
+  assert.deepEqual(evaluatePrepublishGate(greenState({ localHeadSha: '2'.repeat(40) })).failures, [
+    `local HEAD SHA mismatch: ${'2'.repeat(40)}`,
+  ]);
+  assert.deepEqual(evaluatePrepublishGate(greenState({ localBranch: 'main' })).failures, [
+    'local publication branch mismatch: main',
+  ]);
+  assert.deepEqual(evaluatePrepublishGate(greenState({ localWorktreeClean: false })).failures, [
+    'local updates worktree is dirty',
+  ]);
+  assert.deepEqual(evaluatePrepublishGate(greenState({ remotePublicationBranchSha: '3'.repeat(40) })).failures, [
+    `remote publication branch SHA mismatch: ${'3'.repeat(40)}`,
   ]);
 });
 

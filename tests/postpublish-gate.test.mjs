@@ -7,6 +7,7 @@ import {
 } from '../scripts/postpublish-gate.mjs';
 
 const targetSha = '1'.repeat(40);
+const publicationBranch = 'release/09931-production-publish-20260818';
 const exactAssets = {
   'OcupathIF-0.993.1-arm64-mac-standalone.zip': {
     size: 101,
@@ -66,6 +67,11 @@ function greenState(overrides = {}) {
     },
     expectedTagName: 'v0.993.1',
     expectedTargetCommitSha: targetSha,
+    expectedPublicationBranch: publicationBranch,
+    localHeadSha: targetSha,
+    localWorktreeClean: true,
+    localBranch: publicationBranch,
+    remotePublicationBranchSha: targetSha,
     remoteTagCommitSha: targetSha,
     expectedAssets: exactAssets,
     liveManualPublication: {
@@ -231,6 +237,13 @@ test('rejects release target or remote tag drift from the external exact SHA', (
   const tagWrong = greenState({ remoteTagCommitSha: '2'.repeat(40) });
   assert.deepEqual(evaluatePostpublishGate(tagWrong).failures, [
     `remote tag commit SHA mismatch: ${'2'.repeat(40)}`,
+  ]);
+});
+
+test('postpublish retains local HEAD and remote publication branch binding before checking the tag', () => {
+  const state = greenState({ remotePublicationBranchSha: '4'.repeat(40) });
+  assert.deepEqual(evaluatePostpublishGate(state).failures, [
+    `remote publication branch SHA mismatch: ${'4'.repeat(40)}`,
   ]);
 });
 

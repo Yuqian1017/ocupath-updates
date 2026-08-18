@@ -4,6 +4,8 @@ import test from 'node:test';
 
 import {
   DEFAULT_ROLLBACK_AUTHORITY_URL,
+  rollbackStepUrl,
+  validateLiveRollbackState,
   validateRollbackAuthority,
 } from '../scripts/rollback-authority.mjs';
 
@@ -47,4 +49,25 @@ test('rollback authority rejects noncanonical capture time and live source drift
   const origin = structuredClone(authority);
   origin.origins.cos = 'https://example.invalid';
   assert.match(validateRollbackAuthority(origin).failures.join('\n'), /COS origin mismatch/);
+});
+
+test('pre-mutation live rollback recheck detects capture-to-cutover drift and Windows feed appearance', () => {
+  const observations = authority.restoreSteps.map((step) => ({
+    url: rollbackStepUrl(authority, step),
+    httpStatus: step.expectedHttpStatus,
+    bytes: step.bytes,
+    sha256: step.sha256,
+  }));
+  assert.deepEqual(validateLiveRollbackState(authority, observations), {
+    status: 'GREEN',
+    failures: [],
+  });
+
+  const drift = structuredClone(observations);
+  drift[4].sha256 = 'f'.repeat(64);
+  assert.match(validateLiveRollbackState(authority, drift).failures.join('\n'), /latest.json/);
+
+  const windowsAppeared = structuredClone(observations);
+  windowsAppeared[3].httpStatus = 200;
+  assert.match(validateLiveRollbackState(authority, windowsAppeared).failures.join('\n'), /win32-x64/);
 });

@@ -1,4 +1,6 @@
 import { readFileSync } from 'node:fs';
+import { resolve, sep } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { findPendingFields } from './release-manifest.mjs';
 
@@ -9,10 +11,58 @@ export const DEFAULT_WINDOWS_EVIDENCE_URL = new URL(
 
 const EXPECTED_BUILD_REVIEW_SHA = 'a0346b68190747cb15880a84bcb23c6e90eecae4';
 const EXPECTED_PRODUCT_BEHAVIOR_SHA = '630d3a3472e6f7680cd54ed4d39413c5649d01e4';
-const EXPECTED_CONTROLLER_EVIDENCE_REF = 'https://github.com/Yuqian1017/ocupath/actions/runs/32106608240/job/95617238460';
-const EXPECTED_FIXED_SHA_CI_RUN_URL = 'https://github.com/Yuqian1017/ocupath/actions/runs/32106608240';
+const EXPECTED_CI_REPOSITORY = 'Yuqian1017/ocupathif_new';
+const EXPECTED_CI_RUN_ID = 32106608240;
+const EXPECTED_CI_JOB_ID = 95617238460;
+const EXPECTED_CONTROLLER_EVIDENCE_REF = `https://github.com/${EXPECTED_CI_REPOSITORY}/actions/runs/${EXPECTED_CI_RUN_ID}/job/${EXPECTED_CI_JOB_ID}`;
+const EXPECTED_FIXED_SHA_CI_RUN_URL = `https://github.com/${EXPECTED_CI_REPOSITORY}/actions/runs/${EXPECTED_CI_RUN_ID}`;
+const DEFAULT_EVIDENCE_BASE_DIR = fileURLToPath(new URL('../', import.meta.url));
 
-export function validateWindowsEvidence(evidence, manifest, { phase = 'prepublish' } = {}) {
+function validatePostEvidenceRef(ref, post, target, { evidenceBaseDir, evidenceUrlExists }) {
+  const failures = [];
+  if (typeof ref !== 'string' || ref.trim() === '') return ['Windows post-publication evidenceRef is required'];
+  if (ref.startsWith('https://')) {
+    const allowed = /^https:\/\/github\.com\/Yuqian1017\/ocupathif_new\/actions\/runs\/\d+(?:\/(?:job|artifacts)\/\d+)?$/.test(ref);
+    if (!allowed) return ['Windows post-publication evidenceRef URL is not an allowed OcuPathIF evidence URL'];
+    if (typeof evidenceUrlExists !== 'function' || evidenceUrlExists(ref) !== true) {
+      failures.push('Windows post-publication evidenceRef URL was not verified as reachable');
+    }
+    return failures;
+  }
+  if (ref.startsWith('/') || !ref.startsWith('release-evidence/')) {
+    return ['Windows post-publication evidenceRef must be a release-evidence JSON path'];
+  }
+  const root = resolve(evidenceBaseDir);
+  const evidenceRoot = resolve(root, 'release-evidence');
+  const artifactPath = resolve(root, ref);
+  if (!artifactPath.startsWith(`${evidenceRoot}${sep}`)) {
+    return ['Windows post-publication evidenceRef escapes the evidence root'];
+  }
+  try {
+    const artifact = JSON.parse(readFileSync(artifactPath, 'utf8'));
+    if (
+      artifact?.schemaVersion !== 1
+      || artifact?.sourceVersion !== post.sourceVersion
+      || artifact?.targetVersion !== post.targetVersion
+      || artifact?.installerSha256 !== target.installerSha256
+      || artifact?.liveFeedStatus !== post.liveFeedStatus
+      || artifact?.manualPageStatus !== post.manualPageStatus
+      || artifact?.exactInstallerBytesStatus !== post.exactInstallerBytesStatus
+      || artifact?.evidenceLevel !== post.evidenceLevel
+    ) {
+      failures.push('Windows post-publication evidenceRef JSON does not match the claimed evidence');
+    }
+  } catch (error) {
+    failures.push(`Windows post-publication evidenceRef JSON is unavailable or invalid: ${error.message}`);
+  }
+  return failures;
+}
+
+export function validateWindowsEvidence(evidence, manifest, {
+  phase = 'prepublish',
+  evidenceBaseDir = DEFAULT_EVIDENCE_BASE_DIR,
+  evidenceUrlExists,
+} = {}) {
   const failures = [];
   const target = evidence?.target ?? {};
   const source = evidence?.source ?? {};
@@ -66,6 +116,9 @@ export function validateWindowsEvidence(evidence, manifest, { phase = 'prepublis
   if (
     ci.status !== 'PASS'
     || ci.productSourceCommitSha !== target.productSourceCommitSha
+    || ci.repository !== EXPECTED_CI_REPOSITORY
+    || ci.runId !== EXPECTED_CI_RUN_ID
+    || ci.jobId !== EXPECTED_CI_JOB_ID
     || ci.runUrl !== EXPECTED_FIXED_SHA_CI_RUN_URL
     || ci.installerSha256 !== target.installerSha256
     || ci.sourceBoundaryStatus !== 'PASS'
@@ -101,6 +154,10 @@ export function validateWindowsEvidence(evidence, manifest, { phase = 'prepublis
     ) {
       failures.push('Windows post-publication reachability evidence mismatch');
     }
+    failures.push(...validatePostEvidenceRef(post.evidenceRef, post, target, {
+      evidenceBaseDir,
+      evidenceUrlExists,
+    }));
   }
 
   return {
@@ -109,6 +166,56 @@ export function validateWindowsEvidence(evidence, manifest, { phase = 'prepublis
     proofLabel: evidence?.proofLabel,
     nativeExact: evidence?.nativeExact,
   };
+}
+
+export function validateWindowsCiApiState(evidence, apiState) {
+  const failures = [];
+  const targetSha = evidence?.target?.productSourceCommitSha;
+  const run = apiState?.run ?? {};
+  const job = apiState?.job ?? {};
+  if (
+    run.id !== EXPECTED_CI_RUN_ID
+    || run.repository?.full_name !== EXPECTED_CI_REPOSITORY
+    || run.head_repository?.full_name !== EXPECTED_CI_REPOSITORY
+    || run.head_sha !== targetSha
+    || run.status !== 'completed'
+    || run.conclusion !== 'success'
+    || run.path !== '.github/workflows/build-windows.yml'
+    || run.name !== 'Build Windows Standalone'
+  ) {
+    failures.push('Windows CI run API identity/provenance mismatch');
+  }
+  if (
+    job.id !== EXPECTED_CI_JOB_ID
+    || job.run_id !== EXPECTED_CI_RUN_ID
+    || job.head_sha !== targetSha
+    || job.status !== 'completed'
+    || job.conclusion !== 'success'
+    || job.name !== 'build-win'
+    || job.html_url !== EXPECTED_CONTROLLER_EVIDENCE_REF
+  ) {
+    failures.push('Windows CI job API identity/provenance mismatch');
+  }
+  const stepConclusions = new Map((job.steps ?? []).map((step) => [step.name, step.conclusion]));
+  const requiredPassSteps = [
+    'Run standalone builder tests',
+    'Verify canonical embedded build provenance',
+    'Verify bundled runtime contract',
+    'Build Windows installer',
+    'Scan final NSIS payload and extracted app.asar',
+    'Validate Windows direct-update metadata and bytes',
+    'Upload Windows installer zip',
+  ];
+  for (const step of requiredPassSteps) {
+    if (stepConclusions.get(step) !== 'success') failures.push(`Windows CI required step is not success: ${step}`);
+  }
+  if (stepConclusions.get('Verify Authenticode for direct-update installer') !== 'skipped') {
+    failures.push('Windows CI Authenticode step must remain explicitly skipped');
+  }
+  if (stepConclusions.get('Upload Windows direct-update assets') !== 'skipped') {
+    failures.push('Windows CI direct-update upload step must remain explicitly skipped');
+  }
+  return { status: failures.length === 0 ? 'GREEN' : 'RED_STOP_LINE', failures };
 }
 
 export function loadWindowsEvidence(pathOrUrl, manifest, options) {

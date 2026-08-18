@@ -46,6 +46,16 @@ export function evaluatePrepublishGate(state) {
   if (state.publicationFilesCurrent !== true) {
     failures.push('rendered publication files do not match the frozen staging manifest');
   }
+  if (state.localHeadSha !== state.expectedTargetCommitSha) {
+    failures.push(`local HEAD SHA mismatch: ${state.localHeadSha ?? 'missing'}`);
+  }
+  if (state.localWorktreeClean !== true) failures.push('local updates worktree is dirty');
+  if (state.localBranch !== state.expectedPublicationBranch) {
+    failures.push(`local publication branch mismatch: ${state.localBranch ?? 'missing'}`);
+  }
+  if (state.remotePublicationBranchSha !== state.expectedTargetCommitSha) {
+    failures.push(`remote publication branch SHA mismatch: ${state.remotePublicationBranchSha ?? 'missing'}`);
+  }
   if (release.draft !== true) failures.push('release is not a draft');
   if (release.tagName !== state.expectedTagName) {
     failures.push(`release tag mismatch: ${release.tagName ?? 'missing'}`);
@@ -62,13 +72,13 @@ export function evaluatePrepublishGate(state) {
   if (state.rollbackAuthority?.status !== 'GREEN') {
     failures.push(`rollback authority: ${state.rollbackAuthority?.failures?.join('; ') || 'missing'}`);
   }
+  if (state.liveRollbackState?.status !== 'GREEN') {
+    failures.push(`live rollback recheck: ${state.liveRollbackState?.failures?.join('; ') || 'missing'}`);
+  }
 
   failures.push(...exactReleaseAssetFailures(release, state.expectedAssets));
-  if (state.cosEvidence?.status !== 'GREEN') {
-    failures.push(`COS six-object evidence: ${state.cosEvidence?.failures?.join('; ') || 'missing'}`);
-  }
-  if (state.macTwoLegTransaction !== 'PASS') {
-    failures.push(`Mac two-leg updater transaction: ${state.macTwoLegTransaction}`);
+  if (state.manualCosEvidence?.status !== 'GREEN') {
+    failures.push(`COS manual payload evidence: ${state.manualCosEvidence?.failures?.join('; ') || 'missing'}`);
   }
   if (state.windowsEvidence?.status !== 'GREEN') {
     failures.push(`Windows durable evidence: ${state.windowsEvidence?.failures?.join('; ') || 'missing'}`);

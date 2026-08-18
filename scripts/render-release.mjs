@@ -3,20 +3,28 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-import { buildCosAuthority } from './cos-publication.mjs';
+import { buildCosAuthority, buildManualCosAuthority } from './cos-publication.mjs';
 import {
   DEFAULT_STAGING_MANIFEST_URL,
   formatGigabytes,
   loadReleaseManifest,
   releaseUrls,
+  validateWebsitePublicationManifest,
 } from './release-manifest.mjs';
 
 const args = new Set(process.argv.slice(2));
 const allowPending = args.has('--allow-pending');
 const checkOnly = args.has('--check');
+const websiteOnly = args.has('--website-only');
 const positional = process.argv.slice(2).find((arg) => !arg.startsWith('--'));
 const manifestSource = positional ? resolve(positional) : DEFAULT_STAGING_MANIFEST_URL;
-const manifest = loadReleaseManifest(manifestSource, { requireFinal: !allowPending });
+const manifest = loadReleaseManifest(manifestSource, { requireFinal: !allowPending && !websiteOnly });
+if (websiteOnly) {
+  const websiteValidation = validateWebsitePublicationManifest(manifest);
+  if (websiteValidation.status !== 'GREEN') {
+    throw new Error(`Website publication manifest is not publishable:\n- ${websiteValidation.failures.join('\n- ')}`);
+  }
+}
 const urls = releaseUrls(manifest);
 const root = new URL('../', import.meta.url);
 
@@ -85,17 +93,23 @@ outputs.set(new URL('ocupathif/latest.json', root), `${JSON.stringify({
   },
 }, null, 2)}\n`);
 outputs.set(
-  new URL('ocupathif/direct/darwin-arm64/latest-mac.yml', root),
-  macFeedBody,
+  new URL('release-manifests/v0.993.1-manual-cos-authority.json', root),
+  `${JSON.stringify(buildManualCosAuthority(manifest), null, 2)}\n`,
 );
 outputs.set(
   new URL('ocupathif/direct/win32-x64/latest.yml', root),
   windowsFeedBody,
 );
-outputs.set(
-  new URL('release-manifests/v0.993.1-cos-authority.json', root),
-  `${JSON.stringify(buildCosAuthority(manifest, { darwinArm64: macFeedBody }), null, 2)}\n`,
-);
+if (!websiteOnly) {
+  outputs.set(
+    new URL('ocupathif/direct/darwin-arm64/latest-mac.yml', root),
+    macFeedBody,
+  );
+  outputs.set(
+    new URL('release-manifests/v0.993.1-cos-authority.json', root),
+    `${JSON.stringify(buildCosAuthority(manifest, { darwinArm64: macFeedBody }), null, 2)}\n`,
+  );
+}
 
 const mismatches = [];
 for (const [target, content] of outputs) {
@@ -115,4 +129,4 @@ for (const [target, content] of outputs) {
 if (mismatches.length > 0) {
   throw new Error(`Generated publication files are stale:\n- ${mismatches.join('\n- ')}`);
 }
-process.stdout.write(`${checkOnly ? 'checked' : 'rendered'} ${outputs.size} publication files from ${manifest.version} staging manifest${allowPending ? ' (pending allowed)' : ''}\n`);
+process.stdout.write(`${checkOnly ? 'checked' : 'rendered'} ${outputs.size} ${websiteOnly ? 'website ' : ''}publication files from ${manifest.version} staging manifest${allowPending ? ' (pending allowed)' : ''}\n`);

@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
 import {
-  buildCosAuthority,
+  buildManualCosAuthority,
   loadCosEvidence,
+  loadCosUploadLedger,
   validateCosEvidence,
 } from './cos-publication.mjs';
 import { evaluatePrepublishGate } from './prepublish-gate.mjs';
@@ -14,16 +15,20 @@ import {
   DEFAULT_STAGING_MANIFEST_URL,
   loadReleaseManifest,
   requireExactCommitSha,
+  requirePublicationBranch,
+  validateWebsitePublicationManifest,
 } from './release-manifest.mjs';
-import { loadRollbackAuthority } from './rollback-authority.mjs';
-import { loadWindowsEvidence } from './windows-evidence.mjs';
+import {
+  loadRollbackAuthority,
+  rollbackStepUrl,
+  validateLiveRollbackState,
+} from './rollback-authority.mjs';
+import { loadWindowsEvidence, validateWindowsCiApiState } from './windows-evidence.mjs';
 
-function run(command, args) {
-  return execFileSync(command, args, { encoding: 'utf8' }).trim();
-}
+const repoRoot = fileURLToPath(new URL('../', import.meta.url));
 
-function inputStatus(name, fallback) {
-  return process.env[name] || fallback;
+function run(command, args, options = {}) {
+  return execFileSync(command, args, { encoding: 'utf8', ...options }).trim();
 }
 
 function expectedReleaseAssets(manifest) {
@@ -47,34 +52,87 @@ function stopForConfiguration(error) {
   process.exitCode = 2;
 }
 
+function remoteBranchSha(branch) {
+  const output = run('git', [
+    'ls-remote', '--heads', 'origin', `refs/heads/${branch}`,
+  ], { cwd: repoRoot });
+  if (!output) return undefined;
+  const [sha, ref] = output.split(/\s+/);
+  if (ref !== `refs/heads/${branch}`) return undefined;
+  return sha;
+}
+
+function liveRollbackObservations(authority) {
+  return authority.restoreSteps.map((step) => {
+    const url = rollbackStepUrl(authority, step);
+    const response = execFileSync('curl', [
+      '--silent', '--show-error', '--location', '--write-out', '\n%{http_code}', url,
+    ]);
+    const separator = response.lastIndexOf(10);
+    const body = response.subarray(0, separator);
+    return {
+      url,
+      httpStatus: Number(response.subarray(separator + 1).toString()),
+      bytes: body.length,
+      sha256: createHash('sha256').update(body).digest('hex'),
+    };
+  });
+}
+
 try {
   const manifestSource = process.env.OCUPATH_RELEASE_STAGING_MANIFEST || DEFAULT_STAGING_MANIFEST_URL;
-  const manifest = loadReleaseManifest(manifestSource);
+  const manifest = loadReleaseManifest(manifestSource, { requireFinal: false });
+  const websiteManifest = validateWebsitePublicationManifest(manifest);
+  if (websiteManifest.status !== 'GREEN') {
+    throw new Error(`Website publication manifest is not publishable:\n- ${websiteManifest.failures.join('\n- ')}`);
+  }
   const expectedTargetCommitSha = requireExactCommitSha(
     process.env.OCUPATH_RELEASE_TARGET_SHA,
     'OCUPATH_RELEASE_TARGET_SHA',
   );
+  const expectedPublicationBranch = requirePublicationBranch(process.env.OCUPATH_RELEASE_BRANCH);
   const manifestPath = manifestSource instanceof URL ? fileURLToPath(manifestSource) : manifestSource;
   run(process.execPath, [
     fileURLToPath(new URL('./render-release.mjs', import.meta.url)),
     manifestPath,
+    '--website-only',
     '--check',
   ]);
-  const macFeedBody = readFileSync(
-    new URL('../ocupathif/direct/darwin-arm64/latest-mac.yml', import.meta.url),
-    'utf8',
+  const manualCosAuthority = buildManualCosAuthority(manifest);
+  const manualCosUploadLedger = loadCosUploadLedger(
+    process.env.OCUPATH_MANUAL_COS_UPLOAD_LEDGER_JSON,
+    'OCUPATH_MANUAL_COS_UPLOAD_LEDGER_JSON',
   );
-  const cosAuthority = buildCosAuthority(manifest, { darwinArm64: macFeedBody });
-  const cosEvidence = validateCosEvidence(
-    cosAuthority,
-    loadCosEvidence(process.env.OCUPATH_COS_EVIDENCE_JSON),
+  const manualCosEvidence = validateCosEvidence(
+    manualCosAuthority,
+    loadCosEvidence(
+      process.env.OCUPATH_MANUAL_COS_EVIDENCE_JSON,
+      'OCUPATH_MANUAL_COS_EVIDENCE_JSON',
+    ),
+    manualCosUploadLedger,
   );
-  const windowsEvidence = loadWindowsEvidence(
+  const windowsLoaded = loadWindowsEvidence(
     process.env.OCUPATH_WINDOWS_EVIDENCE_JSON,
     manifest,
     { phase: 'prepublish' },
-  ).result;
-  const rollbackAuthority = loadRollbackAuthority().result;
+  );
+  const windowsCiApi = validateWindowsCiApiState(windowsLoaded.evidence, {
+    run: JSON.parse(run('gh', ['api', 'repos/Yuqian1017/ocupathif_new/actions/runs/32106608240'])),
+    job: JSON.parse(run('gh', ['api', 'repos/Yuqian1017/ocupathif_new/actions/jobs/95617238460'])),
+  });
+  const windowsEvidence = {
+    ...windowsLoaded.result,
+    status: windowsLoaded.result.status === 'GREEN' && windowsCiApi.status === 'GREEN'
+      ? 'GREEN'
+      : 'RED_STOP_LINE',
+    failures: [...windowsLoaded.result.failures, ...windowsCiApi.failures],
+  };
+  const rollback = loadRollbackAuthority();
+  const rollbackAuthority = rollback.result;
+  const liveRollbackState = validateLiveRollbackState(
+    rollback.authority,
+    liveRollbackObservations(rollback.authority),
+  );
 
   const release = JSON.parse(run('gh', [
     'api',
@@ -85,7 +143,7 @@ try {
     '--tags',
     'origin',
     manifest.release.tagName,
-  ]) !== '';
+  ], { cwd: repoRoot }) !== '';
   const liveManifest = JSON.parse(run('curl', [
     '--fail',
     '--silent',
@@ -96,6 +154,10 @@ try {
 
   const state = {
     publicationFilesCurrent: true,
+    localHeadSha: run('git', ['rev-parse', 'HEAD'], { cwd: repoRoot }),
+    localWorktreeClean: run('git', ['status', '--porcelain'], { cwd: repoRoot }) === '',
+    localBranch: run('git', ['branch', '--show-current'], { cwd: repoRoot }),
+    remotePublicationBranchSha: remoteBranchSha(expectedPublicationBranch),
     release: {
       draft: release.draft,
       tagName: release.tag_name,
@@ -112,10 +174,11 @@ try {
     expectedRollbackVersion: manifest.previousLiveVersion,
     expectedTagName: manifest.release.tagName,
     expectedTargetCommitSha,
+    expectedPublicationBranch,
     expectedAssets: expectedReleaseAssets(manifest),
     rollbackAuthority,
-    cosEvidence,
-    macTwoLegTransaction: inputStatus('OCUPATH_MAC_TWO_LEG_TRANSACTION', 'not-run'),
+    liveRollbackState,
+    manualCosEvidence,
     windowsEvidence,
   };
 

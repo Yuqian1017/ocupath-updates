@@ -7,16 +7,37 @@ import { Readable } from 'node:stream';
 import { basename, join } from 'node:path';
 import { tmpdir } from 'node:os';
 
+import {
+  cosAuthoritySha256,
+  cosUploadLedgerSha256,
+  validateCosEvidence,
+  validateCosUploadLedger,
+} from './cos-publication.mjs';
+
 const authorityPath = process.argv[2];
-if (!authorityPath) throw new Error('Usage: verify-cos-assets.mjs <COS_UPLOAD_AUTHORITY.json>');
+const uploadLedgerPath = process.argv[3];
+if (!authorityPath || !uploadLedgerPath) {
+  throw new Error('Usage: verify-cos-assets.mjs <COS_AUTHORITY.json> <COS_UPLOAD_LEDGER.json>');
+}
 
 const authority = JSON.parse(readFileSync(authorityPath, 'utf8'));
+const uploadLedger = JSON.parse(readFileSync(uploadLedgerPath, 'utf8'));
+const ledgerResult = validateCosUploadLedger(authority, uploadLedger);
+if (ledgerResult.status !== 'GREEN') {
+  throw new Error(`COS upload ledger is invalid:\n- ${ledgerResult.failures.join('\n- ')}`);
+}
 const results = [];
 
-for (const object of authority.objects) {
+for (const [index, object] of authority.objects.entries()) {
   const encodedKey = object.key.split('/').map(encodeURIComponent).join('/');
   const url = `${authority.baseUrl}/${encodedKey}`;
-  const result = { key: object.key, expectedBytes: object.bytes, expectedSha256: object.sha256 };
+  const ledgerObject = uploadLedger.objects[index];
+  const result = {
+    ...object,
+    uploadStatus: ledgerObject.uploadStatus,
+    uploadedAt: ledgerObject.uploadedAt,
+    verifyStatus: 'FAIL',
+  };
   try {
     const head = await fetch(url, { method: 'HEAD', redirect: 'follow' });
     result.headStatus = head.status;
@@ -34,7 +55,7 @@ for (const object of authority.objects) {
       throw new Error(`Range ${range.status}; bytes ${rangeBytes.length}`);
     }
 
-    const target = join(tmpdir(), `ocupath-cos-verify-${process.pid}-${basename(object.key)}`);
+    const target = join(tmpdir(), `ocupath-cos-verify-${process.pid}-${index}-${basename(object.key)}`);
     const response = await fetch(url, { redirect: 'follow' });
     if (!response.ok || !response.body) throw new Error(`GET ${response.status}`);
     const output = createWriteStream(target, { flags: 'wx' });
@@ -49,21 +70,30 @@ for (const object of authority.objects) {
     await finished(output);
     result.fullBytes = bytes;
     result.fullSha256 = hash.digest('hex');
-    result.status = bytes === object.bytes && result.fullSha256 === object.sha256 ? 'PASS' : 'FAIL';
+    result.verifyStatus = bytes === object.bytes && result.fullSha256 === object.sha256 ? 'PASS' : 'FAIL';
     if (statSync(target).size !== bytes) throw new Error('temporary stream size mismatch');
     await import('node:fs/promises').then(({ unlink }) => unlink(target));
   } catch (error) {
-    result.status = 'FAIL';
+    result.verifyStatus = 'FAIL';
     result.error = error instanceof Error ? error.message : String(error);
   }
   results.push(result);
 }
 
 const output = {
-  schemaVersion: 1,
+  schemaVersion: 2,
+  generatedBy: 'scripts/verify-cos-assets.mjs',
+  authoritySha256: cosAuthoritySha256(authority),
+  uploadLedgerSha256: cosUploadLedgerSha256(uploadLedger),
+  version: authority.version,
   baseUrl: authority.baseUrl,
-  status: results.every((result) => result.status === 'PASS') ? 'PASS' : 'RED_STOP_LINE',
-  results,
+  sequencing: authority.sequencing,
+  uploadCompletedAt: uploadLedger.uploadCompletedAt,
+  verificationCompletedAt: new Date().toISOString(),
+  objects: results,
 };
+const validated = validateCosEvidence(authority, output, uploadLedger);
+output.status = validated.status === 'GREEN' ? 'PASS' : 'RED_STOP_LINE';
+output.failures = validated.failures;
 process.stdout.write(`${JSON.stringify(output, null, 2)}\n`);
 if (output.status !== 'PASS') process.exitCode = 2;

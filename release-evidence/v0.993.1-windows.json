@@ -23,12 +23,15 @@
     "total": 11,
     "productSourceCommitSha": "a0346b68190747cb15880a84bcb23c6e90eecae4",
     "productBehaviorCommitSha": "630d3a3472e6f7680cd54ed4d39413c5649d01e4",
-    "evidenceRef": "https://github.com/Yuqian1017/ocupath/actions/runs/32106608240/job/95617238460"
+    "evidenceRef": "https://github.com/Yuqian1017/ocupathif_new/actions/runs/32106608240/job/95617238460"
   },
   "fixedShaCi": {
     "status": "PASS",
     "productSourceCommitSha": "a0346b68190747cb15880a84bcb23c6e90eecae4",
-    "runUrl": "https://github.com/Yuqian1017/ocupath/actions/runs/32106608240",
+    "repository": "Yuqian1017/ocupathif_new",
+    "runId": 32106608240,
+    "jobId": 95617238460,
+    "runUrl": "https://github.com/Yuqian1017/ocupathif_new/actions/runs/32106608240",
     "installerSha256": "58e48850399c377457819b5294539b9fdea0164da13d4ee0a1cc2cb030cabeeb",
     "sourceBoundaryStatus": "PASS",
     "provenanceStatus": "PASS",

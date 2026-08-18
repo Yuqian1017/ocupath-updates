@@ -23,6 +23,34 @@ function sha256(body) {
   return createHash('sha256').update(body).digest('hex');
 }
 
+export function rollbackStepUrl(authority, step) {
+  const origin = authority?.origins?.[step.surface];
+  if (!origin) throw new Error(`rollback origin missing for ${step.surface}`);
+  return `${origin}/${step.key}`;
+}
+
+export function validateLiveRollbackState(authority, observations) {
+  const failures = [];
+  const steps = authority?.restoreSteps ?? [];
+  if (!Array.isArray(observations) || observations.length !== steps.length) {
+    failures.push(`live rollback observation count mismatch: ${observations?.length ?? 0}/${steps.length}`);
+  }
+  steps.forEach((step, index) => {
+    const observed = observations?.[index];
+    if (!observed) return;
+    const expectedUrl = rollbackStepUrl(authority, step);
+    if (observed.url !== expectedUrl) failures.push(`live rollback URL mismatch: ${step.key}`);
+    if (observed.httpStatus !== step.expectedHttpStatus) {
+      failures.push(`live rollback HTTP status mismatch: ${step.key}`);
+    }
+    if (step.action === 'ensure_absent') return;
+    if (observed.bytes !== step.bytes || observed.sha256 !== step.sha256) {
+      failures.push(`live rollback bytes mismatch: ${step.key}`);
+    }
+  });
+  return { status: failures.length === 0 ? 'GREEN' : 'RED_STOP_LINE', failures };
+}
+
 export function validateRollbackAuthority(authority, authorityPathOrUrl = DEFAULT_ROLLBACK_AUTHORITY_URL) {
   const failures = [];
   const steps = authority?.restoreSteps ?? [];

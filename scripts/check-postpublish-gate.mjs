@@ -5,12 +5,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
-import {
-  buildCosAuthority,
-  loadCosEvidence,
-  loadCosUploadLedger,
-  validateCosEvidence,
-} from './cos-publication.mjs';
+import { runLiveCosGate } from './live-cos-gate.mjs';
 import {
   evaluatePostpublishGate,
   parseUpdaterMetadata,
@@ -122,29 +117,14 @@ try {
   const urls = releaseUrls(manifest);
   const macFeedPath = new URL('../ocupathif/direct/darwin-arm64/latest-mac.yml', import.meta.url);
   const windowsFeedPath = new URL('../ocupathif/direct/win32-x64/latest.yml', import.meta.url);
-  const cosAuthority = buildCosAuthority(manifest, {
-    darwinArm64: readFileSync(macFeedPath, 'utf8'),
-  });
-  const cosUploadLedger = loadCosUploadLedger(process.env.OCUPATH_COS_UPLOAD_LEDGER_JSON);
-  const cosEvidence = validateCosEvidence(
-    cosAuthority,
-    loadCosEvidence(process.env.OCUPATH_COS_EVIDENCE_JSON),
-    cosUploadLedger,
-  );
+  const cosAuthorityPath = fileURLToPath(new URL('../release-manifests/v0.993.1-cos-authority.json', import.meta.url));
+  const cosUploadLedgerPath = process.env.OCUPATH_COS_UPLOAD_LEDGER_JSON;
+  if (!cosUploadLedgerPath) throw new Error('OCUPATH_COS_UPLOAD_LEDGER_JSON is required');
+  const cosEvidence = await runLiveCosGate(cosAuthorityPath, cosUploadLedgerPath);
   const windowsLoaded = loadWindowsEvidence(
     process.env.OCUPATH_WINDOWS_EVIDENCE_JSON,
     manifest,
-    {
-      phase: 'postpublish',
-      evidenceUrlExists: (url) => {
-        try {
-          run('curl', ['--fail', '--silent', '--show-error', '--location', '--head', url]);
-          return true;
-        } catch {
-          return false;
-        }
-      },
-    },
+    { phase: 'postpublish' },
   );
   const windowsCiApi = validateWindowsCiApiState(windowsLoaded.evidence, {
     run: JSON.parse(run('gh', ['api', 'repos/Yuqian1017/ocupathif_new/actions/runs/32106608240'])),

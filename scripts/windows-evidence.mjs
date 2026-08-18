@@ -1,8 +1,9 @@
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { findPendingFields } from './release-manifest.mjs';
+import { findPendingFields, isCanonicalUtcIso } from './release-manifest.mjs';
 
 export const DEFAULT_WINDOWS_EVIDENCE_URL = new URL(
   '../release-evidence/v0.993.1-windows.json',
@@ -18,19 +19,18 @@ const EXPECTED_CONTROLLER_EVIDENCE_REF = `https://github.com/${EXPECTED_CI_REPOS
 const EXPECTED_FIXED_SHA_CI_RUN_URL = `https://github.com/${EXPECTED_CI_REPOSITORY}/actions/runs/${EXPECTED_CI_RUN_ID}`;
 const DEFAULT_EVIDENCE_BASE_DIR = fileURLToPath(new URL('../', import.meta.url));
 
-function validatePostEvidenceRef(ref, post, target, { evidenceBaseDir, evidenceUrlExists }) {
+function sha256(body) {
+  return createHash('sha256').update(body).digest('hex');
+}
+
+function validatePostEvidenceRef(ref, post, target, manifest, { evidenceBaseDir }) {
   const failures = [];
   if (typeof ref !== 'string' || ref.trim() === '') return ['Windows post-publication evidenceRef is required'];
   if (ref.startsWith('https://')) {
-    const allowed = /^https:\/\/github\.com\/Yuqian1017\/ocupathif_new\/actions\/runs\/\d+(?:\/(?:job|artifacts)\/\d+)?$/.test(ref);
-    if (!allowed) return ['Windows post-publication evidenceRef URL is not an allowed OcuPathIF evidence URL'];
-    if (typeof evidenceUrlExists !== 'function' || evidenceUrlExists(ref) !== true) {
-      failures.push('Windows post-publication evidenceRef URL was not verified as reachable');
-    }
-    return failures;
+    return ['Windows post-publication evidenceRef must be a schema-bound local postpublication JSON artifact'];
   }
-  if (ref.startsWith('/') || !ref.startsWith('release-evidence/')) {
-    return ['Windows post-publication evidenceRef must be a release-evidence JSON path'];
+  if (ref.startsWith('/') || !ref.startsWith('release-evidence/') || !ref.endsWith('.json')) {
+    return ['Windows post-publication evidenceRef must be a local release-evidence JSON path'];
   }
   const root = resolve(evidenceBaseDir);
   const evidenceRoot = resolve(root, 'release-evidence');
@@ -40,18 +40,46 @@ function validatePostEvidenceRef(ref, post, target, { evidenceBaseDir, evidenceU
   }
   try {
     const artifact = JSON.parse(readFileSync(artifactPath, 'utf8'));
+    const expectedFeedUrl = `${manifest.origins.public}/${manifest.feeds.win32X64.path}`;
+    const expectedManualUrl = `${manifest.origins.public}/install.html`;
+    const expectedFeedBody = readFileSync(resolve(root, 'ocupathif', manifest.feeds.win32X64.path), 'utf8');
+    const expectedManualBody = readFileSync(resolve(root, 'ocupathif', 'install.html'), 'utf8');
+    const feed = artifact?.feed ?? {};
+    const manualPage = artifact?.manualPage ?? {};
+    const installer = artifact?.installer ?? {};
     if (
       artifact?.schemaVersion !== 1
       || artifact?.sourceVersion !== post.sourceVersion
       || artifact?.targetVersion !== post.targetVersion
-      || artifact?.installerSha256 !== target.installerSha256
-      || artifact?.liveFeedStatus !== post.liveFeedStatus
-      || artifact?.manualPageStatus !== post.manualPageStatus
-      || artifact?.exactInstallerBytesStatus !== post.exactInstallerBytesStatus
       || artifact?.evidenceLevel !== post.evidenceLevel
     ) {
       failures.push('Windows post-publication evidenceRef JSON does not match the claimed evidence');
     }
+    if (
+      feed.url !== expectedFeedUrl
+      || feed.httpStatus !== 200
+      || feed.body !== expectedFeedBody
+      || feed.bodySha256 !== sha256(expectedFeedBody)
+      || feed.version !== target.version
+      || feed.path !== `${manifest.origins.cos}/${target.installerFileName}`
+      || feed.sha512 !== target.installerSha512
+      || feed.size !== target.installerSizeBytes
+    ) failures.push('Windows post-publication feed evidence mismatch');
+    if (
+      manualPage.url !== expectedManualUrl
+      || manualPage.httpStatus !== 200
+      || manualPage.bodySha256 !== sha256(expectedManualBody)
+    ) failures.push('Windows post-publication manual page evidence mismatch');
+    if (
+      installer.fileName !== target.installerFileName
+      || installer.sizeBytes !== target.installerSizeBytes
+      || installer.sha256 !== target.installerSha256
+    ) failures.push('Windows post-publication installer evidence mismatch');
+    if (
+      !isCanonicalUtcIso(artifact?.observedAt, { allowPending: false })
+      || !isCanonicalUtcIso(artifact?.artifactParsedAt, { allowPending: false })
+      || Date.parse(artifact.artifactParsedAt) <= Date.parse(artifact.observedAt)
+    ) failures.push('Windows post-publication timestamps must be canonical and artifactParsedAt must follow observedAt');
   } catch (error) {
     failures.push(`Windows post-publication evidenceRef JSON is unavailable or invalid: ${error.message}`);
   }
@@ -61,7 +89,6 @@ function validatePostEvidenceRef(ref, post, target, { evidenceBaseDir, evidenceU
 export function validateWindowsEvidence(evidence, manifest, {
   phase = 'prepublish',
   evidenceBaseDir = DEFAULT_EVIDENCE_BASE_DIR,
-  evidenceUrlExists,
 } = {}) {
   const failures = [];
   const target = evidence?.target ?? {};
@@ -154,9 +181,8 @@ export function validateWindowsEvidence(evidence, manifest, {
     ) {
       failures.push('Windows post-publication reachability evidence mismatch');
     }
-    failures.push(...validatePostEvidenceRef(post.evidenceRef, post, target, {
+    failures.push(...validatePostEvidenceRef(post.evidenceRef, post, target, manifest, {
       evidenceBaseDir,
-      evidenceUrlExists,
     }));
   }
 

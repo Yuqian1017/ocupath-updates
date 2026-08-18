@@ -41,13 +41,13 @@ function renderInstallPage(source) {
   html = replaceRequired(
     html,
     /<a class="download-button" data-download-platform="mac"[^>]*>/,
-    `<a class="download-button" data-download-platform="mac" data-cn-url="${urls.macManualCos}" data-global-url="${urls.macManualGlobal}" href="${urls.macManualGlobal}">`,
+    `<a class="download-button" data-download-platform="mac" data-cn-url="${urls.macManualGlobal}" data-cn-promoted-url="${urls.macManualCos}" data-expected-bytes="${mac.sizeBytes}" data-global-url="${urls.macManualGlobal}" href="${urls.macManualGlobal}">`,
     'Mac download link',
   );
   html = replaceRequired(
     html,
     /<a class="download-button" data-download-platform="windows"[^>]*>/,
-    `<a class="download-button" data-download-platform="windows" data-cn-url="${urls.windowsCos}" data-global-url="${urls.windowsGlobal}" href="${urls.windowsGlobal}">`,
+    `<a class="download-button" data-download-platform="windows" data-cn-url="${urls.windowsGlobal}" data-cn-promoted-url="${urls.windowsCos}" data-expected-bytes="${windows.sizeBytes}" data-global-url="${urls.windowsGlobal}" href="${urls.windowsGlobal}">`,
     'Windows download link',
   );
   html = replaceRequired(html, /(<p class="file-meta" data-file-meta="mac">)[^<]*(<\/p>)/, `$1Version ${manifest.version} · ${formatGigabytes(mac.sizeBytes)}$2`, 'Mac metadata');

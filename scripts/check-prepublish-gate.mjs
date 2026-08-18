@@ -4,12 +4,6 @@ import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
-import {
-  buildManualCosAuthority,
-  loadCosEvidence,
-  loadCosUploadLedger,
-  validateCosEvidence,
-} from './cos-publication.mjs';
 import { evaluatePrepublishGate } from './prepublish-gate.mjs';
 import {
   DEFAULT_STAGING_MANIFEST_URL,
@@ -98,19 +92,6 @@ try {
     '--website-only',
     '--check',
   ]);
-  const manualCosAuthority = buildManualCosAuthority(manifest);
-  const manualCosUploadLedger = loadCosUploadLedger(
-    process.env.OCUPATH_MANUAL_COS_UPLOAD_LEDGER_JSON,
-    'OCUPATH_MANUAL_COS_UPLOAD_LEDGER_JSON',
-  );
-  const manualCosEvidence = validateCosEvidence(
-    manualCosAuthority,
-    loadCosEvidence(
-      process.env.OCUPATH_MANUAL_COS_EVIDENCE_JSON,
-      'OCUPATH_MANUAL_COS_EVIDENCE_JSON',
-    ),
-    manualCosUploadLedger,
-  );
   const windowsLoaded = loadWindowsEvidence(
     process.env.OCUPATH_WINDOWS_EVIDENCE_JSON,
     manifest,
@@ -178,7 +159,6 @@ try {
     expectedAssets: expectedReleaseAssets(manifest),
     rollbackAuthority,
     liveRollbackState,
-    manualCosEvidence,
     windowsEvidence,
   };
 

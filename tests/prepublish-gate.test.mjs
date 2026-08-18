@@ -47,7 +47,6 @@ function greenState(overrides = {}) {
     expectedAssets: exactAssets,
     rollbackAuthority: { status: 'GREEN', failures: [] },
     liveRollbackState: { status: 'GREEN', failures: [] },
-    manualCosEvidence: { status: 'GREEN', failures: [] },
     windowsEvidence: { status: 'GREEN', failures: [], proofLabel: 'baseline-reused', nativeExact: false },
     ...overrides,
   };
@@ -59,7 +58,6 @@ test('blocks an incomplete draft before any publication mutation', () => {
       ...greenState().release,
       assets: greenState().release.assets.filter((asset) => asset.name !== 'OcupathIF-0.993.1-arm64-mac-standalone.zip'),
     },
-    manualCosEvidence: { status: 'RED_STOP_LINE', failures: ['not-run'] },
     windowsEvidence: { status: 'RED_STOP_LINE', failures: ['missing'] },
   });
 
@@ -69,7 +67,6 @@ test('blocks an incomplete draft before any publication mutation', () => {
   assert.deepEqual(result.failures, [
     'release asset count mismatch: 3/4',
     'missing release asset: OcupathIF-0.993.1-arm64-mac-standalone.zip',
-    'COS manual payload evidence: not-run',
     'Windows durable evidence: missing',
   ]);
 });
@@ -128,6 +125,14 @@ test('website publication does not wait for the parallel Baidu lane', () => {
     baiduAtomicPromotion: 'in-progress',
     cosEvidence: { status: 'RED_STOP_LINE', failures: ['updater payloads not uploaded'] },
     macTwoLegTransaction: 'not-run',
+  }));
+  assert.deepEqual(result, { status: 'GREEN', failures: [] });
+});
+
+test('global website and GitHub publication have zero COS dependency', () => {
+  const result = evaluatePrepublishGate(greenState({
+    manualCosEvidence: { status: 'RED_STOP_LINE', failures: ['example.invalid'] },
+    cosEvidence: { status: 'RED_STOP_LINE', failures: ['no COS objects exist'] },
   }));
   assert.deepEqual(result, { status: 'GREEN', failures: [] });
 });

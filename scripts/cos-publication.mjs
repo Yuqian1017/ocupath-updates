@@ -7,6 +7,15 @@ function sha256(body) {
   return createHash('sha256').update(body).digest('hex');
 }
 
+const REGIONAL_PAGE_ORIGIN = 'https://updates.ocupath.ai';
+const REQUIRED_CORS_METHODS = ['GET', 'HEAD'];
+const REQUIRED_EXPOSED_HEADERS = ['content-length', 'etag', 'last-modified'];
+
+function commaSeparatedTokens(value) {
+  if (typeof value !== 'string') return [];
+  return value.split(',').map((entry) => entry.trim().toLowerCase()).filter(Boolean).sort();
+}
+
 export function cosAuthoritySha256(authority) {
   return sha256(`${JSON.stringify(authority, null, 2)}\n`);
 }
@@ -130,6 +139,8 @@ export function validateCosEvidence(authority, evidence, uploadLedger) {
     failures.push(`COS evidence object count mismatch: ${actual.length}/${authority.objects.length}`);
   }
   let priorTime = -Infinity;
+  const payloadModified = [];
+  const metadataModified = [];
   authority.objects.forEach((expected, index) => {
     const observed = actual[index];
     const ledgerObject = uploadLedger?.objects?.[index];
@@ -169,7 +180,37 @@ export function validateCosEvidence(authority, evidence, uploadLedger) {
     ) {
       failures.push(`COS network verification mismatch: ${expected.key}`);
     }
+    const allowMethods = commaSeparatedTokens(observed.corsAllowMethods).map((method) => method.toUpperCase());
+    const exposedHeaders = commaSeparatedTokens(observed.corsExposeHeaders);
+    if (
+      ![200, 204].includes(observed.corsOptionsStatus)
+      || observed.corsAllowOrigin !== REGIONAL_PAGE_ORIGIN
+      || JSON.stringify(allowMethods) !== JSON.stringify(REQUIRED_CORS_METHODS)
+      || !REQUIRED_EXPOSED_HEADERS.every((header) => exposedHeaders.includes(header))
+      || observed.headCorsAllowOrigin !== REGIONAL_PAGE_ORIGIN
+      || typeof observed.etag !== 'string'
+      || observed.etag.length === 0
+      || !REQUIRED_EXPOSED_HEADERS.every((header) => commaSeparatedTokens(observed.headCorsExposeHeaders).includes(header))
+    ) failures.push(`COS regional CORS readiness mismatch: ${expected.key}`);
+    const modifiedAt = Date.parse(observed.lastModified);
+    if (
+      typeof observed.lastModified !== 'string'
+      || Number.isNaN(modifiedAt)
+      || new Date(modifiedAt).toUTCString() !== observed.lastModified
+    ) {
+      failures.push(`COS Last-Modified is missing or noncanonical: ${expected.key}`);
+    } else if (expected.phase === 'metadata') {
+      metadataModified.push(modifiedAt);
+    } else {
+      payloadModified.push(modifiedAt);
+    }
   });
+  if (
+    authority.sequencing === 'payload-first-metadata-last'
+    && metadataModified.length === 2
+    && payloadModified.length === 4
+    && Math.min(...metadataModified) <= Math.max(...payloadModified)
+  ) failures.push('COS live Last-Modified order does not prove metadata-last promotion');
   if (!isCanonicalUtcIso(evidence?.uploadCompletedAt, { allowPending: false })) {
     failures.push('COS uploadCompletedAt is not canonical UTC ISO');
   } else if (Date.parse(evidence.uploadCompletedAt) <= priorTime) {

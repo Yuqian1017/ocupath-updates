@@ -77,9 +77,6 @@ export function evaluatePrepublishGate(state) {
   }
 
   failures.push(...exactReleaseAssetFailures(release, state.expectedAssets));
-  if (state.manualCosEvidence?.status !== 'GREEN') {
-    failures.push(`COS manual payload evidence: ${state.manualCosEvidence?.failures?.join('; ') || 'missing'}`);
-  }
   if (state.windowsEvidence?.status !== 'GREEN') {
     failures.push(`Windows durable evidence: ${state.windowsEvidence?.failures?.join('; ') || 'missing'}`);
   }

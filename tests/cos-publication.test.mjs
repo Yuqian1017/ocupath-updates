@@ -17,6 +17,7 @@ import {
   validateCosEvidence,
   validateCosUploadLedger,
 } from '../scripts/cos-publication.mjs';
+import { runLiveCosGate } from '../scripts/live-cos-gate.mjs';
 import { DEFAULT_STAGING_MANIFEST_URL } from '../scripts/release-manifest.mjs';
 
 const staging = JSON.parse(readFileSync(DEFAULT_STAGING_MANIFEST_URL, 'utf8'));
@@ -61,6 +62,16 @@ function evidence(expected = authority(), ledger = uploadLedger(expected)) {
         verifyStatus: 'PASS',
         headStatus: 200,
         contentLength: object.bytes,
+        etag: `"fixture-${index}"`,
+        corsOptionsStatus: 204,
+        corsAllowOrigin: 'https://updates.ocupath.ai',
+        corsAllowMethods: 'GET, HEAD',
+        corsExposeHeaders: 'Content-Length, ETag, Last-Modified',
+        headCorsAllowOrigin: 'https://updates.ocupath.ai',
+        headCorsExposeHeaders: 'Content-Length, ETag, Last-Modified',
+        lastModified: index < 4
+          ? 'Tue, 18 Aug 2026 12:00:01 GMT'
+          : 'Tue, 18 Aug 2026 12:00:02 GMT',
         rangeStatus: 206,
         contentRange: `bytes 0-${rangeBytes - 1}/${object.bytes}`,
         rangeBytes,
@@ -155,6 +166,40 @@ test('COS evidence requires actual HEAD, Range and full-byte verifier fields', (
   assert.match(failures, /network verification mismatch/);
 });
 
+test('full COS evidence requires live Last-Modified proof that metadata followed payloads', () => {
+  const expected = authority();
+  const missing = evidence(expected);
+  delete missing.objects[4].lastModified;
+  assert.match(
+    validateCosEvidence(expected, missing, uploadLedger(expected)).failures.join('\n'),
+    /Last-Modified/,
+  );
+
+  const simultaneous = evidence(expected);
+  simultaneous.objects[4].lastModified = simultaneous.objects[3].lastModified;
+  assert.match(
+    validateCosEvidence(expected, simultaneous, uploadLedger(expected)).failures.join('\n'),
+    /does not prove metadata-last promotion/,
+  );
+});
+
+test('COS evidence requires browser-readable regional CORS for exact origin and headers', () => {
+  const expected = authority();
+  const missing = evidence(expected);
+  delete missing.objects[0].headCorsAllowOrigin;
+  assert.match(
+    validateCosEvidence(expected, missing, uploadLedger(expected)).failures.join('\n'),
+    /regional CORS readiness mismatch/,
+  );
+
+  const broadMethods = evidence(expected);
+  broadMethods.objects[0].corsAllowMethods = 'GET, HEAD, PUT';
+  assert.match(
+    validateCosEvidence(expected, broadMethods, uploadLedger(expected)).failures.join('\n'),
+    /regional CORS readiness mismatch/,
+  );
+});
+
 test('upload ledger and manual website authority stay separate from full updater publication', () => {
   const full = authority();
   assert.equal(validateCosUploadLedger(full, uploadLedger(full)).status, 'GREEN');
@@ -192,6 +237,15 @@ test('verify-cos-assets is the network-backed evidence generator for HEAD, Range
       return;
     }
     response.setHeader('content-length', body.length);
+    response.setHeader('last-modified', 'Thu, 01 Jan 2026 00:00:01 GMT');
+    response.setHeader('etag', '"fixture-etag"');
+    response.setHeader('access-control-allow-origin', 'https://updates.ocupath.ai');
+    response.setHeader('access-control-allow-methods', 'GET, HEAD');
+    response.setHeader('access-control-expose-headers', 'Content-Length, ETag, Last-Modified');
+    if (request.method === 'OPTIONS') {
+      response.writeHead(204).end();
+      return;
+    }
     if (request.headers.range) {
       const end = body.length - 1;
       response.writeHead(206, { 'content-range': `bytes 0-${end}/${body.length}` });
@@ -244,7 +298,35 @@ test('verify-cos-assets is the network-backed evidence generator for HEAD, Range
     assert.equal(generated.uploadLedgerSha256, cosUploadLedgerSha256(ledger));
     assert.equal(validateCosEvidence(authority, generated, ledger).status, 'GREEN');
     assert.deepEqual(generated.objects.map((object) => object.rangeStatus), [206, 206]);
+    assert.equal((await runLiveCosGate(authorityPath, ledgerPath)).status, 'GREEN');
   } finally {
     await new Promise((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())));
   }
+});
+
+test('live COS gate cannot be satisfied by a forged external PASS document', async () => {
+  const body = Buffer.from('forged');
+  const unreachable = {
+    schemaVersion: 1,
+    version: '0.993.1',
+    baseUrl: 'https://example.invalid',
+    sequencing: 'manual-payloads-only',
+    objects: [{
+      order: 1,
+      phase: 'payload',
+      key: 'manual.zip',
+      bytes: body.length,
+      sha256: createHash('sha256').update(body).digest('hex'),
+    }],
+  };
+  const ledger = uploadLedger(unreachable);
+  const fixtureRoot = mkdtempSync(join(tmpdir(), 'ocupath-cos-live-gate-red-'));
+  const authorityPath = join(fixtureRoot, 'authority.json');
+  const ledgerPath = join(fixtureRoot, 'ledger.json');
+  writeFileSync(authorityPath, `${JSON.stringify(unreachable, null, 2)}\n`);
+  writeFileSync(ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`);
+
+  const result = await runLiveCosGate(authorityPath, ledgerPath);
+  assert.equal(result.status, 'RED_STOP_LINE');
+  assert.match(result.failures.join('\n'), /live COS verifier process did not PASS|network verification mismatch/);
 });

@@ -80,8 +80,13 @@ assert.equal(
 );
 assert.match(
   html,
-  new RegExp(`data-cn-url="${manualMacChinaUrl.replaceAll('.', '\\.')}"`),
-  'Mac China routing data must use the exact COS customer asset',
+  new RegExp(`data-cn-url="${manualMacGitHubUrl.replaceAll('.', '\\.')}"`),
+  'Mac China route must initially fall back to the exact GitHub customer asset',
+);
+assert.match(
+  html,
+  new RegExp(`data-cn-promoted-url="${manualMacChinaUrl.replaceAll('.', '\\.')}"`),
+  'Mac China promotion data must retain the exact COS customer asset',
 );
 assert.match(
   html,
@@ -90,8 +95,13 @@ assert.match(
 );
 assert.match(
   html,
-  new RegExp(`data-cn-url="${windowsChinaUrl.replaceAll('.', '\\.')}"`),
-  'Windows China routing data must use the exact COS installer',
+  new RegExp(`data-cn-url="${windowsGitHubUrl.replaceAll('.', '\\.')}"`),
+  'Windows China route must initially fall back to the exact GitHub installer',
+);
+assert.match(
+  html,
+  new RegExp(`data-cn-promoted-url="${windowsChinaUrl.replaceAll('.', '\\.')}"`),
+  'Windows China promotion data must retain the exact COS installer',
 );
 assert.match(
   html,
@@ -108,9 +118,12 @@ assert.match(
   new RegExp(`href="${windowsGitHubUrl.replaceAll('.', '\\.')}"`),
   'Windows must default to the exact released installer',
 );
+const customerVisibleText = (html.match(/<body>[\s\S]*?<\/body>/)?.[0] ?? '')
+  .replace(/<script>[\s\S]*?<\/script>/gi, '')
+  .replace(/<[^>]+>/g, ' ');
 assert.doesNotMatch(
-  html.match(/<body>[\s\S]*?<\/body>/)?.[0] ?? '',
-  />[^<]*(?:Hong Kong|GitHub|mirror)[^<]*</i,
+  customerVisibleText,
+  /(?:Hong Kong|GitHub|mirror)/i,
   'customer-visible copy must not ask users to understand download providers',
 );
 assert.match(html, new RegExp(`<code data-sha256="mac">${manualMacSha256}<\\/code>`), 'Mac checksum must come from the staging manifest');
@@ -122,14 +135,18 @@ function createRoutingHarness(fetchImpl = () => new Promise(() => {})) {
   const buttons = [
     {
       dataset: {
-        cnUrl: manualMacChinaUrl,
+        cnUrl: manualMacGitHubUrl,
+        cnPromotedUrl: manualMacChinaUrl,
+        expectedBytes: String(manifest.assets.macManual.sizeBytes),
         globalUrl: manualMacGitHubUrl,
       },
       href: manualMacGitHubUrl,
     },
     {
       dataset: {
-        cnUrl: windowsChinaUrl,
+        cnUrl: windowsGitHubUrl,
+        cnPromotedUrl: windowsChinaUrl,
+        expectedBytes: String(manifest.assets.windowsInstaller.sizeBytes),
         globalUrl: windowsGitHubUrl,
       },
       href: windowsGitHubUrl,
@@ -169,8 +186,8 @@ assert.equal(
 deterministic.window.__ocupathDownloadRouting.applyCountry('CN');
 assert.deepEqual(
   deterministic.buttons.map((button) => button.href),
-  deterministic.buttons.map((button) => button.dataset.cnUrl),
-  'mainland-China traffic must use the COS release asset for both platforms',
+  deterministic.buttons.map((button) => button.dataset.globalUrl),
+  'mainland-China traffic must safely use GitHub until COS promotion succeeds',
 );
 assert.equal(deterministic.document.documentElement.dataset.downloadRegion, 'cn');
 
@@ -182,13 +199,62 @@ assert.deepEqual(
 );
 assert.equal(deterministic.document.documentElement.dataset.downloadRegion, 'global');
 
+const promotedSizes = [101, manifest.assets.windowsInstaller.sizeBytes];
+const promoted = createRoutingHarness((url, options) => {
+  if (url === 'https://api.country.is/') return new Promise(() => {});
+  const button = [manualMacChinaUrl, windowsChinaUrl].indexOf(url);
+  return Promise.resolve({
+    ok: options?.method === 'HEAD' && button >= 0,
+    headers: {
+      get: (name) => ({
+        'content-length': String(promotedSizes[button]),
+        etag: `"fixture-${button}"`,
+        'last-modified': 'Tue, 18 Aug 2026 12:00:00 GMT',
+      })[name] ?? null,
+    },
+  });
+});
+promoted.buttons.forEach((button, index) => { button.dataset.expectedBytes = String(promotedSizes[index]); });
+assert.equal(await promoted.window.__ocupathDownloadRouting.promoteChinaRoutes(), true);
+promoted.window.__ocupathDownloadRouting.applyCountry('CN');
+assert.deepEqual(
+  promoted.buttons.map((button) => button.href),
+  promoted.buttons.map((button) => button.dataset.cnPromotedUrl),
+  'verified COS manual payloads must atomically promote both China routes',
+);
+assert.equal(promoted.document.documentElement.dataset.chinaRoute, 'cos-promoted');
+
+const unavailableCos = createRoutingHarness((url) => {
+  if (url === 'https://api.country.is/') return new Promise(() => {});
+  return Promise.resolve({ ok: false, headers: { get: () => null } });
+});
+assert.equal(await unavailableCos.window.__ocupathDownloadRouting.promoteChinaRoutes(), false);
+unavailableCos.window.__ocupathDownloadRouting.applyCountry('CN');
+assert.deepEqual(
+  unavailableCos.buttons.map((button) => button.href),
+  unavailableCos.buttons.map((button) => button.dataset.globalUrl),
+  'unavailable COS must leave mainland-China users on the working GitHub fallback',
+);
+
+const corsBlocked = createRoutingHarness((url) => {
+  if (url === 'https://api.country.is/') return new Promise(() => {});
+  return Promise.resolve({ ok: true, headers: { get: () => null } });
+});
+assert.equal(await corsBlocked.window.__ocupathDownloadRouting.promoteChinaRoutes(), false);
+corsBlocked.window.__ocupathDownloadRouting.applyCountry('CN');
+assert.deepEqual(
+  corsBlocked.buttons.map((button) => button.href),
+  corsBlocked.buttons.map((button) => button.dataset.globalUrl),
+  'COS without browser-readable CORS headers must keep both China routes on GitHub',
+);
+
 deterministic.window.__ocupathDownloadRouting.applyCountry(undefined);
 assert.deepEqual(
   deterministic.buttons.map((button) => button.href),
-  deterministic.buttons.map((button) => button.dataset.cnUrl),
-  'lookup failure must keep the COS release asset',
+  deterministic.buttons.map((button) => button.dataset.globalUrl),
+  'lookup failure must keep the globally available GitHub asset',
 );
-assert.equal(deterministic.document.documentElement.dataset.downloadRegion, 'cn');
+assert.equal(deterministic.document.documentElement.dataset.downloadRegion, 'global');
 
 let lookupRequest;
 const automatic = createRoutingHarness((url, options) => {

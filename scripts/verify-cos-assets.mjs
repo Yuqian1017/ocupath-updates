@@ -27,6 +27,7 @@ if (ledgerResult.status !== 'GREEN') {
   throw new Error(`COS upload ledger is invalid:\n- ${ledgerResult.failures.join('\n- ')}`);
 }
 const results = [];
+const regionalPageOrigin = 'https://updates.ocupath.ai';
 
 for (const [index, object] of authority.objects.entries()) {
   const encodedKey = object.key.split('/').map(encodeURIComponent).join('/');
@@ -39,9 +40,30 @@ for (const [index, object] of authority.objects.entries()) {
     verifyStatus: 'FAIL',
   };
   try {
-    const head = await fetch(url, { method: 'HEAD', redirect: 'follow' });
+    const corsOptions = await fetch(url, {
+      method: 'OPTIONS',
+      redirect: 'follow',
+      headers: {
+        Origin: regionalPageOrigin,
+        'Access-Control-Request-Method': 'HEAD',
+      },
+    });
+    result.corsOptionsStatus = corsOptions.status;
+    result.corsAllowOrigin = corsOptions.headers.get('access-control-allow-origin');
+    result.corsAllowMethods = corsOptions.headers.get('access-control-allow-methods');
+    result.corsExposeHeaders = corsOptions.headers.get('access-control-expose-headers');
+
+    const head = await fetch(url, {
+      method: 'HEAD',
+      redirect: 'follow',
+      headers: { Origin: regionalPageOrigin },
+    });
     result.headStatus = head.status;
     result.contentLength = Number(head.headers.get('content-length'));
+    result.lastModified = head.headers.get('last-modified');
+    result.etag = head.headers.get('etag');
+    result.headCorsAllowOrigin = head.headers.get('access-control-allow-origin');
+    result.headCorsExposeHeaders = head.headers.get('access-control-expose-headers');
     if (head.status !== 200 || result.contentLength !== object.bytes) {
       throw new Error(`HEAD ${head.status}; content-length ${result.contentLength}`);
     }

@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -25,21 +26,50 @@ function postEvidence(evidenceRef = '__PENDING_WINDOWS_POSTPUBLICATION_EVIDENCE_
   return evidence;
 }
 
-function localPostEvidenceArtifact() {
+function sha256(body) {
+  return createHash('sha256').update(body).digest('hex');
+}
+
+function localPostEvidenceArtifact(mutate = () => {}) {
   const root = join(tmpdir(), `ocupath-windows-evidence-${process.pid}-${Date.now()}`);
   mkdirSync(join(root, 'release-evidence'), { recursive: true });
+  mkdirSync(join(root, 'ocupathif', 'direct', 'win32-x64'), { recursive: true });
   const ref = 'release-evidence/windows-postpublication.json';
-  writeFileSync(join(root, ref), `${JSON.stringify({
+  const feedBody = readFileSync(new URL('../ocupathif/direct/win32-x64/latest.yml', import.meta.url), 'utf8');
+  const manualBody = readFileSync(new URL('../ocupathif/install.html', import.meta.url), 'utf8');
+  writeFileSync(join(root, 'ocupathif', 'direct', 'win32-x64', 'latest.yml'), feedBody);
+  writeFileSync(join(root, 'ocupathif', 'install.html'), manualBody);
+  const artifact = {
     schemaVersion: 1,
     sourceVersion: '0.992.1',
     targetVersion: '0.993.1',
-    installerSha256: '58e48850399c377457819b5294539b9fdea0164da13d4ee0a1cc2cb030cabeeb',
-    liveFeedStatus: 'PASS',
-    manualPageStatus: 'PASS',
-    exactInstallerBytesStatus: 'PASS',
     evidenceLevel: 'live-feed-browser-and-artifact-parsed',
-  })}\n`);
-  return { root, ref };
+    observedAt: '2026-08-18T18:00:00.000Z',
+    artifactParsedAt: '2026-08-18T18:00:01.000Z',
+    feed: {
+      url: 'https://updates.ocupath.ai/ocupathif/direct/win32-x64/latest.yml',
+      httpStatus: 200,
+      body: feedBody,
+      bodySha256: sha256(feedBody),
+      version: '0.993.1',
+      path: 'https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com/OcupathIF-Setup-0.993.1-x64.exe',
+      sha512: 'i6Nv6zQdjVmO2z1rfYtaVUFk2yCHEuuYZ17nJxgkQrk4a1Y86AqjNpUpsmZfuuFE1xeRSQZwGCaI20iEdJ4Kag==',
+      size: 1354683792,
+    },
+    manualPage: {
+      url: 'https://updates.ocupath.ai/ocupathif/install.html',
+      httpStatus: 200,
+      bodySha256: sha256(manualBody),
+    },
+    installer: {
+      fileName: 'OcupathIF-Setup-0.993.1-x64.exe',
+      sizeBytes: 1354683792,
+      sha256: '58e48850399c377457819b5294539b9fdea0164da13d4ee0a1cc2cb030cabeeb',
+    },
+  };
+  mutate(artifact);
+  writeFileSync(join(root, ref), `${JSON.stringify(artifact)}\n`);
+  return { root, ref, artifact };
 }
 
 function ciApiState() {
@@ -161,20 +191,41 @@ test('Windows CI run and job API provenance must match the frozen source and req
   assert.match(validateWindowsCiApiState(frozen, wrongStep).failures.join('\n'), /required step/);
 });
 
-test('Windows post evidenceRef must be nonempty and parseable or a verified allowed URL', () => {
+test('Windows post evidenceRef must be a schema-bound local postpublication artifact', () => {
   const arbitrary = postEvidence('anything.json');
   assert.match(validateWindowsEvidence(arbitrary, manifest, { phase: 'postpublish' }).failures.join('\n'), /release-evidence JSON path/);
 
   const missing = postEvidence('release-evidence/missing.json');
   assert.match(validateWindowsEvidence(missing, manifest, { phase: 'postpublish' }).failures.join('\n'), /unavailable or invalid/);
 
-  const allowedUrl = postEvidence('https://github.com/Yuqian1017/ocupathif_new/actions/runs/32106608240/job/95617238460');
-  assert.equal(validateWindowsEvidence(allowedUrl, manifest, {
+  const actionsUrl = postEvidence('https://github.com/Yuqian1017/ocupathif_new/actions/runs/32106608240/job/95617238460');
+  assert.match(validateWindowsEvidence(actionsUrl, manifest, {
     phase: 'postpublish',
-    evidenceUrlExists: () => true,
-  }).status, 'GREEN');
-  assert.match(validateWindowsEvidence(allowedUrl, manifest, {
+  }).failures.join('\n'), /local postpublication JSON/);
+});
+
+test('Windows post artifact rejects live feed body, installer or timestamp drift', () => {
+  const feedDrift = localPostEvidenceArtifact((artifact) => {
+    artifact.feed.body = `${artifact.feed.body}# stale\n`;
+  });
+  assert.match(validateWindowsEvidence(postEvidence(feedDrift.ref), manifest, {
     phase: 'postpublish',
-    evidenceUrlExists: () => false,
-  }).failures.join('\n'), /not verified as reachable/);
+    evidenceBaseDir: feedDrift.root,
+  }).failures.join('\n'), /feed evidence mismatch/);
+
+  const installerDrift = localPostEvidenceArtifact((artifact) => {
+    artifact.installer.sizeBytes -= 1;
+  });
+  assert.match(validateWindowsEvidence(postEvidence(installerDrift.ref), manifest, {
+    phase: 'postpublish',
+    evidenceBaseDir: installerDrift.root,
+  }).failures.join('\n'), /installer evidence mismatch/);
+
+  const timeDrift = localPostEvidenceArtifact((artifact) => {
+    artifact.artifactParsedAt = '2026-08-18T18:00:01Z';
+  });
+  assert.match(validateWindowsEvidence(postEvidence(timeDrift.ref), manifest, {
+    phase: 'postpublish',
+    evidenceBaseDir: timeDrift.root,
+  }).failures.join('\n'), /timestamps must be canonical/);
 });

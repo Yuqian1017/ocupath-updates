@@ -8,8 +8,8 @@
       "order": 1,
       "phase": "payload",
       "key": "OcupathIF-0.993.1-arm64-mac-standalone.zip",
-      "bytes": 1318843535,
-      "sha256": "1f50c512a44c756d60d06e5dddad3b97bbed99900560f2b436cb3c792f57cc8d"
+      "bytes": 1319544776,
+      "sha256": "b91ede8b9d22cccabbedc8e2d2c8c5d660ebbc867a7b0be1d6532078e6f92f06"
     },
     {
       "order": 2,
@@ -22,29 +22,29 @@
       "order": 3,
       "phase": "payload",
       "key": "OcupathIF-0.993.1-arm64-mac.zip",
-      "bytes": 1313883296,
-      "sha256": "3a2051db46382ef6239b9d401be879c5affe393136fd36aa9fa25981cb6a730b"
+      "bytes": 1314557732,
+      "sha256": "62618cc0ad0c3481bc2c187e2ebfdbc272b64c809af6ac1fa17403832fd904c7"
     },
     {
       "order": 4,
       "phase": "payload",
       "key": "OcupathIF-0.993.1-arm64-mac.zip.blockmap",
-      "bytes": 1361667,
-      "sha256": "01c073dccb874cddd8c4abd3ed6a52311934de8a0ba2d346f843c4fd3a5d0085"
+      "bytes": 1362659,
+      "sha256": "81e40ed390ef43c8655c49f65b33c821a93e6c24e2022a88684ace46cc27435b"
     },
     {
       "order": 5,
       "phase": "metadata",
       "key": "latest-mac.yml",
       "bytes": 504,
-      "sha256": "a98a945d77a95f198df1bd3120bf21c735249e5cf62f0d20ca86260d6cf0e007"
+      "sha256": "7821d1f47f2cd731ab369d362baa3eb6b6e487ebf4cff87374a7ce45d974b8f5"
     },
     {
       "order": 6,
       "phase": "metadata",
       "key": "darwin-arm64/latest-mac.yml",
       "bytes": 504,
-      "sha256": "a98a945d77a95f198df1bd3120bf21c735249e5cf62f0d20ca86260d6cf0e007"
+      "sha256": "7821d1f47f2cd731ab369d362baa3eb6b6e487ebf4cff87374a7ce45d974b8f5"
     }
   ]
 }

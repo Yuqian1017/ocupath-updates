@@ -8,8 +8,8 @@
     "darwin-arm64": {
       "kind": "manual_page",
       "url": "https://updates.ocupath.ai/ocupathif/install.html",
-      "sha256": "1f50c512a44c756d60d06e5dddad3b97bbed99900560f2b436cb3c792f57cc8d",
-      "sizeBytes": 1318843535,
+      "sha256": "b91ede8b9d22cccabbedc8e2d2c8c5d660ebbc867a7b0be1d6532078e6f92f06",
+      "sizeBytes": 1319544776,
       "signature": "Apple notarized and stapled; Developer ID Application: Biostate AI, Incorporated (6269FUBJZ5)"
     },
     "win32-x64": {

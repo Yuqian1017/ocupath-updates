@@ -37,14 +37,14 @@
       "phase": "metadata",
       "key": "latest-mac.yml",
       "bytes": 412,
-      "sha256": "3a84fc98759176cf8712c074e648bc26cd5c63807974e63957094250f32d1746"
+      "sha256": "e67f5c2227220ab3317ea6a75e892c3a911aa99839839a23097104d13064f581"
     },
     {
       "order": 6,
       "phase": "metadata",
       "key": "darwin-arm64/latest-mac.yml",
       "bytes": 412,
-      "sha256": "3a84fc98759176cf8712c074e648bc26cd5c63807974e63957094250f32d1746"
+      "sha256": "e67f5c2227220ab3317ea6a75e892c3a911aa99839839a23097104d13064f581"
     }
   ]
 }

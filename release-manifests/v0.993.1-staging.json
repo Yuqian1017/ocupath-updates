@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
   "version": "0.993.1",
-  "releaseDate": "__PENDING_RELEASE_DATE__",
+  "releaseDate": "2026-08-18T08:34:34.000Z",
   "previousLiveVersion": "0.992.1",
   "release": {
     "repository": "Yuqian1017/ocupath-updates",
     "tagName": "v0.993.1",
-    "draftReleaseId": "__PENDING_GITHUB_DRAFT_RELEASE_ID__"
+    "draftReleaseId": "372197104"
   },
   "origins": {
     "public": "https://updates.ocupath.ai/ocupathif",

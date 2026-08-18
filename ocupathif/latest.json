@@ -3,7 +3,7 @@
   "appId": "com.biostateai.ocupathif",
   "channel": "stable",
   "version": "0.993.1",
-  "releaseDate": "__PENDING_RELEASE_DATE__",
+  "releaseDate": "2026-08-18T08:34:34.000Z",
   "packages": {
     "darwin-arm64": {
       "kind": "manual_page",

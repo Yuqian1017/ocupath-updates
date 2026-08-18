@@ -33,12 +33,10 @@ function finalManifest() {
   return manifest;
 }
 
-test('staging manifest fixes the 0.993.1 names and guides but remains unpublishable', () => {
+test('staging manifest fixes the 0.993.1 draft and guides but remains unpublishable', () => {
   const prepared = validateReleaseManifest(staging, { requireFinal: false });
   assert.equal(prepared.status, 'GREEN');
   assert.deepEqual(prepared.pending, [
-    'releaseDate',
-    'release.draftReleaseId',
     'assets.macManual.sizeBytes',
     'assets.macManual.sha256',
     'assets.macUpdater.sizeBytes',

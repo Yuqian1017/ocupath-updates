@@ -76,7 +76,7 @@ function greenState(overrides = {}) {
     localBranch: publicationBranch,
     remotePublicationBranchSha: promotionSha,
     remoteTagCommitSha: targetSha,
-    regionalPromotionParentSha: targetSha,
+    regionalPromotionParentShas: [targetSha],
     regionalPromotionChangedFiles: [{ status: 'A', path: regionalMarkerPath }],
     regionalMarkerPresentAtBase: false,
     expectedRegionalMarkerPath: regionalMarkerPath,
@@ -261,9 +261,14 @@ test('postpublish binds local HEAD and remote publication branch to the promotio
 });
 
 test('regional promotion must be the one-marker direct child of the immutable base tag', () => {
-  const parentWrong = greenState({ regionalPromotionParentSha: '3'.repeat(40) });
+  const parentWrong = greenState({ regionalPromotionParentShas: ['3'.repeat(40)] });
   assert.deepEqual(evaluatePostpublishGate(parentWrong).failures, [
-    `regional promotion parent SHA mismatch: ${'3'.repeat(40)}`,
+    `regional promotion parent set mismatch: ${'3'.repeat(40)}`,
+  ]);
+
+  const mergeCommit = greenState({ regionalPromotionParentShas: [targetSha, '3'.repeat(40)] });
+  assert.deepEqual(evaluatePostpublishGate(mergeCommit).failures, [
+    `regional promotion parent set mismatch: ${targetSha},${'3'.repeat(40)}`,
   ]);
 
   const extraFile = greenState({

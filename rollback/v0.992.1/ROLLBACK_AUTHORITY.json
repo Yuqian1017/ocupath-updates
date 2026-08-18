@@ -10,6 +10,13 @@
   "restoreSteps": [
     {
       "order": 1,
+      "surface": "pages",
+      "action": "ensure_absent",
+      "key": "ocupathif/regional-cos/v0.993.1.json",
+      "expectedHttpStatus": 404
+    },
+    {
+      "order": 2,
       "surface": "cos",
       "action": "restore_body",
       "key": "latest-mac.yml",
@@ -19,7 +26,7 @@
       "sha256": "c91d12b5968991a1bd32bc36f98ce0ddf7f11ade972d36a53ea7e0c7ee162dc8"
     },
     {
-      "order": 2,
+      "order": 3,
       "surface": "cos",
       "action": "restore_body",
       "key": "darwin-arm64/latest-mac.yml",
@@ -29,7 +36,7 @@
       "sha256": "c91d12b5968991a1bd32bc36f98ce0ddf7f11ade972d36a53ea7e0c7ee162dc8"
     },
     {
-      "order": 3,
+      "order": 4,
       "surface": "pages",
       "action": "restore_body",
       "key": "ocupathif/direct/darwin-arm64/latest-mac.yml",
@@ -39,14 +46,14 @@
       "sha256": "c91d12b5968991a1bd32bc36f98ce0ddf7f11ade972d36a53ea7e0c7ee162dc8"
     },
     {
-      "order": 4,
+      "order": 5,
       "surface": "pages",
       "action": "ensure_absent",
       "key": "ocupathif/direct/win32-x64/latest.yml",
       "expectedHttpStatus": 404
     },
     {
-      "order": 5,
+      "order": 6,
       "surface": "pages",
       "action": "restore_body",
       "key": "ocupathif/latest.json",
@@ -56,7 +63,7 @@
       "sha256": "b3b6c983786d060dcf3abcf531df8769697790b9e3603e9baae9ed941aa1b65f"
     },
     {
-      "order": 6,
+      "order": 7,
       "surface": "pages",
       "action": "restore_body",
       "key": "ocupathif/install.html",

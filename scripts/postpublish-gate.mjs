@@ -48,8 +48,8 @@ export function evaluatePostpublishGate(state) {
   if (state.remotePublicationBranchSha !== state.expectedRegionalPromotionSha) {
     failures.push(`remote publication branch SHA mismatch: ${state.remotePublicationBranchSha ?? 'missing'}`);
   }
-  if (state.regionalPromotionParentSha !== state.expectedTargetCommitSha) {
-    failures.push(`regional promotion parent SHA mismatch: ${state.regionalPromotionParentSha ?? 'missing'}`);
+  if (JSON.stringify(state.regionalPromotionParentShas) !== JSON.stringify([state.expectedTargetCommitSha])) {
+    failures.push(`regional promotion parent set mismatch: ${state.regionalPromotionParentShas?.join(',') || 'missing'}`);
   }
   if (JSON.stringify(state.regionalPromotionChangedFiles) !== JSON.stringify([{
     status: 'A',

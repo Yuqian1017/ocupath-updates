@@ -124,6 +124,14 @@ function changedFiles(fromSha, toSha) {
   });
 }
 
+function commitParents(sha) {
+  const [commit, ...parents] = run('git', [
+    'rev-list', '--parents', '-n', '1', sha,
+  ], { cwd: repoRoot }).split(/\s+/);
+  if (commit !== sha) throw new Error(`git did not resolve the exact promotion SHA: ${sha}`);
+  return parents;
+}
+
 try {
   const manifestSource = process.env.OCUPATH_RELEASE_STAGING_MANIFEST || DEFAULT_STAGING_MANIFEST_URL;
   const manifest = loadReleaseManifest(manifestSource);
@@ -150,7 +158,7 @@ try {
   const localBranch = run('git', ['branch', '--show-current'], { cwd: repoRoot });
   const remotePublicationBranchSha = remoteBranchSha(expectedPublicationBranch);
   const publishedTagCommitSha = remoteTagCommitSha(manifest.release.tagName);
-  const regionalPromotionParentSha = run('git', ['rev-parse', `${expectedRegionalPromotionSha}^`], { cwd: repoRoot });
+  const regionalPromotionParentShas = commitParents(expectedRegionalPromotionSha);
   const regionalPromotionChangedFiles = changedFiles(expectedTargetCommitSha, expectedRegionalPromotionSha);
   const regionalMarkerPresentAtBase = gitObjectExists(`${expectedTargetCommitSha}:${REGIONAL_COS_MARKER_PATH}`);
   const expectedPromotionDiff = [{ status: 'A', path: REGIONAL_COS_MARKER_PATH }];
@@ -160,7 +168,9 @@ try {
   if (localBranch !== expectedPublicationBranch) topologyFailures.push('local branch is not the publication branch');
   if (remotePublicationBranchSha !== expectedRegionalPromotionSha) topologyFailures.push('remote publication branch is not the promotion SHA');
   if (publishedTagCommitSha !== expectedTargetCommitSha) topologyFailures.push('remote release tag is not the immutable base SHA');
-  if (regionalPromotionParentSha !== expectedTargetCommitSha) topologyFailures.push('regional promotion is not the direct child of the base SHA');
+  if (JSON.stringify(regionalPromotionParentShas) !== JSON.stringify([expectedTargetCommitSha])) {
+    topologyFailures.push('regional promotion must have exactly one parent and it must be the base SHA');
+  }
   if (JSON.stringify(regionalPromotionChangedFiles) !== JSON.stringify(expectedPromotionDiff)) {
     topologyFailures.push(`regional promotion diff is not the single added marker ${REGIONAL_COS_MARKER_PATH}`);
   }
@@ -250,7 +260,7 @@ try {
     expectedRegionalPromotionSha,
     expectedPublicationBranch,
     remoteTagCommitSha: publishedTagCommitSha,
-    regionalPromotionParentSha,
+    regionalPromotionParentShas,
     regionalPromotionChangedFiles,
     regionalMarkerPresentAtBase,
     expectedRegionalMarkerPath: REGIONAL_COS_MARKER_PATH,

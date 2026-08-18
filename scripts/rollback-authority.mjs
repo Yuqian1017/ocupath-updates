@@ -11,6 +11,7 @@ export const DEFAULT_ROLLBACK_AUTHORITY_URL = new URL(
 );
 
 const EXPECTED_SEQUENCE = [
+  ['pages', 'ensure_absent', 'ocupathif/regional-cos/v0.993.1.json'],
   ['cos', 'restore_body', 'latest-mac.yml'],
   ['cos', 'restore_body', 'darwin-arm64/latest-mac.yml'],
   ['pages', 'restore_body', 'ocupathif/direct/darwin-arm64/latest-mac.yml'],
@@ -80,7 +81,7 @@ export function validateRollbackAuthority(authority, authorityPathOrUrl = DEFAUL
     }
     if (action === 'ensure_absent') {
       if (step.expectedHttpStatus !== 404 || Object.hasOwn(step, 'bodyPath')) {
-        failures.push('rollback Windows feed absence contract mismatch');
+        failures.push(`rollback absence contract mismatch: ${step.key}`);
       }
       return;
     }

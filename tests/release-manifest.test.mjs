@@ -33,23 +33,13 @@ function finalManifest() {
   return manifest;
 }
 
-test('staging manifest fixes the 0.993.1 draft and guides but remains unpublishable', () => {
-  const prepared = validateReleaseManifest(staging, { requireFinal: false });
-  assert.equal(prepared.status, 'GREEN');
-  assert.deepEqual(prepared.pending, [
-    'assets.macManual.sizeBytes',
-    'assets.macManual.sha256',
-    'assets.macUpdater.sizeBytes',
-    'assets.macUpdater.sha256',
-    'assets.macUpdater.sha512',
-    'assets.macUpdaterBlockmap.sizeBytes',
-    'assets.macUpdaterBlockmap.sha256',
-  ]);
-
-  const strict = validateReleaseManifest(staging);
-  assert.equal(strict.status, 'RED_STOP_LINE');
-  assert.match(strict.failures.at(-1), /pending publication fields/);
-  assert.throws(() => loadReleaseManifest(), /not publishable/);
+test('staging manifest freezes the final 0.993.1 packages and guides', () => {
+  assert.deepEqual(validateReleaseManifest(staging), {
+    status: 'GREEN',
+    failures: [],
+    pending: [],
+  });
+  assert.equal(loadReleaseManifest().version, '0.993.1');
 });
 
 test('a fully frozen staging manifest passes the strict publication contract', () => {
@@ -77,13 +67,13 @@ test('prepared public files are reproducibly rendered from the pending manifest'
   assert.match(output, /checked 6 publication files/);
 });
 
-test('renderer and prepublish gate stop before remote work while fields are pending', () => {
+test('renderer accepts final bytes and gates still require an external immutable target', () => {
   const render = spawnSync(process.execPath, [
     rendererPath,
     '--check',
   ], { encoding: 'utf8' });
-  assert.notEqual(render.status, 0);
-  assert.match(render.stderr, /pending publication fields/);
+  assert.equal(render.status, 0);
+  assert.match(render.stdout, /checked 6 publication files/);
 
   const gate = spawnSync(process.execPath, [
     prepublishPath,
@@ -92,14 +82,14 @@ test('renderer and prepublish gate stop before remote work while fields are pend
   const result = JSON.parse(gate.stdout);
   assert.equal(result.status, 'RED_STOP_LINE');
   assert.equal(result.phase, 'local-publication-inputs');
-  assert.match(result.failures[0], /pending website publication fields/);
+  assert.match(result.failures[0], /OCUPATH_RELEASE_TARGET_SHA/);
 
   const postGate = spawnSync(process.execPath, [postpublishPath], { encoding: 'utf8' });
   assert.equal(postGate.status, 2);
   const postResult = JSON.parse(postGate.stdout);
   assert.equal(postResult.status, 'RED_STOP_LINE');
   assert.equal(postResult.phase, 'local-publication-inputs');
-  assert.match(postResult.failures[0], /pending publication fields/);
+  assert.match(postResult.failures[0], /OCUPATH_RELEASE_TARGET_SHA/);
 });
 
 test('Windows feed path and manual install mode cannot drift', () => {
@@ -167,10 +157,11 @@ test('publication object sets are exact and payload-first', () => {
 
 test('website publication can proceed with manual packages while updater artifacts remain pending', () => {
   const website = structuredClone(staging);
-  website.releaseDate = '2026-08-18T12:00:00.000Z';
-  website.release.draftReleaseId = '123456789';
-  website.assets.macManual.sizeBytes = 101;
-  website.assets.macManual.sha256 = 'a'.repeat(64);
+  website.assets.macUpdater.sizeBytes = '__PENDING_MAC_UPDATER_SIZE_BYTES__';
+  website.assets.macUpdater.sha256 = '__PENDING_MAC_UPDATER_SHA256__';
+  website.assets.macUpdater.sha512 = '__PENDING_MAC_UPDATER_SHA512__';
+  website.assets.macUpdaterBlockmap.sizeBytes = '__PENDING_MAC_UPDATER_BLOCKMAP_SIZE_BYTES__';
+  website.assets.macUpdaterBlockmap.sha256 = '__PENDING_MAC_UPDATER_BLOCKMAP_SHA256__';
   assert.deepEqual(validateWebsitePublicationManifest(website), {
     status: 'GREEN',
     failures: [],

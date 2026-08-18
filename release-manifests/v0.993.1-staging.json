@@ -31,19 +31,19 @@
   "assets": {
     "macManual": {
       "fileName": "OcupathIF-0.993.1-arm64-mac-standalone.zip",
-      "sizeBytes": "__PENDING_MAC_MANUAL_SIZE_BYTES__",
-      "sha256": "__PENDING_MAC_MANUAL_SHA256__"
+      "sizeBytes": 1318830831,
+      "sha256": "da73c87ea13b8ac4d6333c6a4ff3ccac4f1180fb0ec8668c3bad50bdd7111495"
     },
     "macUpdater": {
       "fileName": "OcupathIF-0.993.1-arm64-mac.zip",
-      "sizeBytes": "__PENDING_MAC_UPDATER_SIZE_BYTES__",
-      "sha256": "__PENDING_MAC_UPDATER_SHA256__",
-      "sha512": "__PENDING_MAC_UPDATER_SHA512__"
+      "sizeBytes": 1313883296,
+      "sha256": "3a2051db46382ef6239b9d401be879c5affe393136fd36aa9fa25981cb6a730b",
+      "sha512": "kvgmeTFTH+HLTrguE47Rv0ZcuRYNBtHaqrraKtvHooEafrgWcX5niFzo82kPZZTVrkdWEpOQz6syykr+zXjhdg=="
     },
     "macUpdaterBlockmap": {
       "fileName": "OcupathIF-0.993.1-arm64-mac.zip.blockmap",
-      "sizeBytes": "__PENDING_MAC_UPDATER_BLOCKMAP_SIZE_BYTES__",
-      "sha256": "__PENDING_MAC_UPDATER_BLOCKMAP_SHA256__"
+      "sizeBytes": 1361667,
+      "sha256": "01c073dccb874cddd8c4abd3ed6a52311934de8a0ba2d346f843c4fd3a5d0085"
     },
     "windowsInstaller": {
       "fileName": "OcupathIF-Setup-0.993.1-x64.exe",

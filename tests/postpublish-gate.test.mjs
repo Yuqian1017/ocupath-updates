@@ -6,16 +6,37 @@ import {
   parseUpdaterMetadata,
 } from '../scripts/postpublish-gate.mjs';
 
+const targetSha = '1'.repeat(40);
+const exactAssets = {
+  'OcupathIF-0.993.1-arm64-mac-standalone.zip': {
+    size: 101,
+    digest: `sha256:${'a'.repeat(64)}`,
+  },
+  'OcupathIF-Setup-0.993.1-x64.exe': {
+    size: 102,
+    digest: `sha256:${'b'.repeat(64)}`,
+  },
+  'OcuPathIF_v0.993.1_User_Guide_en.pdf': {
+    size: 2256745,
+    digest: 'sha256:00979793eae523f0fb8922d56880672fffcf743437eb497ea6e5127a2f8a294c',
+  },
+  'OcuPathIF_v0.993.1_User_Guide_zh.pdf': {
+    size: 2535248,
+    digest: 'sha256:67d2f1844142927b40b2cc698d1b99ab359f376fb0b6bec8dc802e0facdafbb1',
+  },
+};
+
 function exactFeed(platform) {
   const isMac = platform === 'mac';
   const fileName = isMac
     ? 'OcupathIF-0.993.1-arm64-mac.zip'
     : 'OcupathIF-Setup-0.993.1-x64.exe';
-  const metadataName = isMac ? 'darwin-arm64/latest-mac.yml' : 'win32-x64/latest.yml';
+  const metadataName = isMac ? 'direct/darwin-arm64/latest-mac.yml' : 'direct/win32-x64/latest.yml';
   const base = 'https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com';
+  const publicBase = 'https://updates.ocupath.ai/ocupathif';
   return {
-    url: `${base}/${metadataName}`,
-    expectedUrl: `${base}/${metadataName}`,
+    url: `${publicBase}/${metadataName}`,
+    expectedUrl: `${publicBase}/${metadataName}`,
     httpStatus: 200,
     sha256: isMac ? 'a'.repeat(64) : 'b'.repeat(64),
     expectedSha256: isMac ? 'a'.repeat(64) : 'b'.repeat(64),
@@ -33,11 +54,24 @@ function greenState(overrides = {}) {
   return {
     liveVersion: '0.993.1',
     expectedVersion: '0.993.1',
-    releaseDraft: false,
-    releaseTagName: 'v0.993.1',
+    release: {
+      draft: false,
+      tagName: 'v0.993.1',
+      targetCommitish: targetSha,
+      assets: Object.entries(exactAssets).map(([name, value]) => ({
+        name,
+        ...value,
+        state: 'uploaded',
+      })),
+    },
     expectedTagName: 'v0.993.1',
+    expectedTargetCommitSha: targetSha,
+    remoteTagCommitSha: targetSha,
+    expectedAssets: exactAssets,
     liveManualPublication: {
-      latestManifestExact: true,
+      latestJsonHttpStatus: 200,
+      latestJsonSha256: 'latest-exact',
+      expectedLatestJsonSha256: 'latest-exact',
       installPageHttpStatus: 200,
       installPageSha256: 'page-exact',
       expectedInstallPageSha256: 'page-exact',
@@ -57,12 +91,9 @@ function greenState(overrides = {}) {
     expectedSentinels: 7,
     rangeRequestCount: 1,
     fullZipHttp200Count: 0,
-    windowsUpdateDetection: 'PASS',
-    windowsInstallMode: 'manual',
-    windowsManualFallback: 'PASS',
-    windowsAutomaticInstallObserved: false,
+    windowsEvidence: { status: 'GREEN', failures: [], proofLabel: 'controller-and-fixed-sha-ci-only', nativeExact: false },
+    cosEvidence: { status: 'GREEN', failures: [] },
     macManualDownload: 'PASS',
-    windowsManualDownload: 'PASS',
     chinaMacValidation: 'baseline-reused',
     chinaWindowsValidation: 'baseline-reused',
     baiduAtomicPromotion: 'PASS',
@@ -116,7 +147,7 @@ test('rejects stale live manual metadata or page bytes', () => {
   const latestWrong = greenState();
   latestWrong.liveManualPublication = {
     ...latestWrong.liveManualPublication,
-    latestManifestExact: false,
+    latestJsonSha256: 'stale-latest-json',
   };
   assert.deepEqual(evaluatePostpublishGate(latestWrong).failures, [
     'live latest.json does not match the frozen staging manifest',
@@ -152,14 +183,12 @@ test('rejects a missing packaged-app Mac or Windows route', () => {
   ]);
 });
 
-test('rejects Windows auto-install semantics even when detection succeeds', () => {
+test('rejects missing durable Windows evidence instead of inferring native proof', () => {
   const result = evaluatePostpublishGate(greenState({
-    windowsInstallMode: 'in_app',
-    windowsAutomaticInstallObserved: true,
+    windowsEvidence: { status: 'RED_STOP_LINE', failures: ['native exact run was not authorized'] },
   }));
   assert.deepEqual(result.failures, [
-    'Windows install mode: in_app',
-    'Windows attempted automatic installation instead of Manual Download',
+    'Windows durable evidence: native exact run was not authorized',
   ]);
 });
 
@@ -176,14 +205,12 @@ test('rejects a transaction that did not land on the released version', () => {
 test('keeps customer-clean open until downloads, regional decision and Baidu pass', () => {
   const result = evaluatePostpublishGate(greenState({
     macManualDownload: 'not-run',
-    windowsManualDownload: 'evidence-blocked',
     chinaMacValidation: 'not-run',
     chinaWindowsValidation: 'not-run',
     baiduAtomicPromotion: 'in-progress',
   }));
   assert.deepEqual(result.failures, [
     'Mac production Manual Download transaction: not-run',
-    'Windows production Manual Download transaction: evidence-blocked',
     'China Mac regional validation: not-run',
     'China Windows regional validation: not-run',
     'Baidu atomic promotion: in-progress',
@@ -192,4 +219,43 @@ test('keeps customer-clean open until downloads, regional decision and Baidu pas
 
 test('passes only after both feeds and every final delivery lane are exact', () => {
   assert.deepEqual(evaluatePostpublishGate(greenState()), { status: 'GREEN', failures: [] });
+});
+
+test('rejects release target or remote tag drift from the external exact SHA', () => {
+  const releaseWrong = greenState();
+  releaseWrong.release.targetCommitish = 'main';
+  assert.deepEqual(evaluatePostpublishGate(releaseWrong).failures, [
+    'published release target SHA mismatch: main',
+  ]);
+
+  const tagWrong = greenState({ remoteTagCommitSha: '2'.repeat(40) });
+  assert.deepEqual(evaluatePostpublishGate(tagWrong).failures, [
+    `remote tag commit SHA mismatch: ${'2'.repeat(40)}`,
+  ]);
+});
+
+test('postpublish rechecks the exact four release assets and rejects extras', () => {
+  const state = greenState();
+  state.release.assets.push({
+    name: 'unexpected.zip',
+    size: 1,
+    digest: `sha256:${'f'.repeat(64)}`,
+    state: 'uploaded',
+  });
+  assert.deepEqual(evaluatePostpublishGate(state).failures, [
+    'release asset count mismatch: 5/4',
+    'unexpected release assets: unexpected.zip',
+  ]);
+
+  const wrongDigest = greenState();
+  wrongDigest.release.assets[0].digest = `sha256:${'0'.repeat(64)}`;
+  assert.deepEqual(evaluatePostpublishGate(wrongDigest).failures, [
+    'release asset bytes mismatch: OcupathIF-0.993.1-arm64-mac-standalone.zip',
+  ]);
+
+  const incomplete = greenState();
+  incomplete.release.assets[0].state = 'starter';
+  assert.deepEqual(evaluatePostpublishGate(incomplete).failures, [
+    'release asset incomplete: OcupathIF-0.993.1-arm64-mac-standalone.zip (starter)',
+  ]);
 });

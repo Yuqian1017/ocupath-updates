@@ -1,3 +1,5 @@
+import { exactReleaseAssetFailures } from './prepublish-gate.mjs';
+
 export function parseUpdaterMetadata(body) {
   function scalar(key) {
     const match = body.match(new RegExp(`^\\s*${key}:\\s*(.+)$`, 'm'));
@@ -33,11 +35,22 @@ export function evaluatePostpublishGate(state) {
   if (state.liveVersion !== state.expectedVersion) {
     failures.push(`live version mismatch: ${state.liveVersion ?? 'missing'}`);
   }
-  if (state.releaseDraft !== false) failures.push('release is still a draft');
-  if (state.releaseTagName !== state.expectedTagName) {
-    failures.push(`published release tag mismatch: ${state.releaseTagName ?? 'missing'}`);
+  const release = state.release ?? {};
+  if (release.draft !== false) failures.push('release is still a draft');
+  if (release.tagName !== state.expectedTagName) {
+    failures.push(`published release tag mismatch: ${release.tagName ?? 'missing'}`);
   }
-  if (state.liveManualPublication?.latestManifestExact !== true) {
+  if (release.targetCommitish !== state.expectedTargetCommitSha) {
+    failures.push(`published release target SHA mismatch: ${release.targetCommitish ?? 'missing'}`);
+  }
+  if (state.remoteTagCommitSha !== state.expectedTargetCommitSha) {
+    failures.push(`remote tag commit SHA mismatch: ${state.remoteTagCommitSha ?? 'missing'}`);
+  }
+  failures.push(...exactReleaseAssetFailures(release, state.expectedAssets));
+  if (
+    state.liveManualPublication?.latestJsonHttpStatus !== 200
+    || state.liveManualPublication?.latestJsonSha256 !== state.liveManualPublication?.expectedLatestJsonSha256
+  ) {
     failures.push('live latest.json does not match the frozen staging manifest');
   }
   if (
@@ -81,24 +94,15 @@ export function evaluatePostpublishGate(state) {
     }
   }
 
-  if (state.windowsUpdateDetection !== 'PASS') {
-    failures.push(`Windows update detection: ${state.windowsUpdateDetection}`);
+  if (state.windowsEvidence?.status !== 'GREEN') {
+    failures.push(`Windows durable evidence: ${state.windowsEvidence?.failures?.join('; ') || 'missing'}`);
   }
-  if (state.windowsInstallMode !== 'manual') {
-    failures.push(`Windows install mode: ${state.windowsInstallMode ?? 'missing'}`);
-  }
-  if (state.windowsManualFallback !== 'PASS') {
-    failures.push(`Windows Manual Download fallback: ${state.windowsManualFallback}`);
-  }
-  if (state.windowsAutomaticInstallObserved === true) {
-    failures.push('Windows attempted automatic installation instead of Manual Download');
+  if (state.cosEvidence?.status !== 'GREEN') {
+    failures.push(`COS six-object evidence: ${state.cosEvidence?.failures?.join('; ') || 'missing'}`);
   }
 
   if (state.macManualDownload !== 'PASS') {
     failures.push(`Mac production Manual Download transaction: ${state.macManualDownload}`);
-  }
-  if (state.windowsManualDownload !== 'PASS') {
-    failures.push(`Windows production Manual Download transaction: ${state.windowsManualDownload}`);
   }
   if (!acceptedRegionalStatus(state.chinaMacValidation)) {
     failures.push(`China Mac regional validation: ${state.chinaMacValidation}`);

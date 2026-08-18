@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "version": "0.992.1",
+  "capturedAt": "2026-08-18T07:17:29.000Z",
+  "source": "read-only production fetch",
+  "origins": {
+    "pages": "https://updates.ocupath.ai",
+    "cos": "https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com"
+  },
+  "restoreSteps": [
+    {
+      "order": 1,
+      "surface": "cos",
+      "action": "restore_body",
+      "key": "latest-mac.yml",
+      "bodyPath": "cos/latest-mac.yml",
+      "expectedHttpStatus": 200,
+      "bytes": 504,
+      "sha256": "c91d12b5968991a1bd32bc36f98ce0ddf7f11ade972d36a53ea7e0c7ee162dc8"
+    },
+    {
+      "order": 2,
+      "surface": "cos",
+      "action": "restore_body",
+      "key": "darwin-arm64/latest-mac.yml",
+      "bodyPath": "cos/darwin-arm64/latest-mac.yml",
+      "expectedHttpStatus": 200,
+      "bytes": 504,
+      "sha256": "c91d12b5968991a1bd32bc36f98ce0ddf7f11ade972d36a53ea7e0c7ee162dc8"
+    },
+    {
+      "order": 3,
+      "surface": "pages",
+      "action": "restore_body",
+      "key": "ocupathif/direct/darwin-arm64/latest-mac.yml",
+      "bodyPath": "pages/ocupathif/direct/darwin-arm64/latest-mac.yml",
+      "expectedHttpStatus": 200,
+      "bytes": 504,
+      "sha256": "c91d12b5968991a1bd32bc36f98ce0ddf7f11ade972d36a53ea7e0c7ee162dc8"
+    },
+    {
+      "order": 4,
+      "surface": "pages",
+      "action": "ensure_absent",
+      "key": "ocupathif/direct/win32-x64/latest.yml",
+      "expectedHttpStatus": 404
+    },
+    {
+      "order": 5,
+      "surface": "pages",
+      "action": "restore_body",
+      "key": "ocupathif/latest.json",
+      "bodyPath": "pages/ocupathif/latest.json",
+      "expectedHttpStatus": 200,
+      "bytes": 765,
+      "sha256": "b3b6c983786d060dcf3abcf531df8769697790b9e3603e9baae9ed941aa1b65f"
+    },
+    {
+      "order": 6,
+      "surface": "pages",
+      "action": "restore_body",
+      "key": "ocupathif/install.html",
+      "bodyPath": "pages/ocupathif/install.html",
+      "expectedHttpStatus": 200,
+      "bytes": 9194,
+      "sha256": "5e77dde03b5746ad63ada316f14c3c595f414cb9fca6794c35efcbdd2e8705f1"
+    }
+  ]
+}

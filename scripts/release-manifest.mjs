@@ -7,14 +7,14 @@ export const DEFAULT_STAGING_MANIFEST_URL = new URL(
 
 const PENDING_PREFIX = '__PENDING_';
 
-function isPending(value) {
+export function isPendingValue(value) {
   return typeof value === 'string'
     && value.startsWith(PENDING_PREFIX)
     && value.endsWith('__');
 }
 
 function visitPending(value, path, pending) {
-  if (isPending(value)) {
+  if (isPendingValue(value)) {
     pending.push(path);
     return;
   }
@@ -34,21 +34,32 @@ function requireValue(condition, message, failures) {
 }
 
 function validSha256(value) {
-  return isPending(value) || /^[a-f0-9]{64}$/.test(value);
+  return isPendingValue(value) || /^[a-f0-9]{64}$/.test(value);
 }
 
 function validSha512(value) {
-  if (isPending(value)) return true;
-  if (typeof value !== 'string') return false;
+  if (isPendingValue(value)) return true;
+  if (typeof value !== 'string' || !/^[A-Za-z0-9+/]+={0,2}$/.test(value)) return false;
   try {
-    return Buffer.from(value, 'base64').length === 64;
+    const decoded = Buffer.from(value, 'base64');
+    return decoded.length === 64 && decoded.toString('base64') === value;
   } catch {
     return false;
   }
 }
 
 function validBytes(value) {
-  return isPending(value) || (Number.isSafeInteger(value) && value > 0);
+  return isPendingValue(value) || (Number.isSafeInteger(value) && value > 0);
+}
+
+export function isCanonicalUtcIso(value, { allowPending = true } = {}) {
+  if (allowPending && isPendingValue(value)) return true;
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value)) return false;
+  try {
+    return new Date(value).toISOString() === value;
+  } catch {
+    return false;
+  }
 }
 
 export function validateReleaseManifest(manifest, { requireFinal = true } = {}) {
@@ -62,8 +73,8 @@ export function validateReleaseManifest(manifest, { requireFinal = true } = {}) 
   requireValue(manifest?.release?.repository === 'Yuqian1017/ocupath-updates', 'release.repository mismatch', failures);
   requireValue(manifest?.release?.tagName === `v${version}`, 'release.tagName must match version', failures);
   requireValue(
-    manifest?.release?.targetCommitish === 'release/09931-production-publish-20260818',
-    'release.targetCommitish mismatch',
+    !Object.hasOwn(manifest?.release ?? {}, 'targetCommitish'),
+    'release.targetCommitish must not be stored in the manifest; supply OCUPATH_RELEASE_TARGET_SHA',
     failures,
   );
   requireValue(manifest?.origins?.public === 'https://updates.ocupath.ai/ocupathif', 'public origin mismatch', failures);
@@ -72,24 +83,35 @@ export function validateReleaseManifest(manifest, { requireFinal = true } = {}) 
     'COS origin mismatch',
     failures,
   );
-  requireValue(manifest?.publication?.expectedCosObjects === 4, 'expectedCosObjects must be 4', failures);
   requireValue(
-    JSON.stringify(manifest?.publication?.cosAssetKeys) === JSON.stringify([
+    JSON.stringify(manifest?.publication?.githubAssetKeys) === JSON.stringify([
       'macManual',
-      'macUpdater',
-      'macUpdaterBlockmap',
       'windowsInstaller',
+      'guideEn',
+      'guideZh',
     ]),
-    'publication.cosAssetKeys must name the exact four COS objects',
+    'publication.githubAssetKeys must name the exact four release assets',
     failures,
   );
   requireValue(
-    isPending(manifest?.releaseDate) || !Number.isNaN(Date.parse(manifest?.releaseDate)),
-    'releaseDate must be an ISO timestamp',
+    JSON.stringify(manifest?.publication?.cosObjects) === JSON.stringify([
+      { order: 1, phase: 'payload', assetKey: 'macManual' },
+      { order: 2, phase: 'payload', assetKey: 'windowsInstaller' },
+      { order: 3, phase: 'payload', assetKey: 'macUpdater' },
+      { order: 4, phase: 'payload', assetKey: 'macUpdaterBlockmap' },
+      { order: 5, phase: 'metadata', key: 'latest-mac.yml', feedKey: 'darwinArm64' },
+      { order: 6, phase: 'metadata', key: 'darwin-arm64/latest-mac.yml', feedKey: 'darwinArm64' },
+    ]),
+    'publication.cosObjects must contain the exact six payload-first, metadata-last objects',
     failures,
   );
   requireValue(
-    isPending(manifest?.release?.draftReleaseId) || /^\d+$/.test(manifest?.release?.draftReleaseId),
+    isCanonicalUtcIso(manifest?.releaseDate),
+    'releaseDate must be canonical UTC ISO (YYYY-MM-DDTHH:mm:ss.sssZ)',
+    failures,
+  );
+  requireValue(
+    isPendingValue(manifest?.release?.draftReleaseId) || /^\d+$/.test(manifest?.release?.draftReleaseId),
     'release.draftReleaseId must be numeric',
     failures,
   );
@@ -147,6 +169,19 @@ export function loadReleaseManifest(pathOrUrl, options) {
     throw error;
   }
   return manifest;
+}
+
+export function findPendingFields(value) {
+  const pending = [];
+  visitPending(value, '', pending);
+  return pending;
+}
+
+export function requireExactCommitSha(value, label = 'commit SHA') {
+  if (typeof value !== 'string' || !/^[a-f0-9]{40}$/.test(value)) {
+    throw new Error(`${label} must be an externally supplied exact 40-char lowercase SHA`);
+  }
+  return value;
 }
 
 export function releaseUrls(manifest) {

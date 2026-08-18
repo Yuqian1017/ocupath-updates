@@ -1,0 +1,83 @@
+import { createHash } from 'node:crypto';
+import { readFileSync, statSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+import { isCanonicalUtcIso } from './release-manifest.mjs';
+
+export const DEFAULT_ROLLBACK_AUTHORITY_URL = new URL(
+  '../rollback/v0.992.1/ROLLBACK_AUTHORITY.json',
+  import.meta.url,
+);
+
+const EXPECTED_SEQUENCE = [
+  ['cos', 'restore_body', 'latest-mac.yml'],
+  ['cos', 'restore_body', 'darwin-arm64/latest-mac.yml'],
+  ['pages', 'restore_body', 'ocupathif/direct/darwin-arm64/latest-mac.yml'],
+  ['pages', 'ensure_absent', 'ocupathif/direct/win32-x64/latest.yml'],
+  ['pages', 'restore_body', 'ocupathif/latest.json'],
+  ['pages', 'restore_body', 'ocupathif/install.html'],
+];
+
+function sha256(body) {
+  return createHash('sha256').update(body).digest('hex');
+}
+
+export function validateRollbackAuthority(authority, authorityPathOrUrl = DEFAULT_ROLLBACK_AUTHORITY_URL) {
+  const failures = [];
+  const steps = authority?.restoreSteps ?? [];
+  const authorityPath = authorityPathOrUrl instanceof URL
+    ? fileURLToPath(authorityPathOrUrl)
+    : resolve(authorityPathOrUrl);
+  const baseDir = dirname(authorityPath);
+
+  if (authority?.schemaVersion !== 1) failures.push('rollback schemaVersion must be 1');
+  if (authority?.version !== '0.992.1') failures.push('rollback version must be 0.992.1');
+  if (authority?.source !== 'read-only production fetch') failures.push('rollback source mismatch');
+  if (authority?.origins?.pages !== 'https://updates.ocupath.ai') failures.push('rollback Pages origin mismatch');
+  if (
+    authority?.origins?.cos
+    !== 'https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com'
+  ) failures.push('rollback COS origin mismatch');
+  if (!isCanonicalUtcIso(authority?.capturedAt, { allowPending: false })) {
+    failures.push('rollback capturedAt must be canonical UTC ISO');
+  }
+  if (steps.length !== EXPECTED_SEQUENCE.length) failures.push('rollback restore step count mismatch');
+
+  EXPECTED_SEQUENCE.forEach(([surface, action, key], index) => {
+    const step = steps[index];
+    if (!step) return;
+    if (step.order !== index + 1 || step.surface !== surface || step.action !== action || step.key !== key) {
+      failures.push(`rollback step ${index + 1} sequence mismatch`);
+    }
+    if (action === 'ensure_absent') {
+      if (step.expectedHttpStatus !== 404 || Object.hasOwn(step, 'bodyPath')) {
+        failures.push('rollback Windows feed absence contract mismatch');
+      }
+      return;
+    }
+    if (step.expectedHttpStatus !== 200) {
+      failures.push(`rollback HTTP status mismatch: ${step.key}`);
+    }
+    try {
+      const bodyPath = resolve(baseDir, step.bodyPath);
+      const body = readFileSync(bodyPath);
+      if (statSync(bodyPath).size !== step.bytes || sha256(body) !== step.sha256) {
+        failures.push(`rollback body mismatch: ${step.key}`);
+      }
+    } catch (error) {
+      failures.push(`rollback body unavailable: ${step.key} (${error.message})`);
+    }
+  });
+
+  return { status: failures.length === 0 ? 'GREEN' : 'RED_STOP_LINE', failures };
+}
+
+export function loadRollbackAuthority(pathOrUrl = DEFAULT_ROLLBACK_AUTHORITY_URL) {
+  const authority = JSON.parse(readFileSync(pathOrUrl, 'utf8'));
+  const result = validateRollbackAuthority(authority, pathOrUrl);
+  if (result.status !== 'GREEN') {
+    throw new Error(`Rollback authority is invalid:\n- ${result.failures.join('\n- ')}`);
+  }
+  return { authority, result };
+}

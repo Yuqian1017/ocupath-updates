@@ -14,7 +14,8 @@ const authority = JSON.parse(readFileSync(authorityPath, 'utf8'));
 const results = [];
 
 for (const object of authority.objects) {
-  const url = `${authority.baseUrl}/${encodeURIComponent(object.key)}`;
+  const encodedKey = object.key.split('/').map(encodeURIComponent).join('/');
+  const url = `${authority.baseUrl}/${encodedKey}`;
   const result = { key: object.key, expectedBytes: object.bytes, expectedSha256: object.sha256 };
   try {
     const head = await fetch(url, { method: 'HEAD', redirect: 'follow' });

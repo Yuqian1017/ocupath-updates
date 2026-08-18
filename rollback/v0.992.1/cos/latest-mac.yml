@@ -1,0 +1,8 @@
+version: 0.992.1
+files:
+  - url: https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com/OcupathIF-0.992.1-arm64-mac.zip
+    sha512: CXdBQTzGGTWcdbzJCfntISa4u5xSqnFN0o5Ys47CuWfDyE46ftirjgKZrCLeKmFHbmnbD11kNpGYJWl/6exSww==
+    size: 1313798897
+path: https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com/OcupathIF-0.992.1-arm64-mac.zip
+sha512: CXdBQTzGGTWcdbzJCfntISa4u5xSqnFN0o5Ys47CuWfDyE46ftirjgKZrCLeKmFHbmnbD11kNpGYJWl/6exSww==
+releaseDate: '2026-08-14T18:11:57.759Z'

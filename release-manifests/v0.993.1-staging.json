@@ -6,7 +6,6 @@
   "release": {
     "repository": "Yuqian1017/ocupath-updates",
     "tagName": "v0.993.1",
-    "targetCommitish": "release/09931-production-publish-20260818",
     "draftReleaseId": "__PENDING_GITHUB_DRAFT_RELEASE_ID__"
   },
   "origins": {
@@ -14,12 +13,19 @@
     "cos": "https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com"
   },
   "publication": {
-    "expectedCosObjects": 4,
-    "cosAssetKeys": [
+    "githubAssetKeys": [
       "macManual",
-      "macUpdater",
-      "macUpdaterBlockmap",
-      "windowsInstaller"
+      "windowsInstaller",
+      "guideEn",
+      "guideZh"
+    ],
+    "cosObjects": [
+      { "order": 1, "phase": "payload", "assetKey": "macManual" },
+      { "order": 2, "phase": "payload", "assetKey": "windowsInstaller" },
+      { "order": 3, "phase": "payload", "assetKey": "macUpdater" },
+      { "order": 4, "phase": "payload", "assetKey": "macUpdaterBlockmap" },
+      { "order": 5, "phase": "metadata", "key": "latest-mac.yml", "feedKey": "darwinArm64" },
+      { "order": 6, "phase": "metadata", "key": "darwin-arm64/latest-mac.yml", "feedKey": "darwinArm64" }
     ]
   },
   "assets": {
@@ -41,9 +47,9 @@
     },
     "windowsInstaller": {
       "fileName": "OcupathIF-Setup-0.993.1-x64.exe",
-      "sizeBytes": "__PENDING_WINDOWS_EXE_SIZE_BYTES__",
-      "sha256": "__PENDING_WINDOWS_EXE_SHA256__",
-      "sha512": "__PENDING_WINDOWS_EXE_SHA512__"
+      "sizeBytes": 1354683792,
+      "sha256": "58e48850399c377457819b5294539b9fdea0164da13d4ee0a1cc2cb030cabeeb",
+      "sha512": "i6Nv6zQdjVmO2z1rfYtaVUFk2yCHEuuYZ17nJxgkQrk4a1Y86AqjNpUpsmZfuuFE1xeRSQZwGCaI20iEdJ4Kag=="
     },
     "guideEn": {
       "fileName": "OcuPathIF_v0.993.1_User_Guide_en.pdf",

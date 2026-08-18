@@ -3,6 +3,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
+import { buildCosAuthority } from './cos-publication.mjs';
 import {
   DEFAULT_STAGING_MANIFEST_URL,
   formatGigabytes,
@@ -58,6 +59,8 @@ function updaterFeed(asset, artifactUrl) {
 
 const outputs = new Map();
 const installPath = new URL('ocupathif/install.html', root);
+const macFeedBody = updaterFeed(manifest.assets.macUpdater, urls.macUpdaterCos);
+const windowsFeedBody = updaterFeed(manifest.assets.windowsInstaller, urls.windowsCos);
 outputs.set(installPath, renderInstallPage(readFileSync(installPath, 'utf8')));
 outputs.set(new URL('ocupathif/latest.json', root), `${JSON.stringify({
   schemaVersion: 1,
@@ -83,11 +86,15 @@ outputs.set(new URL('ocupathif/latest.json', root), `${JSON.stringify({
 }, null, 2)}\n`);
 outputs.set(
   new URL('ocupathif/direct/darwin-arm64/latest-mac.yml', root),
-  updaterFeed(manifest.assets.macUpdater, urls.macUpdaterCos),
+  macFeedBody,
 );
 outputs.set(
   new URL('ocupathif/direct/win32-x64/latest.yml', root),
-  updaterFeed(manifest.assets.windowsInstaller, urls.windowsCos),
+  windowsFeedBody,
+);
+outputs.set(
+  new URL('release-manifests/v0.993.1-cos-authority.json', root),
+  `${JSON.stringify(buildCosAuthority(manifest, { darwinArm64: macFeedBody }), null, 2)}\n`,
 );
 
 const mismatches = [];

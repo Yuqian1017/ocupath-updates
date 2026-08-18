@@ -1,8 +1,8 @@
 version: 0.993.1
 files:
   - url: https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com/OcupathIF-Setup-0.993.1-x64.exe
-    sha512: __PENDING_WINDOWS_EXE_SHA512__
-    size: __PENDING_WINDOWS_EXE_SIZE_BYTES__
+    sha512: i6Nv6zQdjVmO2z1rfYtaVUFk2yCHEuuYZ17nJxgkQrk4a1Y86AqjNpUpsmZfuuFE1xeRSQZwGCaI20iEdJ4Kag==
+    size: 1354683792
 path: https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com/OcupathIF-Setup-0.993.1-x64.exe
-sha512: __PENDING_WINDOWS_EXE_SHA512__
+sha512: i6Nv6zQdjVmO2z1rfYtaVUFk2yCHEuuYZ17nJxgkQrk4a1Y86AqjNpUpsmZfuuFE1xeRSQZwGCaI20iEdJ4Kag==
 releaseDate: '__PENDING_RELEASE_DATE__'

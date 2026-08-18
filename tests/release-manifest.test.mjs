@@ -6,7 +6,9 @@ import { fileURLToPath } from 'node:url';
 
 import {
   DEFAULT_STAGING_MANIFEST_URL,
+  isCanonicalUtcIso,
   loadReleaseManifest,
+  requireExactCommitSha,
   releaseUrls,
   validateReleaseManifest,
 } from '../scripts/release-manifest.mjs';
@@ -27,9 +29,6 @@ function finalManifest() {
   manifest.assets.macUpdater.sha512 = Buffer.alloc(64, 1).toString('base64');
   manifest.assets.macUpdaterBlockmap.sizeBytes = 104;
   manifest.assets.macUpdaterBlockmap.sha256 = 'd'.repeat(64);
-  manifest.assets.windowsInstaller.sizeBytes = 103;
-  manifest.assets.windowsInstaller.sha256 = 'c'.repeat(64);
-  manifest.assets.windowsInstaller.sha512 = Buffer.alloc(64, 2).toString('base64');
   return manifest;
 }
 
@@ -46,9 +45,6 @@ test('staging manifest fixes the 0.993.1 names and guides but remains unpublisha
     'assets.macUpdater.sha512',
     'assets.macUpdaterBlockmap.sizeBytes',
     'assets.macUpdaterBlockmap.sha256',
-    'assets.windowsInstaller.sizeBytes',
-    'assets.windowsInstaller.sha256',
-    'assets.windowsInstaller.sha512',
   ]);
 
   const strict = validateReleaseManifest(staging);
@@ -79,7 +75,7 @@ test('prepared public files are reproducibly rendered from the pending manifest'
     '--allow-pending',
     '--check',
   ], { encoding: 'utf8' });
-  assert.match(output, /checked 4 publication files/);
+  assert.match(output, /checked 5 publication files/);
 });
 
 test('renderer and prepublish gate stop before remote work while fields are pending', () => {
@@ -115,4 +111,48 @@ test('Windows feed path and manual install mode cannot drift', () => {
   const wrongMode = finalManifest();
   wrongMode.feeds.win32X64.installMode = 'in_app';
   assert.match(validateReleaseManifest(wrongMode).failures.join('\n'), /Windows installMode must be manual/);
+});
+
+test('release target is external exact SHA input and cannot be stored as a mutable ref', () => {
+  const sha = '1'.repeat(40);
+  assert.equal(requireExactCommitSha(sha, 'target'), sha);
+  assert.throws(() => requireExactCommitSha('main', 'target'), /exact 40-char lowercase SHA/);
+  assert.throws(() => requireExactCommitSha('A'.repeat(40), 'target'), /exact 40-char lowercase SHA/);
+
+  const selfReferential = finalManifest();
+  selfReferential.release.targetCommitish = 'v0.993.1';
+  assert.match(
+    validateReleaseManifest(selfReferential).failures.join('\n'),
+    /targetCommitish must not be stored/,
+  );
+});
+
+test('SHA-512 and releaseDate accept only canonical publication encodings', () => {
+  const nonCanonicalSha = finalManifest();
+  nonCanonicalSha.assets.macUpdater.sha512 = nonCanonicalSha.assets.macUpdater.sha512.replace(/==$/, '=');
+  assert.match(validateReleaseManifest(nonCanonicalSha).failures.join('\n'), /macUpdater.sha512 is invalid/);
+
+  for (const value of [
+    '2026-08-18T12:00:00Z',
+    '2026-08-18T07:00:00.000-05:00',
+    '2026-02-30T12:00:00.000Z',
+  ]) {
+    const wrongDate = finalManifest();
+    wrongDate.releaseDate = value;
+    assert.match(validateReleaseManifest(wrongDate).failures.join('\n'), /canonical UTC ISO/);
+    assert.equal(isCanonicalUtcIso(value), false);
+  }
+});
+
+test('publication object sets are exact and payload-first', () => {
+  const extraAsset = finalManifest();
+  extraAsset.publication.githubAssetKeys.push('macUpdater');
+  assert.match(validateReleaseManifest(extraAsset).failures.join('\n'), /exact four release assets/);
+
+  const wrongOrder = finalManifest();
+  [wrongOrder.publication.cosObjects[0], wrongOrder.publication.cosObjects[4]] = [
+    wrongOrder.publication.cosObjects[4],
+    wrongOrder.publication.cosObjects[0],
+  ];
+  assert.match(validateReleaseManifest(wrongOrder).failures.join('\n'), /exact six payload-first/);
 });

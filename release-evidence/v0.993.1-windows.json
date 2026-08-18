@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "version": "0.993.1",
+  "proofLabel": "controller-and-fixed-sha-ci-only",
+  "nativeExact": false,
+  "source": {
+    "version": "0.992.1",
+    "installerFileName": "OcupathIF-Setup-0.992.1-x64.exe",
+    "installerSizeBytes": 1354655261,
+    "installerSha256": "385a35a12225d44dc5361c20f21ea43b109b908a08e5b4cdfded4d32e9391193"
+  },
+  "target": {
+    "version": "0.993.1",
+    "productSourceCommitSha": "a0346b68190747cb15880a84bcb23c6e90eecae4",
+    "installerFileName": "OcupathIF-Setup-0.993.1-x64.exe",
+    "installerSizeBytes": 1354683792,
+    "installerSha256": "58e48850399c377457819b5294539b9fdea0164da13d4ee0a1cc2cb030cabeeb",
+    "installerSha512": "i6Nv6zQdjVmO2z1rfYtaVUFk2yCHEuuYZ17nJxgkQrk4a1Y86AqjNpUpsmZfuuFE1xeRSQZwGCaI20iEdJ4Kag=="
+  },
+  "controllerTests": {
+    "status": "PASS",
+    "passed": 11,
+    "total": 11,
+    "productSourceCommitSha": "a0346b68190747cb15880a84bcb23c6e90eecae4",
+    "productBehaviorCommitSha": "630d3a3472e6f7680cd54ed4d39413c5649d01e4",
+    "evidenceRef": "https://github.com/Yuqian1017/ocupath/actions/runs/32106608240/job/95617238460"
+  },
+  "fixedShaCi": {
+    "status": "PASS",
+    "productSourceCommitSha": "a0346b68190747cb15880a84bcb23c6e90eecae4",
+    "runUrl": "https://github.com/Yuqian1017/ocupath/actions/runs/32106608240",
+    "installerSha256": "58e48850399c377457819b5294539b9fdea0164da13d4ee0a1cc2cb030cabeeb",
+    "sourceBoundaryStatus": "PASS",
+    "provenanceStatus": "PASS",
+    "authenticodeStatus": "SKIPPED_NATIVE_NOT_AUTHORIZED"
+  },
+  "updateReachability": {
+    "sourceVersion": "0.992.1",
+    "targetVersion": "0.993.1",
+    "feedUrl": "https://updates.ocupath.ai/ocupathif/direct/win32-x64/latest.yml",
+    "installMode": "manual",
+    "detectionEvidenceLevel": "automated-controller-only",
+    "detectionStatus": "source-controller-verified",
+    "manualFallbackStatus": "source-controller-verified",
+    "automaticInstallObservation": {
+      "mode": "automated-controller-only",
+      "observed": false
+    }
+  },
+  "postPublication": {
+    "sourceVersion": "0.992.1",
+    "targetVersion": "0.993.1",
+    "liveFeedStatus": "__PENDING_WINDOWS_LIVE_FEED_STATUS__",
+    "manualPageStatus": "__PENDING_WINDOWS_MANUAL_PAGE_STATUS__",
+    "exactInstallerBytesStatus": "__PENDING_WINDOWS_EXACT_INSTALLER_BYTES_STATUS__",
+    "evidenceLevel": "live-feed-browser-and-artifact-parsed",
+    "evidenceRef": "__PENDING_WINDOWS_POSTPUBLICATION_EVIDENCE_REF__"
+  }
+}

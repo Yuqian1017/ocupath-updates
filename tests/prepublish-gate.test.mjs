@@ -3,6 +3,8 @@ import test from 'node:test';
 
 import { evaluatePrepublishGate } from '../scripts/prepublish-gate.mjs';
 
+const targetSha = '1'.repeat(40);
+
 const exactAssets = {
   'OcupathIF-0.993.1-arm64-mac-standalone.zip': {
     size: 101,
@@ -28,19 +30,19 @@ function greenState(overrides = {}) {
     release: {
       draft: true,
       tagName: 'v0.993.1',
-      targetCommitish: 'release/09931-production-publish-20260818',
+      targetCommitish: targetSha,
       assets: Object.entries(exactAssets).map(([name, value]) => ({ name, ...value, state: 'uploaded' })),
     },
     remoteTagPresent: false,
     liveVersion: '0.992.1',
     expectedRollbackVersion: '0.992.1',
     expectedTagName: 'v0.993.1',
-    expectedTargetCommitish: 'release/09931-production-publish-20260818',
+    expectedTargetCommitSha: targetSha,
     expectedAssets: exactAssets,
-    cosObjectsVerified: 4,
-    expectedCosObjects: 4,
+    rollbackAuthority: { status: 'GREEN', failures: [] },
+    cosEvidence: { status: 'GREEN', failures: [] },
     macTwoLegTransaction: 'PASS',
-    windowsNativeValidation: 'baseline-reused',
+    windowsEvidence: { status: 'GREEN', failures: [], proofLabel: 'baseline-reused', nativeExact: false },
     ...overrides,
   };
 }
@@ -51,19 +53,20 @@ test('blocks an incomplete draft before any publication mutation', () => {
       ...greenState().release,
       assets: greenState().release.assets.filter((asset) => asset.name !== 'OcupathIF-0.993.1-arm64-mac-standalone.zip'),
     },
-    cosObjectsVerified: 0,
+    cosEvidence: { status: 'RED_STOP_LINE', failures: ['not-run'] },
     macTwoLegTransaction: 'not-run',
-    windowsNativeValidation: 'rerun-required',
+    windowsEvidence: { status: 'RED_STOP_LINE', failures: ['missing'] },
   });
 
   const result = evaluatePrepublishGate(state);
 
   assert.equal(result.status, 'RED_STOP_LINE');
   assert.deepEqual(result.failures, [
+    'release asset count mismatch: 3/4',
     'missing release asset: OcupathIF-0.993.1-arm64-mac-standalone.zip',
-    'COS exact objects verified: 0/4',
+    'COS six-object evidence: not-run',
     'Mac two-leg updater transaction: not-run',
-    'Windows native risk decision: rerun-required',
+    'Windows durable evidence: missing',
   ]);
 });
 
@@ -103,9 +106,10 @@ test('rejects a starter asset even when GitHub reports the expected size', () =>
   ]);
 });
 
-test('accepts either documented Windows baseline reuse or a fresh exact-package run', () => {
-  assert.deepEqual(evaluatePrepublishGate(greenState({ windowsNativeValidation: 'baseline-reused' })), { status: 'GREEN', failures: [] });
-  assert.deepEqual(evaluatePrepublishGate(greenState({ windowsNativeValidation: 'PASS' })), { status: 'GREEN', failures: [] });
+test('requires the durable Windows evidence verdict instead of a naked status boolean', () => {
+  assert.deepEqual(evaluatePrepublishGate(greenState({ windowsEvidence: undefined })).failures, [
+    'Windows durable evidence: missing',
+  ]);
 });
 
 test('website publication does not wait for the parallel Baidu lane', () => {
@@ -115,4 +119,33 @@ test('website publication does not wait for the parallel Baidu lane', () => {
 
 test('passes only when every frozen website publication input is exact', () => {
   assert.deepEqual(evaluatePrepublishGate(greenState()), { status: 'GREEN', failures: [] });
+});
+
+test('rejects a mutable or different GitHub target', () => {
+  const state = greenState();
+  state.release.targetCommitish = 'main';
+  assert.deepEqual(evaluatePrepublishGate(state).failures, [
+    'release target SHA mismatch: main',
+  ]);
+});
+
+test('rejects duplicate, extra, or differently digested release assets', () => {
+  const state = greenState();
+  state.release.assets.push({
+    name: 'unexpected.txt',
+    size: 1,
+    digest: `sha256:${'f'.repeat(64)}`,
+    state: 'uploaded',
+  });
+  assert.deepEqual(evaluatePrepublishGate(state).failures, [
+    'release asset count mismatch: 5/4',
+    'unexpected release assets: unexpected.txt',
+  ]);
+
+  const duplicate = greenState();
+  duplicate.release.assets.push({ ...duplicate.release.assets[0] });
+  assert.deepEqual(evaluatePrepublishGate(duplicate).failures, [
+    'release asset count mismatch: 5/4',
+    'duplicate release assets: OcupathIF-0.993.1-arm64-mac-standalone.zip',
+  ]);
 });

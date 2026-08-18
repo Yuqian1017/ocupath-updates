@@ -44,6 +44,7 @@ function greenState(overrides = {}) {
     localWorktreeClean: true,
     localBranch: publicationBranch,
     remotePublicationBranchSha: targetSha,
+    regionalMarkerPresent: false,
     expectedAssets: exactAssets,
     rollbackAuthority: { status: 'GREEN', failures: [] },
     liveRollbackState: { status: 'GREEN', failures: [] },
@@ -135,6 +136,17 @@ test('global website and GitHub publication have zero COS dependency', () => {
     cosEvidence: { status: 'RED_STOP_LINE', failures: ['no COS objects exist'] },
   }));
   assert.deepEqual(result, { status: 'GREEN', failures: [] });
+});
+
+test('base release publication requires the regional marker to remain absent', () => {
+  assert.deepEqual(evaluatePrepublishGate(greenState({ regionalMarkerPresent: true })).failures, [
+    'regional COS marker must be absent from the base release commit',
+  ]);
+  const missing = greenState();
+  delete missing.regionalMarkerPresent;
+  assert.deepEqual(evaluatePrepublishGate(missing).failures, [
+    'regional COS marker must be absent from the base release commit',
+  ]);
 });
 
 test('passes only when every frozen website publication input is exact', () => {

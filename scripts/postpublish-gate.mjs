@@ -35,16 +35,37 @@ export function evaluatePostpublishGate(state) {
   if (state.liveVersion !== state.expectedVersion) {
     failures.push(`live version mismatch: ${state.liveVersion ?? 'missing'}`);
   }
-  if (state.localHeadSha !== state.expectedTargetCommitSha) {
+  if (state.expectedRegionalPromotionSha === state.expectedTargetCommitSha) {
+    failures.push('regional promotion SHA must differ from the immutable base release SHA');
+  }
+  if (state.localHeadSha !== state.expectedRegionalPromotionSha) {
     failures.push(`local HEAD SHA mismatch: ${state.localHeadSha ?? 'missing'}`);
   }
   if (state.localWorktreeClean !== true) failures.push('local updates worktree is dirty');
   if (state.localBranch !== state.expectedPublicationBranch) {
     failures.push(`local publication branch mismatch: ${state.localBranch ?? 'missing'}`);
   }
-  if (state.remotePublicationBranchSha !== state.expectedTargetCommitSha) {
+  if (state.remotePublicationBranchSha !== state.expectedRegionalPromotionSha) {
     failures.push(`remote publication branch SHA mismatch: ${state.remotePublicationBranchSha ?? 'missing'}`);
   }
+  if (state.regionalPromotionParentSha !== state.expectedTargetCommitSha) {
+    failures.push(`regional promotion parent SHA mismatch: ${state.regionalPromotionParentSha ?? 'missing'}`);
+  }
+  if (JSON.stringify(state.regionalPromotionChangedFiles) !== JSON.stringify([{
+    status: 'A',
+    path: state.expectedRegionalMarkerPath,
+  }])) failures.push(`regional promotion commit must add only ${state.expectedRegionalMarkerPath}`);
+  if (state.regionalMarkerPresentAtBase !== false) {
+    failures.push('regional marker already existed in the immutable base release commit');
+  }
+  if (state.regionalMarkerEvidence?.status !== 'GREEN') {
+    failures.push(`regional marker evidence: ${state.regionalMarkerEvidence?.failures?.join('; ') || 'missing'}`);
+  }
+  if (
+    state.liveRegionalMarker?.httpStatus !== 200
+    || state.liveRegionalMarker?.sha256 !== state.liveRegionalMarker?.expectedSha256
+    || state.liveRegionalMarker?.expectedSha256 !== state.regionalMarkerEvidence?.sha256
+  ) failures.push('live regional COS marker does not match the promotion commit');
   const release = state.release ?? {};
   if (release.draft !== false) failures.push('release is still a draft');
   if (release.tagName !== state.expectedTagName) {

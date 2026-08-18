@@ -11,6 +11,12 @@ import {
   parseUpdaterMetadata,
 } from './postpublish-gate.mjs';
 import {
+  REGIONAL_COS_MARKER_PATH,
+  REGIONAL_COS_MARKER_URL_PATH,
+  regionalCosMarkerBody,
+  validateRegionalCosMarker,
+} from './regional-cos-marker.mjs';
+import {
   DEFAULT_STAGING_MANIFEST_URL,
   loadReleaseManifest,
   requireExactCommitSha,
@@ -100,6 +106,24 @@ function remoteBranchSha(branch) {
   return sha;
 }
 
+function gitObjectExists(spec) {
+  try {
+    run('git', ['cat-file', '-e', spec], { cwd: repoRoot });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function changedFiles(fromSha, toSha) {
+  const output = run('git', ['diff', '--name-status', fromSha, toSha], { cwd: repoRoot });
+  if (!output) return [];
+  return output.split('\n').map((line) => {
+    const [status, path] = line.split('\t');
+    return { status, path };
+  });
+}
+
 try {
   const manifestSource = process.env.OCUPATH_RELEASE_STAGING_MANIFEST || DEFAULT_STAGING_MANIFEST_URL;
   const manifest = loadReleaseManifest(manifestSource);
@@ -107,6 +131,13 @@ try {
     process.env.OCUPATH_RELEASE_TARGET_SHA,
     'OCUPATH_RELEASE_TARGET_SHA',
   );
+  const expectedRegionalPromotionSha = requireExactCommitSha(
+    process.env.OCUPATH_REGIONAL_PROMOTION_SHA,
+    'OCUPATH_REGIONAL_PROMOTION_SHA',
+  );
+  if (expectedRegionalPromotionSha === expectedTargetCommitSha) {
+    throw new Error('OCUPATH_REGIONAL_PROMOTION_SHA must differ from the immutable base release SHA');
+  }
   const expectedPublicationBranch = requirePublicationBranch(process.env.OCUPATH_RELEASE_BRANCH);
   const manifestPath = manifestSource instanceof URL ? fileURLToPath(manifestSource) : manifestSource;
   run(process.execPath, [
@@ -114,13 +145,57 @@ try {
     manifestPath,
     '--check',
   ]);
+  const localHeadSha = run('git', ['rev-parse', 'HEAD'], { cwd: repoRoot });
+  const localWorktreeClean = run('git', ['status', '--porcelain'], { cwd: repoRoot }) === '';
+  const localBranch = run('git', ['branch', '--show-current'], { cwd: repoRoot });
+  const remotePublicationBranchSha = remoteBranchSha(expectedPublicationBranch);
+  const publishedTagCommitSha = remoteTagCommitSha(manifest.release.tagName);
+  const regionalPromotionParentSha = run('git', ['rev-parse', `${expectedRegionalPromotionSha}^`], { cwd: repoRoot });
+  const regionalPromotionChangedFiles = changedFiles(expectedTargetCommitSha, expectedRegionalPromotionSha);
+  const regionalMarkerPresentAtBase = gitObjectExists(`${expectedTargetCommitSha}:${REGIONAL_COS_MARKER_PATH}`);
+  const expectedPromotionDiff = [{ status: 'A', path: REGIONAL_COS_MARKER_PATH }];
+  const topologyFailures = [];
+  if (localHeadSha !== expectedRegionalPromotionSha) topologyFailures.push('local HEAD is not the regional promotion SHA');
+  if (!localWorktreeClean) topologyFailures.push('local updates worktree is dirty');
+  if (localBranch !== expectedPublicationBranch) topologyFailures.push('local branch is not the publication branch');
+  if (remotePublicationBranchSha !== expectedRegionalPromotionSha) topologyFailures.push('remote publication branch is not the promotion SHA');
+  if (publishedTagCommitSha !== expectedTargetCommitSha) topologyFailures.push('remote release tag is not the immutable base SHA');
+  if (regionalPromotionParentSha !== expectedTargetCommitSha) topologyFailures.push('regional promotion is not the direct child of the base SHA');
+  if (JSON.stringify(regionalPromotionChangedFiles) !== JSON.stringify(expectedPromotionDiff)) {
+    topologyFailures.push(`regional promotion diff is not the single added marker ${REGIONAL_COS_MARKER_PATH}`);
+  }
+  if (regionalMarkerPresentAtBase) topologyFailures.push('regional marker already exists at the base SHA');
+  if (topologyFailures.length > 0) {
+    throw new Error(`Regional promotion topology is invalid:\n- ${topologyFailures.join('\n- ')}`);
+  }
   const urls = releaseUrls(manifest);
   const macFeedPath = new URL('../ocupathif/direct/darwin-arm64/latest-mac.yml', import.meta.url);
   const windowsFeedPath = new URL('../ocupathif/direct/win32-x64/latest.yml', import.meta.url);
   const cosAuthorityPath = fileURLToPath(new URL('../release-manifests/v0.993.1-cos-authority.json', import.meta.url));
+  const cosAuthority = JSON.parse(readFileSync(cosAuthorityPath, 'utf8'));
   const cosUploadLedgerPath = process.env.OCUPATH_COS_UPLOAD_LEDGER_JSON;
   if (!cosUploadLedgerPath) throw new Error('OCUPATH_COS_UPLOAD_LEDGER_JSON is required');
   const cosEvidence = await runLiveCosGate(cosAuthorityPath, cosUploadLedgerPath);
+  const regionalMarkerPath = fileURLToPath(new URL(`../${REGIONAL_COS_MARKER_PATH}`, import.meta.url));
+  const localRegionalMarkerBody = readFileSync(regionalMarkerPath, 'utf8');
+  const regionalMarker = JSON.parse(localRegionalMarkerBody);
+  const regionalMarkerValidation = validateRegionalCosMarker({
+    marker: regionalMarker,
+    manifest,
+    authority: cosAuthority,
+    liveGate: cosEvidence,
+    baseReleaseCommitSha: expectedTargetCommitSha,
+  });
+  const regionalMarkerFailures = [...regionalMarkerValidation.failures];
+  if (localRegionalMarkerBody !== regionalCosMarkerBody(regionalMarker)) {
+    regionalMarkerFailures.push('regional marker body is not canonical rendered JSON');
+  }
+  const regionalMarkerEvidence = {
+    ...regionalMarkerValidation,
+    status: regionalMarkerFailures.length === 0 ? 'GREEN' : 'RED_STOP_LINE',
+    failures: regionalMarkerFailures,
+    sha256: createHash('sha256').update(localRegionalMarkerBody).digest('hex'),
+  };
   const windowsLoaded = loadWindowsEvidence(
     process.env.OCUPATH_WINDOWS_EVIDENCE_JSON,
     manifest,
@@ -146,6 +221,7 @@ try {
   const localLatestPage = readFileSync(new URL('../ocupathif/latest.json', import.meta.url), 'utf8');
   const liveInstallPage = fetchTextWithStatus(`${manifest.origins.public}/install.html`);
   const localInstallPage = readFileSync(new URL('../ocupathif/install.html', import.meta.url), 'utf8');
+  const liveRegionalMarker = fetchTextWithStatus(`${manifest.origins.public}${REGIONAL_COS_MARKER_URL_PATH}`);
 
   let transaction = {};
   const transactionSummaryPath = process.env.OCUPATH_PRODUCTION_TRANSACTION_SUMMARY;
@@ -154,10 +230,10 @@ try {
   const state = {
     liveVersion: liveManifest.version,
     expectedVersion: manifest.version,
-    localHeadSha: run('git', ['rev-parse', 'HEAD'], { cwd: repoRoot }),
-    localWorktreeClean: run('git', ['status', '--porcelain'], { cwd: repoRoot }) === '',
-    localBranch: run('git', ['branch', '--show-current'], { cwd: repoRoot }),
-    remotePublicationBranchSha: remoteBranchSha(expectedPublicationBranch),
+    localHeadSha,
+    localWorktreeClean,
+    localBranch,
+    remotePublicationBranchSha,
     release: {
       draft: release.draft,
       tagName: release.tag_name,
@@ -171,8 +247,19 @@ try {
     },
     expectedTagName: manifest.release.tagName,
     expectedTargetCommitSha,
+    expectedRegionalPromotionSha,
     expectedPublicationBranch,
-    remoteTagCommitSha: remoteTagCommitSha(manifest.release.tagName),
+    remoteTagCommitSha: publishedTagCommitSha,
+    regionalPromotionParentSha,
+    regionalPromotionChangedFiles,
+    regionalMarkerPresentAtBase,
+    expectedRegionalMarkerPath: REGIONAL_COS_MARKER_PATH,
+    regionalMarkerEvidence,
+    liveRegionalMarker: {
+      httpStatus: liveRegionalMarker.httpStatus,
+      sha256: createHash('sha256').update(liveRegionalMarker.body).digest('hex'),
+      expectedSha256: regionalMarkerEvidence.sha256,
+    },
     expectedAssets: expectedReleaseAssets(manifest),
     liveManualPublication: {
       latestJsonHttpStatus: liveLatestPage.httpStatus,

@@ -2,9 +2,11 @@
 
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
+import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 import { evaluatePrepublishGate } from './prepublish-gate.mjs';
+import { REGIONAL_COS_MARKER_PATH } from './regional-cos-marker.mjs';
 import {
   DEFAULT_STAGING_MANIFEST_URL,
   loadReleaseManifest,
@@ -139,6 +141,7 @@ try {
     localWorktreeClean: run('git', ['status', '--porcelain'], { cwd: repoRoot }) === '',
     localBranch: run('git', ['branch', '--show-current'], { cwd: repoRoot }),
     remotePublicationBranchSha: remoteBranchSha(expectedPublicationBranch),
+    regionalMarkerPresent: existsSync(new URL(`../${REGIONAL_COS_MARKER_PATH}`, import.meta.url)),
     release: {
       draft: release.draft,
       tagName: release.tag_name,

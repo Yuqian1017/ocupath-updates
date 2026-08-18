@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-release-version="0.993.1" data-regional-marker-url="/ocupathif/regional-cos/v0.993.1.json">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -55,7 +55,7 @@
           <span class="recommended" data-recommended="mac" hidden>Recommended for this device</span>
         </div>
         <p class="requirement">macOS 14+ · Apple Silicon</p>
-        <a class="download-button" data-download-platform="mac" data-cn-url="https://github.com/Yuqian1017/ocupath-updates/releases/download/v0.993.1/OcupathIF-0.993.1-arm64-mac-standalone.zip" data-cn-promoted-url="https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com/OcupathIF-0.993.1-arm64-mac-standalone.zip" data-expected-bytes="__PENDING_MAC_MANUAL_SIZE_BYTES__" data-global-url="https://github.com/Yuqian1017/ocupath-updates/releases/download/v0.993.1/OcupathIF-0.993.1-arm64-mac-standalone.zip" href="https://github.com/Yuqian1017/ocupath-updates/releases/download/v0.993.1/OcupathIF-0.993.1-arm64-mac-standalone.zip">Download OcuPathIF for macOS</a>
+        <a class="download-button" data-download-platform="mac" data-regional-key="macManual" data-cn-url="https://github.com/Yuqian1017/ocupath-updates/releases/download/v0.993.1/OcupathIF-0.993.1-arm64-mac-standalone.zip" data-cn-promoted-url="https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com/OcupathIF-0.993.1-arm64-mac-standalone.zip" data-expected-key="OcupathIF-0.993.1-arm64-mac-standalone.zip" data-expected-bytes="__PENDING_MAC_MANUAL_SIZE_BYTES__" data-expected-sha256="__PENDING_MAC_MANUAL_SHA256__" data-global-url="https://github.com/Yuqian1017/ocupath-updates/releases/download/v0.993.1/OcupathIF-0.993.1-arm64-mac-standalone.zip" href="https://github.com/Yuqian1017/ocupath-updates/releases/download/v0.993.1/OcupathIF-0.993.1-arm64-mac-standalone.zip">Download OcuPathIF for macOS</a>
         <p class="file-meta" data-file-meta="mac">Version 0.993.1 · Pending final package</p>
         <details>
           <summary>Verify download (SHA-256)</summary>
@@ -76,7 +76,7 @@
           <span class="recommended" data-recommended="windows" hidden>Recommended for this device</span>
         </div>
         <p class="requirement">Windows 10/11 · x64</p>
-        <a class="download-button" data-download-platform="windows" data-cn-url="https://github.com/Yuqian1017/ocupath-updates/releases/download/v0.993.1/OcupathIF-Setup-0.993.1-x64.exe" data-cn-promoted-url="https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com/OcupathIF-Setup-0.993.1-x64.exe" data-expected-bytes="1354683792" data-global-url="https://github.com/Yuqian1017/ocupath-updates/releases/download/v0.993.1/OcupathIF-Setup-0.993.1-x64.exe" href="https://github.com/Yuqian1017/ocupath-updates/releases/download/v0.993.1/OcupathIF-Setup-0.993.1-x64.exe">Download OcuPathIF for Windows</a>
+        <a class="download-button" data-download-platform="windows" data-regional-key="windowsInstaller" data-cn-url="https://github.com/Yuqian1017/ocupath-updates/releases/download/v0.993.1/OcupathIF-Setup-0.993.1-x64.exe" data-cn-promoted-url="https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com/OcupathIF-Setup-0.993.1-x64.exe" data-expected-key="OcupathIF-Setup-0.993.1-x64.exe" data-expected-bytes="1354683792" data-expected-sha256="58e48850399c377457819b5294539b9fdea0164da13d4ee0a1cc2cb030cabeeb" data-global-url="https://github.com/Yuqian1017/ocupath-updates/releases/download/v0.993.1/OcupathIF-Setup-0.993.1-x64.exe" href="https://github.com/Yuqian1017/ocupath-updates/releases/download/v0.993.1/OcupathIF-Setup-0.993.1-x64.exe">Download OcuPathIF for Windows</a>
         <p class="file-meta" data-file-meta="windows">Version 0.993.1 · 1.26 GB</p>
         <details>
           <summary>Verify download (SHA-256)</summary>
@@ -103,34 +103,82 @@
         document.documentElement.dataset.downloadRegion = useChinaRoute ? 'cn' : 'global';
       };
 
+      const exactKeys = (value, expected) => value
+        && typeof value === 'object'
+        && !Array.isArray(value)
+        && JSON.stringify(Object.keys(value).sort()) === JSON.stringify([...expected].sort());
+      const isCanonicalTimestamp = (value) => typeof value === 'string'
+        && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value)
+        && !Number.isNaN(Date.parse(value));
+      const markerMatchesPage = (marker) => {
+        if (!exactKeys(marker, [
+          'schemaVersion', 'version', 'state', 'generatedBy', 'baseReleaseCommitSha',
+          'promotedAt', 'verifier', 'cors', 'assets',
+        ])) return false;
+        if (
+          marker.schemaVersion !== 1
+          || marker.version !== document.documentElement.dataset.releaseVersion
+          || marker.state !== 'PROMOTED'
+          || marker.generatedBy !== 'scripts/generate-regional-cos-marker.mjs'
+          || !/^[a-f0-9]{40}$/.test(marker.baseReleaseCommitSha ?? '')
+          || !isCanonicalTimestamp(marker.promotedAt)
+        ) return false;
+        if (
+          !exactKeys(marker.verifier, [
+            'authoritySha256', 'uploadLedgerSha256', 'evidenceSha256', 'verificationCompletedAt',
+          ])
+          || !/^[a-f0-9]{64}$/.test(marker.verifier.authoritySha256 ?? '')
+          || !/^[a-f0-9]{64}$/.test(marker.verifier.uploadLedgerSha256 ?? '')
+          || !/^[a-f0-9]{64}$/.test(marker.verifier.evidenceSha256 ?? '')
+          || !isCanonicalTimestamp(marker.verifier.verificationCompletedAt)
+          || Date.parse(marker.promotedAt) <= Date.parse(marker.verifier.verificationCompletedAt)
+        ) return false;
+        if (
+          !exactKeys(marker.cors, ['allowedOrigin', 'allowedMethods', 'exposedHeaders'])
+          || marker.cors.allowedOrigin !== 'https://updates.ocupath.ai'
+          || JSON.stringify(marker.cors.allowedMethods) !== JSON.stringify(['GET', 'HEAD'])
+          || JSON.stringify(marker.cors.exposedHeaders) !== JSON.stringify(['Content-Length', 'ETag', 'Last-Modified'])
+          || !exactKeys(marker.assets, ['macManual', 'windowsInstaller'])
+        ) return false;
+        return downloadButtons.every((button) => {
+          const asset = marker.assets[button.dataset.regionalKey];
+          return exactKeys(asset, ['key', 'url', 'bytes', 'sha256'])
+            && asset.key === button.dataset.expectedKey
+            && asset.url === button.dataset.cnPromotedUrl
+            && asset.bytes === Number(button.dataset.expectedBytes)
+            && asset.sha256 === button.dataset.expectedSha256
+            && /^[a-f0-9]{64}$/.test(asset.sha256);
+        });
+      };
+
       const promoteChinaRoutes = () => {
         if (typeof fetch !== 'function') return Promise.resolve(false);
-        return Promise.all(downloadButtons.map((button) => fetch(button.dataset.cnPromotedUrl, {
+        return fetch(document.documentElement.dataset.regionalMarkerUrl, {
           cache: 'no-store',
-          credentials: 'omit',
-          method: 'HEAD',
-          mode: 'cors',
+          credentials: 'same-origin',
+          headers: { Accept: 'application/json' },
+          method: 'GET',
+          mode: 'same-origin',
           referrerPolicy: 'no-referrer',
         }).then((response) => {
-          const bytes = Number(response.headers?.get?.('content-length'));
-          const etag = response.headers?.get?.('etag');
-          const lastModified = response.headers?.get?.('last-modified');
-          if (
-            !response.ok
-            || bytes !== Number(button.dataset.expectedBytes)
-            || typeof etag !== 'string'
-            || etag.length === 0
-            || typeof lastModified !== 'string'
-            || Number.isNaN(Date.parse(lastModified))
-          ) {
-            throw new Error('COS manual payload is not ready');
-          }
-        }))).then(() => {
+          if (!response.ok) throw new Error('Regional COS marker is not published');
+          return response.json();
+        }).then((marker) => {
+          if (!markerMatchesPage(marker)) throw new Error('Regional COS marker does not match this release');
           downloadButtons.forEach((button) => { button.dataset.cnUrl = button.dataset.cnPromotedUrl; });
           document.documentElement.dataset.chinaRoute = 'cos-promoted';
           if (document.documentElement.dataset.downloadRegion === 'cn') applyCountry('CN');
           return true;
         }).catch(() => false);
+      };
+
+      let regionalPollTimer;
+      const scheduleRegionalPoll = () => {
+        if (regionalPollTimer || document.documentElement.dataset.downloadRegion !== 'cn') return;
+        regionalPollTimer = setTimeout(() => {
+          regionalPollTimer = undefined;
+          promoteChinaRoutes().then((promoted) => { if (!promoted) scheduleRegionalPoll(); });
+        }, 30000);
       };
 
       window.__ocupathDownloadRouting = { applyCountry, promoteChinaRoutes };
@@ -153,7 +201,12 @@
           })
           .then((result) => {
             applyCountry(result?.country);
-            if (String(result?.country ?? '').toUpperCase() === 'CN') return promoteChinaRoutes();
+            if (String(result?.country ?? '').toUpperCase() === 'CN') {
+              return promoteChinaRoutes().then((promoted) => {
+                if (!promoted) scheduleRegionalPoll();
+                return promoted;
+              });
+            }
             return false;
           })
           .catch(() => applyCountry())

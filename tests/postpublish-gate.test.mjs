@@ -7,6 +7,8 @@ import {
 } from '../scripts/postpublish-gate.mjs';
 
 const targetSha = '1'.repeat(40);
+const promotionSha = '2'.repeat(40);
+const regionalMarkerPath = 'ocupathif/regional-cos/v0.993.1.json';
 const publicationBranch = 'release/09931-production-publish-20260818';
 const exactAssets = {
   'OcupathIF-0.993.1-arm64-mac-standalone.zip': {
@@ -67,12 +69,23 @@ function greenState(overrides = {}) {
     },
     expectedTagName: 'v0.993.1',
     expectedTargetCommitSha: targetSha,
+    expectedRegionalPromotionSha: promotionSha,
     expectedPublicationBranch: publicationBranch,
-    localHeadSha: targetSha,
+    localHeadSha: promotionSha,
     localWorktreeClean: true,
     localBranch: publicationBranch,
-    remotePublicationBranchSha: targetSha,
+    remotePublicationBranchSha: promotionSha,
     remoteTagCommitSha: targetSha,
+    regionalPromotionParentSha: targetSha,
+    regionalPromotionChangedFiles: [{ status: 'A', path: regionalMarkerPath }],
+    regionalMarkerPresentAtBase: false,
+    expectedRegionalMarkerPath: regionalMarkerPath,
+    regionalMarkerEvidence: { status: 'GREEN', failures: [], sha256: 'marker-exact' },
+    liveRegionalMarker: {
+      httpStatus: 200,
+      sha256: 'marker-exact',
+      expectedSha256: 'marker-exact',
+    },
     expectedAssets: exactAssets,
     liveManualPublication: {
       latestJsonHttpStatus: 200,
@@ -240,10 +253,39 @@ test('rejects release target or remote tag drift from the external exact SHA', (
   ]);
 });
 
-test('postpublish retains local HEAD and remote publication branch binding before checking the tag', () => {
+test('postpublish binds local HEAD and remote publication branch to the promotion commit', () => {
   const state = greenState({ remotePublicationBranchSha: '4'.repeat(40) });
   assert.deepEqual(evaluatePostpublishGate(state).failures, [
     `remote publication branch SHA mismatch: ${'4'.repeat(40)}`,
+  ]);
+});
+
+test('regional promotion must be the one-marker direct child of the immutable base tag', () => {
+  const parentWrong = greenState({ regionalPromotionParentSha: '3'.repeat(40) });
+  assert.deepEqual(evaluatePostpublishGate(parentWrong).failures, [
+    `regional promotion parent SHA mismatch: ${'3'.repeat(40)}`,
+  ]);
+
+  const extraFile = greenState({
+    regionalPromotionChangedFiles: [
+      { status: 'A', path: regionalMarkerPath },
+      { status: 'M', path: 'ocupathif/install.html' },
+    ],
+  });
+  assert.deepEqual(evaluatePostpublishGate(extraFile).failures, [
+    'regional promotion commit must add only ocupathif/regional-cos/v0.993.1.json',
+  ]);
+
+  const atBase = greenState({ regionalMarkerPresentAtBase: true });
+  assert.deepEqual(evaluatePostpublishGate(atBase).failures, [
+    'regional marker already existed in the immutable base release commit',
+  ]);
+
+  const wrongLiveMarker = greenState({
+    liveRegionalMarker: { httpStatus: 200, sha256: 'stale', expectedSha256: 'marker-exact' },
+  });
+  assert.deepEqual(evaluatePostpublishGate(wrongLiveMarker).failures, [
+    'live regional COS marker does not match the promotion commit',
   ]);
 });
 

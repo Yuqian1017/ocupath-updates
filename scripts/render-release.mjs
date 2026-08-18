@@ -4,6 +4,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 import { buildCosAuthority, buildManualCosAuthority } from './cos-publication.mjs';
+import { REGIONAL_COS_MARKER_URL_PATH } from './regional-cos-marker.mjs';
 import {
   DEFAULT_STAGING_MANIFEST_URL,
   formatGigabytes,
@@ -37,17 +38,23 @@ function renderInstallPage(source) {
   const mac = manifest.assets.macManual;
   const windows = manifest.assets.windowsInstaller;
   let html = source;
+  html = replaceRequired(
+    html,
+    /<html lang="en"[^>]*>/,
+    `<html lang="en" data-release-version="${manifest.version}" data-regional-marker-url="${REGIONAL_COS_MARKER_URL_PATH}">`,
+    'regional marker page contract',
+  );
   html = replaceRequired(html, /<title>Download OcuPathIF [^<]+<\/title>/, `<title>Download OcuPathIF ${manifest.version}</title>`, 'page title');
   html = replaceRequired(
     html,
     /<a class="download-button" data-download-platform="mac"[^>]*>/,
-    `<a class="download-button" data-download-platform="mac" data-cn-url="${urls.macManualGlobal}" data-cn-promoted-url="${urls.macManualCos}" data-expected-bytes="${mac.sizeBytes}" data-global-url="${urls.macManualGlobal}" href="${urls.macManualGlobal}">`,
+    `<a class="download-button" data-download-platform="mac" data-regional-key="macManual" data-cn-url="${urls.macManualGlobal}" data-cn-promoted-url="${urls.macManualCos}" data-expected-key="${mac.fileName}" data-expected-bytes="${mac.sizeBytes}" data-expected-sha256="${mac.sha256}" data-global-url="${urls.macManualGlobal}" href="${urls.macManualGlobal}">`,
     'Mac download link',
   );
   html = replaceRequired(
     html,
     /<a class="download-button" data-download-platform="windows"[^>]*>/,
-    `<a class="download-button" data-download-platform="windows" data-cn-url="${urls.windowsGlobal}" data-cn-promoted-url="${urls.windowsCos}" data-expected-bytes="${windows.sizeBytes}" data-global-url="${urls.windowsGlobal}" href="${urls.windowsGlobal}">`,
+    `<a class="download-button" data-download-platform="windows" data-regional-key="windowsInstaller" data-cn-url="${urls.windowsGlobal}" data-cn-promoted-url="${urls.windowsCos}" data-expected-key="${windows.fileName}" data-expected-bytes="${windows.sizeBytes}" data-expected-sha256="${windows.sha256}" data-global-url="${urls.windowsGlobal}" href="${urls.windowsGlobal}">`,
     'Windows download link',
   );
   html = replaceRequired(html, /(<p class="file-meta" data-file-meta="mac">)[^<]*(<\/p>)/, `$1Version ${manifest.version} · ${formatGigabytes(mac.sizeBytes)}$2`, 'Mac metadata');

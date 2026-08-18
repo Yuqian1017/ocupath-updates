@@ -31,6 +31,11 @@ assert.equal(
   false,
   'customer page must not show internal signing terminology',
 );
+assert.match(
+  html,
+  /data-regional-marker-url="\/ocupathif\/regional-cos\/v0\.993\.1\.json"/,
+  'the immutable page must poll the versioned same-origin regional marker',
+);
 
 const baseButtonRule = html.match(/\.download-button\s*\{([^}]*)\}/)?.[1] ?? '';
 assert.match(
@@ -135,25 +140,36 @@ function createRoutingHarness(fetchImpl = () => new Promise(() => {})) {
   const buttons = [
     {
       dataset: {
+        regionalKey: 'macManual',
         cnUrl: manualMacGitHubUrl,
         cnPromotedUrl: manualMacChinaUrl,
+        expectedKey: manifest.assets.macManual.fileName,
         expectedBytes: String(manifest.assets.macManual.sizeBytes),
+        expectedSha256: String(manifest.assets.macManual.sha256),
         globalUrl: manualMacGitHubUrl,
       },
       href: manualMacGitHubUrl,
     },
     {
       dataset: {
+        regionalKey: 'windowsInstaller',
         cnUrl: windowsGitHubUrl,
         cnPromotedUrl: windowsChinaUrl,
+        expectedKey: manifest.assets.windowsInstaller.fileName,
         expectedBytes: String(manifest.assets.windowsInstaller.sizeBytes),
+        expectedSha256: String(manifest.assets.windowsInstaller.sha256),
         globalUrl: windowsGitHubUrl,
       },
       href: windowsGitHubUrl,
     },
   ];
   const document = {
-    documentElement: { dataset: {} },
+    documentElement: {
+      dataset: {
+        releaseVersion: manifest.version,
+        regionalMarkerUrl: `/ocupathif/regional-cos/v${manifest.version}.json`,
+      },
+    },
     querySelectorAll(selector) {
       return selector === '[data-download-platform]' ? buttons : [];
     },
@@ -200,21 +216,47 @@ assert.deepEqual(
 assert.equal(deterministic.document.documentElement.dataset.downloadRegion, 'global');
 
 const promotedSizes = [101, manifest.assets.windowsInstaller.sizeBytes];
-const promoted = createRoutingHarness((url, options) => {
-  if (url === 'https://api.country.is/') return new Promise(() => {});
-  const button = [manualMacChinaUrl, windowsChinaUrl].indexOf(url);
-  return Promise.resolve({
-    ok: options?.method === 'HEAD' && button >= 0,
-    headers: {
-      get: (name) => ({
-        'content-length': String(promotedSizes[button]),
-        etag: `"fixture-${button}"`,
-        'last-modified': 'Tue, 18 Aug 2026 12:00:00 GMT',
-      })[name] ?? null,
+const promotedSha256 = ['a'.repeat(64), manifest.assets.windowsInstaller.sha256];
+function exactMarker(buttons) {
+  return {
+    schemaVersion: 1,
+    version: manifest.version,
+    state: 'PROMOTED',
+    generatedBy: 'scripts/generate-regional-cos-marker.mjs',
+    baseReleaseCommitSha: '1'.repeat(40),
+    promotedAt: '2026-08-18T12:00:09.000Z',
+    verifier: {
+      authoritySha256: '2'.repeat(64),
+      uploadLedgerSha256: '3'.repeat(64),
+      evidenceSha256: '4'.repeat(64),
+      verificationCompletedAt: '2026-08-18T12:00:08.000Z',
     },
+    cors: {
+      allowedOrigin: 'https://updates.ocupath.ai',
+      allowedMethods: ['GET', 'HEAD'],
+      exposedHeaders: ['Content-Length', 'ETag', 'Last-Modified'],
+    },
+    assets: Object.fromEntries(buttons.map((button) => [button.dataset.regionalKey, {
+      key: button.dataset.expectedKey,
+      url: button.dataset.cnPromotedUrl,
+      bytes: Number(button.dataset.expectedBytes),
+      sha256: button.dataset.expectedSha256,
+    }])),
+  };
+}
+
+let promoted;
+promoted = createRoutingHarness((url, options) => {
+  if (url === 'https://api.country.is/') return new Promise(() => {});
+  return Promise.resolve({
+    ok: url === `/ocupathif/regional-cos/v${manifest.version}.json` && options?.method === 'GET',
+    json: () => Promise.resolve(exactMarker(promoted.buttons)),
   });
 });
-promoted.buttons.forEach((button, index) => { button.dataset.expectedBytes = String(promotedSizes[index]); });
+promoted.buttons.forEach((button, index) => {
+  button.dataset.expectedBytes = String(promotedSizes[index]);
+  button.dataset.expectedSha256 = promotedSha256[index];
+});
 assert.equal(await promoted.window.__ocupathDownloadRouting.promoteChinaRoutes(), true);
 promoted.window.__ocupathDownloadRouting.applyCountry('CN');
 assert.deepEqual(
@@ -226,7 +268,7 @@ assert.equal(promoted.document.documentElement.dataset.chinaRoute, 'cos-promoted
 
 const unavailableCos = createRoutingHarness((url) => {
   if (url === 'https://api.country.is/') return new Promise(() => {});
-  return Promise.resolve({ ok: false, headers: { get: () => null } });
+  return Promise.resolve({ ok: false, json: () => Promise.resolve({}) });
 });
 assert.equal(await unavailableCos.window.__ocupathDownloadRouting.promoteChinaRoutes(), false);
 unavailableCos.window.__ocupathDownloadRouting.applyCountry('CN');
@@ -236,16 +278,21 @@ assert.deepEqual(
   'unavailable COS must leave mainland-China users on the working GitHub fallback',
 );
 
-const corsBlocked = createRoutingHarness((url) => {
+let sameSizeWrongBytes;
+sameSizeWrongBytes = createRoutingHarness((url) => {
   if (url === 'https://api.country.is/') return new Promise(() => {});
-  return Promise.resolve({ ok: true, headers: { get: () => null } });
+  const marker = exactMarker(sameSizeWrongBytes.buttons);
+  marker.assets.macManual.sha256 = 'f'.repeat(64);
+  return Promise.resolve({ ok: true, json: () => Promise.resolve(marker) });
 });
-assert.equal(await corsBlocked.window.__ocupathDownloadRouting.promoteChinaRoutes(), false);
-corsBlocked.window.__ocupathDownloadRouting.applyCountry('CN');
+sameSizeWrongBytes.buttons[0].dataset.expectedBytes = '101';
+sameSizeWrongBytes.buttons[0].dataset.expectedSha256 = 'a'.repeat(64);
+assert.equal(await sameSizeWrongBytes.window.__ocupathDownloadRouting.promoteChinaRoutes(), false);
+sameSizeWrongBytes.window.__ocupathDownloadRouting.applyCountry('CN');
 assert.deepEqual(
-  corsBlocked.buttons.map((button) => button.href),
-  corsBlocked.buttons.map((button) => button.dataset.globalUrl),
-  'COS without browser-readable CORS headers must keep both China routes on GitHub',
+  sameSizeWrongBytes.buttons.map((button) => button.href),
+  sameSizeWrongBytes.buttons.map((button) => button.dataset.globalUrl),
+  'same-size wrong bytes must remain on GitHub when the marker SHA256 does not match',
 );
 
 deterministic.window.__ocupathDownloadRouting.applyCountry(undefined);

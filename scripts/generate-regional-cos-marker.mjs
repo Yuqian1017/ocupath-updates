@@ -27,7 +27,7 @@ if (!uploadLedgerPath) {
 }
 
 const repoRoot = fileURLToPath(new URL('../', import.meta.url));
-const authorityPath = fileURLToPath(new URL('../release-manifests/v0.993.1-cos-authority.json', import.meta.url));
+const authorityPath = fileURLToPath(new URL('../release-manifests/v0.994.1-cos-authority.json', import.meta.url));
 const markerPath = resolve(repoRoot, REGIONAL_COS_MARKER_PATH);
 const runGit = (args) => execFileSync('git', args, { cwd: repoRoot, encoding: 'utf8' }).trim();
 const localHead = runGit(['rev-parse', 'HEAD']);

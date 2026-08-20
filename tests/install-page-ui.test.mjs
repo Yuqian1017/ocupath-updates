@@ -33,7 +33,7 @@ assert.equal(
 );
 assert.match(
   html,
-  /data-regional-marker-url="\/ocupathif\/regional-cos\/v0\.993\.1\.json"/,
+  new RegExp(`data-regional-marker-url="/ocupathif/regional-cos/v${manifest.version.replaceAll('.', '\\.')}.json"`),
   'the immutable page must poll the versioned same-origin regional marker',
 );
 

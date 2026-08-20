@@ -38,10 +38,10 @@ object independently.
 
 All package bytes named by the platform feeds are served from the approved Hong Kong COS bucket. Large customer packages are not stored in this repository.
 
-Publication files are generated from `release-manifests/v0.993.1-staging.json`:
+Publication files are generated from `release-manifests/v0.994.1-staging.json`:
 
 ```text
-node scripts/render-release.mjs release-manifests/v0.993.1-staging.json
+node scripts/render-release.mjs release-manifests/v0.994.1-staging.json
 ```
 
 The renderer and publication gates stop while any `__PENDING_*__` field remains.

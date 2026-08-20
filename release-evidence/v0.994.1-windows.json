@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "version": "0.994.1",
+  "proofLabel": "controller-and-fixed-sha-ci-only",
+  "nativeExact": false,
+  "source": {
+    "version": "0.993.1",
+    "installerFileName": "OcupathIF-Setup-0.993.1-x64.exe",
+    "installerSizeBytes": 1354683792,
+    "installerSha256": "58e48850399c377457819b5294539b9fdea0164da13d4ee0a1cc2cb030cabeeb"
+  },
+  "target": {
+    "version": "0.994.1",
+    "productSourceCommitSha": "fbd1788ff5b43bfe12624b9a9984c4f9b90342ed",
+    "installerFileName": "OcupathIF-Setup-0.994.1-x64.exe",
+    "installerSizeBytes": 1354705933,
+    "installerSha256": "ee2801ce9953453fb1982e568b307fe1ee49a71a12d71926c27815581be10e8c",
+    "installerSha512": "XnvzJ91HAqV3q1845zJWrOMZAfX5giT2Js3+tqAZ9P3IKcxAZWGzy0ZsxhFi7h8l+GIMgp1enddbOHwCtkCCVQ=="
+  },
+  "controllerTests": {
+    "status": "PASS",
+    "passed": 11,
+    "total": 11,
+    "productSourceCommitSha": "fbd1788ff5b43bfe12624b9a9984c4f9b90342ed",
+    "productBehaviorCommitSha": "fbd1788ff5b43bfe12624b9a9984c4f9b90342ed",
+    "evidenceRef": "https://github.com/Yuqian1017/ocupathif_new/actions/runs/32411740699/job/96563504711"
+  },
+  "fixedShaCi": {
+    "status": "PASS",
+    "productSourceCommitSha": "fbd1788ff5b43bfe12624b9a9984c4f9b90342ed",
+    "repository": "Yuqian1017/ocupathif_new",
+    "runId": 32411740699,
+    "jobId": 96563504711,
+    "runUrl": "https://github.com/Yuqian1017/ocupathif_new/actions/runs/32411740699",
+    "installerSha256": "ee2801ce9953453fb1982e568b307fe1ee49a71a12d71926c27815581be10e8c",
+    "sourceBoundaryStatus": "PASS",
+    "provenanceStatus": "PASS",
+    "authenticodeStatus": "SKIPPED_NATIVE_NOT_AUTHORIZED"
+  },
+  "updateReachability": {
+    "sourceVersion": "0.993.1",
+    "targetVersion": "0.994.1",
+    "feedUrl": "https://updates.ocupath.ai/ocupathif/direct/win32-x64/latest.yml",
+    "installMode": "manual",
+    "detectionEvidenceLevel": "automated-controller-only",
+    "detectionStatus": "source-controller-verified",
+    "manualFallbackStatus": "source-controller-verified",
+    "automaticInstallObservation": {
+      "mode": "automated-controller-only",
+      "observed": false
+    }
+  },
+  "postPublication": {
+    "sourceVersion": "0.993.1",
+    "targetVersion": "0.994.1",
+    "liveFeedStatus": "__PENDING_WINDOWS_LIVE_FEED_STATUS__",
+    "manualPageStatus": "__PENDING_WINDOWS_MANUAL_PAGE_STATUS__",
+    "exactInstallerBytesStatus": "__PENDING_WINDOWS_EXACT_INSTALLER_BYTES_STATUS__",
+    "evidenceLevel": "live-feed-browser-and-artifact-parsed",
+    "evidenceRef": "__PENDING_WINDOWS_POSTPUBLICATION_EVIDENCE_REF__"
+  }
+}

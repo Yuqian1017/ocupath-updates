@@ -6,15 +6,15 @@ import { fileURLToPath } from 'node:url';
 import { findPendingFields, isCanonicalUtcIso } from './release-manifest.mjs';
 
 export const DEFAULT_WINDOWS_EVIDENCE_URL = new URL(
-  '../release-evidence/v0.993.1-windows.json',
+  '../release-evidence/v0.994.1-windows.json',
   import.meta.url,
 );
 
-const EXPECTED_BUILD_REVIEW_SHA = 'a0346b68190747cb15880a84bcb23c6e90eecae4';
-const EXPECTED_PRODUCT_BEHAVIOR_SHA = '630d3a3472e6f7680cd54ed4d39413c5649d01e4';
+const EXPECTED_BUILD_REVIEW_SHA = 'fbd1788ff5b43bfe12624b9a9984c4f9b90342ed';
+const EXPECTED_PRODUCT_BEHAVIOR_SHA = 'fbd1788ff5b43bfe12624b9a9984c4f9b90342ed';
 const EXPECTED_CI_REPOSITORY = 'Yuqian1017/ocupathif_new';
-const EXPECTED_CI_RUN_ID = 32106608240;
-const EXPECTED_CI_JOB_ID = 95617238460;
+const EXPECTED_CI_RUN_ID = 32411740699;
+const EXPECTED_CI_JOB_ID = 96563504711;
 const EXPECTED_CONTROLLER_EVIDENCE_REF = `https://github.com/${EXPECTED_CI_REPOSITORY}/actions/runs/${EXPECTED_CI_RUN_ID}/job/${EXPECTED_CI_JOB_ID}`;
 const EXPECTED_FIXED_SHA_CI_RUN_URL = `https://github.com/${EXPECTED_CI_REPOSITORY}/actions/runs/${EXPECTED_CI_RUN_ID}`;
 const DEFAULT_EVIDENCE_BASE_DIR = fileURLToPath(new URL('../', import.meta.url));
@@ -111,9 +111,9 @@ export function validateWindowsEvidence(evidence, manifest, {
 
   if (
     source.version !== manifest.previousLiveVersion
-    || source.installerFileName !== 'OcupathIF-Setup-0.992.1-x64.exe'
-    || source.installerSizeBytes !== 1354655261
-    || source.installerSha256 !== '385a35a12225d44dc5361c20f21ea43b109b908a08e5b4cdfded4d32e9391193'
+    || source.installerFileName !== 'OcupathIF-Setup-0.993.1-x64.exe'
+    || source.installerSizeBytes !== 1354683792
+    || source.installerSha256 !== '58e48850399c377457819b5294539b9fdea0164da13d4ee0a1cc2cb030cabeeb'
   ) {
     failures.push('Windows source package identity mismatch');
   }

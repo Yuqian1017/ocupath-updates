@@ -7,21 +7,21 @@ const targetSha = '1'.repeat(40);
 const publicationBranch = 'release/09931-production-publish-20260818';
 
 const exactAssets = {
-  'OcupathIF-0.993.1-arm64-mac-standalone.zip': {
+  'OcupathIF-0.994.1-arm64-mac-standalone.zip': {
     size: 101,
     digest: `sha256:${'a'.repeat(64)}`,
   },
-  'OcupathIF-Setup-0.993.1-x64.exe': {
+  'OcupathIF-Setup-0.994.1-x64.exe': {
     size: 102,
     digest: `sha256:${'b'.repeat(64)}`,
   },
-  'OcuPathIF_v0.993.1_User_Guide_en.pdf': {
-    size: 2256745,
-    digest: 'sha256:00979793eae523f0fb8922d56880672fffcf743437eb497ea6e5127a2f8a294c',
+  'OcuPathIF_v0.994.1_User_Guide_en.pdf': {
+    size: 2256633,
+    digest: 'sha256:1e99d2b8e6635051e059b741b7a399efa5e6b4605e22e7f85bfcc3ef37227801',
   },
-  'OcuPathIF_v0.993.1_User_Guide_zh.pdf': {
-    size: 2535248,
-    digest: 'sha256:67d2f1844142927b40b2cc698d1b99ab359f376fb0b6bec8dc802e0facdafbb1',
+  'OcuPathIF_v0.994.1_User_Guide_zh.pdf': {
+    size: 2534894,
+    digest: 'sha256:e0974f61bf87184d5209262b1a289a31c742c99486928e4fd707029aad16f996',
   },
 };
 
@@ -30,14 +30,14 @@ function greenState(overrides = {}) {
     publicationFilesCurrent: true,
     release: {
       draft: true,
-      tagName: 'v0.993.1',
+      tagName: 'v0.994.1',
       targetCommitish: targetSha,
       assets: Object.entries(exactAssets).map(([name, value]) => ({ name, ...value, state: 'uploaded' })),
     },
     remoteTagPresent: false,
-    liveVersion: '0.992.1',
-    expectedRollbackVersion: '0.992.1',
-    expectedTagName: 'v0.993.1',
+    liveVersion: '0.993.1',
+    expectedRollbackVersion: '0.993.1',
+    expectedTagName: 'v0.994.1',
     expectedTargetCommitSha: targetSha,
     expectedPublicationBranch: publicationBranch,
     localHeadSha: targetSha,
@@ -57,7 +57,7 @@ test('blocks an incomplete draft before any publication mutation', () => {
   const state = greenState({
     release: {
       ...greenState().release,
-      assets: greenState().release.assets.filter((asset) => asset.name !== 'OcupathIF-0.993.1-arm64-mac-standalone.zip'),
+      assets: greenState().release.assets.filter((asset) => asset.name !== 'OcupathIF-0.994.1-arm64-mac-standalone.zip'),
     },
     windowsEvidence: { status: 'RED_STOP_LINE', failures: ['missing'] },
   });
@@ -67,7 +67,7 @@ test('blocks an incomplete draft before any publication mutation', () => {
   assert.equal(result.status, 'RED_STOP_LINE');
   assert.deepEqual(result.failures, [
     'release asset count mismatch: 3/4',
-    'missing release asset: OcupathIF-0.993.1-arm64-mac-standalone.zip',
+    'missing release asset: OcupathIF-0.994.1-arm64-mac-standalone.zip',
     'Windows durable evidence: missing',
   ]);
 });
@@ -81,7 +81,7 @@ test('rejects stale rendered publication files', () => {
 
 test('rejects a tag created before the gate opens', () => {
   const result = evaluatePrepublishGate(greenState({ remoteTagPresent: true }));
-  assert.deepEqual(result.failures, ['remote tag already exists before publication: v0.993.1']);
+  assert.deepEqual(result.failures, ['remote tag already exists before publication: v0.994.1']);
 });
 
 test('rejects rollback capture-to-cutover drift before any mutation', () => {
@@ -94,24 +94,24 @@ test('rejects rollback capture-to-cutover drift before any mutation', () => {
 test('rejects a same-name asset with different bytes', () => {
   const state = greenState();
   state.release.assets = state.release.assets.map((asset) => (
-    asset.name === 'OcupathIF-0.993.1-arm64-mac-standalone.zip'
+    asset.name === 'OcupathIF-0.994.1-arm64-mac-standalone.zip'
       ? { ...asset, size: asset.size - 1 }
       : asset
   ));
   assert.deepEqual(evaluatePrepublishGate(state).failures, [
-    'release asset bytes mismatch: OcupathIF-0.993.1-arm64-mac-standalone.zip',
+    'release asset bytes mismatch: OcupathIF-0.994.1-arm64-mac-standalone.zip',
   ]);
 });
 
 test('rejects a starter asset even when GitHub reports the expected size', () => {
   const state = greenState();
   state.release.assets = state.release.assets.map((asset) => (
-    asset.name === 'OcupathIF-0.993.1-arm64-mac-standalone.zip'
+    asset.name === 'OcupathIF-0.994.1-arm64-mac-standalone.zip'
       ? { ...asset, state: 'starter', digest: null }
       : asset
   ));
   assert.deepEqual(evaluatePrepublishGate(state).failures, [
-    'release asset incomplete: OcupathIF-0.993.1-arm64-mac-standalone.zip (starter)',
+    'release asset incomplete: OcupathIF-0.994.1-arm64-mac-standalone.zip (starter)',
   ]);
 });
 
@@ -193,6 +193,6 @@ test('rejects duplicate, extra, or differently digested release assets', () => {
   duplicate.release.assets.push({ ...duplicate.release.assets[0] });
   assert.deepEqual(evaluatePrepublishGate(duplicate).failures, [
     'release asset count mismatch: 5/4',
-    'duplicate release assets: OcupathIF-0.993.1-arm64-mac-standalone.zip',
+    'duplicate release assets: OcupathIF-0.994.1-arm64-mac-standalone.zip',
   ]);
 });

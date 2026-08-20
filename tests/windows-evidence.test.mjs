@@ -41,8 +41,8 @@ function localPostEvidenceArtifact(mutate = () => {}) {
   writeFileSync(join(root, 'ocupathif', 'install.html'), manualBody);
   const artifact = {
     schemaVersion: 1,
-    sourceVersion: '0.992.1',
-    targetVersion: '0.993.1',
+    sourceVersion: '0.993.1',
+    targetVersion: '0.994.1',
     evidenceLevel: 'live-feed-browser-and-artifact-parsed',
     observedAt: '2026-08-18T18:00:00.000Z',
     artifactParsedAt: '2026-08-18T18:00:01.000Z',
@@ -51,10 +51,10 @@ function localPostEvidenceArtifact(mutate = () => {}) {
       httpStatus: 200,
       body: feedBody,
       bodySha256: sha256(feedBody),
-      version: '0.993.1',
-      path: 'https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com/OcupathIF-Setup-0.993.1-x64.exe',
-      sha512: 'i6Nv6zQdjVmO2z1rfYtaVUFk2yCHEuuYZ17nJxgkQrk4a1Y86AqjNpUpsmZfuuFE1xeRSQZwGCaI20iEdJ4Kag==',
-      size: 1354683792,
+      version: '0.994.1',
+      path: 'https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com/OcupathIF-Setup-0.994.1-x64.exe',
+      sha512: 'XnvzJ91HAqV3q1845zJWrOMZAfX5giT2Js3+tqAZ9P3IKcxAZWGzy0ZsxhFi7h8l+GIMgp1enddbOHwCtkCCVQ==',
+      size: 1354705933,
     },
     manualPage: {
       url: 'https://updates.ocupath.ai/ocupathif/install.html',
@@ -62,9 +62,9 @@ function localPostEvidenceArtifact(mutate = () => {}) {
       bodySha256: sha256(manualBody),
     },
     installer: {
-      fileName: 'OcupathIF-Setup-0.993.1-x64.exe',
-      sizeBytes: 1354683792,
-      sha256: '58e48850399c377457819b5294539b9fdea0164da13d4ee0a1cc2cb030cabeeb',
+      fileName: 'OcupathIF-Setup-0.994.1-x64.exe',
+      sizeBytes: 1354705933,
+      sha256: 'ee2801ce9953453fb1982e568b307fe1ee49a71a12d71926c27815581be10e8c',
     },
   };
   mutate(artifact);
@@ -84,23 +84,23 @@ function ciApiState() {
   ];
   return {
     run: {
-      id: 32106608240,
+      id: 32411740699,
       repository: { full_name: 'Yuqian1017/ocupathif_new' },
       head_repository: { full_name: 'Yuqian1017/ocupathif_new' },
-      head_sha: 'a0346b68190747cb15880a84bcb23c6e90eecae4',
+      head_sha: 'fbd1788ff5b43bfe12624b9a9984c4f9b90342ed',
       status: 'completed',
       conclusion: 'success',
       path: '.github/workflows/build-windows.yml',
       name: 'Build Windows Standalone',
     },
     job: {
-      id: 95617238460,
-      run_id: 32106608240,
-      head_sha: 'a0346b68190747cb15880a84bcb23c6e90eecae4',
+      id: 96563504711,
+      run_id: 32411740699,
+      head_sha: 'fbd1788ff5b43bfe12624b9a9984c4f9b90342ed',
       status: 'completed',
       conclusion: 'success',
       name: 'build-win',
-      html_url: 'https://github.com/Yuqian1017/ocupathif_new/actions/runs/32106608240/job/95617238460',
+      html_url: 'https://github.com/Yuqian1017/ocupathif_new/actions/runs/32411740699/job/96563504711',
       steps: [
         ...requiredSteps.map((name) => ({ name, conclusion: 'success' })),
         { name: 'Verify Authenticode for direct-update installer', conclusion: 'skipped' },
@@ -117,16 +117,16 @@ test('frozen Windows evidence binds controller and fixed-SHA CI to the exact fin
     proofLabel: 'controller-and-fixed-sha-ci-only',
     nativeExact: false,
   });
-  assert.equal(frozen.target.installerSizeBytes, 1354683792);
-  assert.equal(frozen.target.installerSha256, '58e48850399c377457819b5294539b9fdea0164da13d4ee0a1cc2cb030cabeeb');
+  assert.equal(frozen.target.installerSizeBytes, 1354705933);
+  assert.equal(frozen.target.installerSha256, 'ee2801ce9953453fb1982e568b307fe1ee49a71a12d71926c27815581be10e8c');
   assert.equal(frozen.fixedShaCi.authenticodeStatus, 'SKIPPED_NATIVE_NOT_AUTHORIZED');
   assert.equal(
     frozen.controllerTests.evidenceRef,
-    'https://github.com/Yuqian1017/ocupathif_new/actions/runs/32106608240/job/95617238460',
+    'https://github.com/Yuqian1017/ocupathif_new/actions/runs/32411740699/job/96563504711',
   );
   assert.equal(
     frozen.fixedShaCi.runUrl,
-    'https://github.com/Yuqian1017/ocupathif_new/actions/runs/32106608240',
+    'https://github.com/Yuqian1017/ocupathif_new/actions/runs/32411740699',
   );
 });
 
@@ -198,7 +198,7 @@ test('Windows post evidenceRef must be a schema-bound local postpublication arti
   const missing = postEvidence('release-evidence/missing.json');
   assert.match(validateWindowsEvidence(missing, manifest, { phase: 'postpublish' }).failures.join('\n'), /unavailable or invalid/);
 
-  const actionsUrl = postEvidence('https://github.com/Yuqian1017/ocupathif_new/actions/runs/32106608240/job/95617238460');
+  const actionsUrl = postEvidence('https://github.com/Yuqian1017/ocupathif_new/actions/runs/32411740699/job/96563504711');
   assert.match(validateWindowsEvidence(actionsUrl, manifest, {
     phase: 'postpublish',
   }).failures.join('\n'), /local postpublication JSON/);

@@ -8,32 +8,32 @@ import {
 
 const targetSha = '1'.repeat(40);
 const promotionSha = '2'.repeat(40);
-const regionalMarkerPath = 'ocupathif/regional-cos/v0.993.1.json';
+const regionalMarkerPath = 'ocupathif/regional-cos/v0.994.1.json';
 const publicationBranch = 'release/09931-production-publish-20260818';
 const exactAssets = {
-  'OcupathIF-0.993.1-arm64-mac-standalone.zip': {
+  'OcupathIF-0.994.1-arm64-mac-standalone.zip': {
     size: 101,
     digest: `sha256:${'a'.repeat(64)}`,
   },
-  'OcupathIF-Setup-0.993.1-x64.exe': {
+  'OcupathIF-Setup-0.994.1-x64.exe': {
     size: 102,
     digest: `sha256:${'b'.repeat(64)}`,
   },
-  'OcuPathIF_v0.993.1_User_Guide_en.pdf': {
-    size: 2256745,
-    digest: 'sha256:00979793eae523f0fb8922d56880672fffcf743437eb497ea6e5127a2f8a294c',
+  'OcuPathIF_v0.994.1_User_Guide_en.pdf': {
+    size: 2256633,
+    digest: 'sha256:1e99d2b8e6635051e059b741b7a399efa5e6b4605e22e7f85bfcc3ef37227801',
   },
-  'OcuPathIF_v0.993.1_User_Guide_zh.pdf': {
-    size: 2535248,
-    digest: 'sha256:67d2f1844142927b40b2cc698d1b99ab359f376fb0b6bec8dc802e0facdafbb1',
+  'OcuPathIF_v0.994.1_User_Guide_zh.pdf': {
+    size: 2534894,
+    digest: 'sha256:e0974f61bf87184d5209262b1a289a31c742c99486928e4fd707029aad16f996',
   },
 };
 
 function exactFeed(platform) {
   const isMac = platform === 'mac';
   const fileName = isMac
-    ? 'OcupathIF-0.993.1-arm64-mac.zip'
-    : 'OcupathIF-Setup-0.993.1-x64.exe';
+    ? 'OcupathIF-0.994.1-arm64-mac.zip'
+    : 'OcupathIF-Setup-0.994.1-x64.exe';
   const metadataName = isMac ? 'direct/darwin-arm64/latest-mac.yml' : 'direct/win32-x64/latest.yml';
   const base = 'https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com';
   const publicBase = 'https://updates.ocupath.ai/ocupathif';
@@ -43,7 +43,7 @@ function exactFeed(platform) {
     httpStatus: 200,
     sha256: isMac ? 'a'.repeat(64) : 'b'.repeat(64),
     expectedSha256: isMac ? 'a'.repeat(64) : 'b'.repeat(64),
-    version: '0.993.1',
+    version: '0.994.1',
     path: `${base}/${fileName}`,
     expectedPath: `${base}/${fileName}`,
     sha512: isMac ? 'mac-exact-sha512' : 'windows-exact-sha512',
@@ -55,11 +55,11 @@ function exactFeed(platform) {
 
 function greenState(overrides = {}) {
   return {
-    liveVersion: '0.993.1',
-    expectedVersion: '0.993.1',
+    liveVersion: '0.994.1',
+    expectedVersion: '0.994.1',
     release: {
       draft: false,
-      tagName: 'v0.993.1',
+      tagName: 'v0.994.1',
       targetCommitish: targetSha,
       assets: Object.entries(exactAssets).map(([name, value]) => ({
         name,
@@ -67,7 +67,7 @@ function greenState(overrides = {}) {
         state: 'uploaded',
       })),
     },
-    expectedTagName: 'v0.993.1',
+    expectedTagName: 'v0.994.1',
     expectedTargetCommitSha: targetSha,
     expectedRegionalPromotionSha: promotionSha,
     expectedPublicationBranch: publicationBranch,
@@ -99,9 +99,9 @@ function greenState(overrides = {}) {
       darwinArm64: exactFeed('mac'),
       win32X64: exactFeed('windows'),
     },
-    productionOldVersion: '0.992.1',
-    expectedOldVersion: '0.992.1',
-    productionTargetVersion: '0.993.1',
+    productionOldVersion: '0.993.1',
+    expectedOldVersion: '0.993.1',
+    productionTargetVersion: '0.994.1',
     productionUpdaterTransaction: 'PASS',
     macUpdateDetection: 'PASS',
     macManualFallback: 'PASS',
@@ -121,7 +121,7 @@ function greenState(overrides = {}) {
 }
 
 test('parses the updater size from the indented files entry', () => {
-  const metadata = parseUpdaterMetadata(`version: 0.993.1
+  const metadata = parseUpdaterMetadata(`version: 0.994.1
 files:
   - url: https://downloads.example/OcupathIF.zip
     sha512: exact-sha512
@@ -158,8 +158,8 @@ test('blocks when neither Mac automatic update nor detection plus fallback passe
 });
 
 test('rejects a published manifest that is not the exact target version', () => {
-  const result = evaluatePostpublishGate(greenState({ liveVersion: '0.992.1' }));
-  assert.deepEqual(result.failures, ['live version mismatch: 0.992.1']);
+  const result = evaluatePostpublishGate(greenState({ liveVersion: '0.993.1' }));
+  assert.deepEqual(result.failures, ['live version mismatch: 0.993.1']);
 });
 
 test('rejects stale live manual metadata or page bytes', () => {
@@ -217,8 +217,8 @@ test('rejects a successful automatic Mac transaction that used the full ZIP', ()
 });
 
 test('rejects a transaction that did not land on the released version', () => {
-  const result = evaluatePostpublishGate(greenState({ productionTargetVersion: '0.992.1' }));
-  assert.deepEqual(result.failures, ['production updater target mismatch: 0.992.1']);
+  const result = evaluatePostpublishGate(greenState({ productionTargetVersion: '0.993.1' }));
+  assert.deepEqual(result.failures, ['production updater target mismatch: 0.993.1']);
 });
 
 test('keeps customer-clean open until downloads, regional decision and Baidu pass', () => {
@@ -278,7 +278,7 @@ test('regional promotion must be the one-marker direct child of the immutable ba
     ],
   });
   assert.deepEqual(evaluatePostpublishGate(extraFile).failures, [
-    'regional promotion commit must add only ocupathif/regional-cos/v0.993.1.json',
+    'regional promotion commit must add only ocupathif/regional-cos/v0.994.1.json',
   ]);
 
   const atBase = greenState({ regionalMarkerPresentAtBase: true });
@@ -310,12 +310,12 @@ test('postpublish rechecks the exact four release assets and rejects extras', ()
   const wrongDigest = greenState();
   wrongDigest.release.assets[0].digest = `sha256:${'0'.repeat(64)}`;
   assert.deepEqual(evaluatePostpublishGate(wrongDigest).failures, [
-    'release asset bytes mismatch: OcupathIF-0.993.1-arm64-mac-standalone.zip',
+    'release asset bytes mismatch: OcupathIF-0.994.1-arm64-mac-standalone.zip',
   ]);
 
   const incomplete = greenState();
   incomplete.release.assets[0].state = 'starter';
   assert.deepEqual(evaluatePostpublishGate(incomplete).failures, [
-    'release asset incomplete: OcupathIF-0.993.1-arm64-mac-standalone.zip (starter)',
+    'release asset incomplete: OcupathIF-0.994.1-arm64-mac-standalone.zip (starter)',
   ]);
 });

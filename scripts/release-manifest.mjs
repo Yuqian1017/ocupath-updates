@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 
 export const DEFAULT_STAGING_MANIFEST_URL = new URL(
-  '../release-manifests/v0.993.1-staging.json',
+  '../release-manifests/v0.994.1-staging.json',
   import.meta.url,
 );
 
@@ -68,8 +68,8 @@ export function validateReleaseManifest(manifest, { requireFinal = true } = {}) 
   const assets = manifest?.assets ?? {};
 
   requireValue(manifest?.schemaVersion === 1, 'schemaVersion must be 1', failures);
-  requireValue(version === '0.993.1', `version must be 0.993.1, got ${version ?? 'missing'}`, failures);
-  requireValue(manifest?.previousLiveVersion === '0.992.1', 'previousLiveVersion must be 0.992.1', failures);
+  requireValue(version === '0.994.1', `version must be 0.994.1, got ${version ?? 'missing'}`, failures);
+  requireValue(manifest?.previousLiveVersion === '0.993.1', 'previousLiveVersion must be 0.993.1', failures);
   requireValue(manifest?.release?.repository === 'Yuqian1017/ocupath-updates', 'release.repository mismatch', failures);
   requireValue(manifest?.release?.tagName === `v${version}`, 'release.tagName must match version', failures);
   requireValue(

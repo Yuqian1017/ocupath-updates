@@ -40,7 +40,7 @@ function finalManifest() {
 
 function authority() {
   return buildCosAuthority(finalManifest(), {
-    darwinArm64: 'version: 0.993.1\nreleaseDate: 2026-08-18T12:00:00.000Z\n',
+    darwinArm64: 'version: 0.994.1\nreleaseDate: 2026-08-18T12:00:00.000Z\n',
   });
 }
 
@@ -105,10 +105,10 @@ function uploadLedger(expected = authority()) {
 test('COS authority is the exact six-object payload-first metadata-last contract', () => {
   const expected = authority();
   assert.deepEqual(expected.objects.map(({ order, phase, key }) => ({ order, phase, key })), [
-    { order: 1, phase: 'payload', key: 'OcupathIF-0.993.1-arm64-mac-standalone.zip' },
-    { order: 2, phase: 'payload', key: 'OcupathIF-Setup-0.993.1-x64.exe' },
-    { order: 3, phase: 'payload', key: 'OcupathIF-0.993.1-arm64-mac.zip' },
-    { order: 4, phase: 'payload', key: 'OcupathIF-0.993.1-arm64-mac.zip.blockmap' },
+    { order: 1, phase: 'payload', key: 'OcupathIF-0.994.1-arm64-mac-standalone.zip' },
+    { order: 2, phase: 'payload', key: 'OcupathIF-Setup-0.994.1-x64.exe' },
+    { order: 3, phase: 'payload', key: 'OcupathIF-0.994.1-arm64-mac.zip' },
+    { order: 4, phase: 'payload', key: 'OcupathIF-0.994.1-arm64-mac.zip.blockmap' },
     { order: 5, phase: 'metadata', key: 'latest-mac.yml' },
     { order: 6, phase: 'metadata', key: 'darwin-arm64/latest-mac.yml' },
   ]);
@@ -207,8 +207,8 @@ test('upload ledger and manual website authority stay separate from full updater
   const manual = buildManualCosAuthority(finalManifest());
   assert.equal(manual.sequencing, 'manual-payloads-only');
   assert.deepEqual(manual.objects.map((object) => object.key), [
-    'OcupathIF-0.993.1-arm64-mac-standalone.zip',
-    'OcupathIF-Setup-0.993.1-x64.exe',
+    'OcupathIF-0.994.1-arm64-mac-standalone.zip',
+    'OcupathIF-Setup-0.994.1-x64.exe',
   ]);
   assert.equal(validateCosEvidence(manual, evidence(manual), uploadLedger(manual)).status, 'GREEN');
 
@@ -260,7 +260,7 @@ test('verify-cos-assets is the network-backed evidence generator for HEAD, Range
     const { port } = server.address();
     const authority = {
       schemaVersion: 1,
-      version: '0.993.1',
+      version: '0.994.1',
       baseUrl: `http://127.0.0.1:${port}`,
       sequencing: 'manual-payloads-only',
       objects: [...bodies.entries()].map(([key, body], index) => ({
@@ -308,7 +308,7 @@ test('live COS gate cannot be satisfied by a forged external PASS document', asy
   const body = Buffer.from('forged');
   const unreachable = {
     schemaVersion: 1,
-    version: '0.993.1',
+    version: '0.994.1',
     baseUrl: 'https://example.invalid',
     sequencing: 'manual-payloads-only',
     objects: [{

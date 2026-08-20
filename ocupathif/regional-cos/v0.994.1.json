@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "version": "0.994.1",
+  "state": "PROMOTED",
+  "generatedBy": "scripts/generate-regional-cos-marker.mjs",
+  "baseReleaseCommitSha": "12ce354fbc4d61c9c45e9694128649641e624511",
+  "promotedAt": "2026-08-20T21:45:06.032Z",
+  "verifier": {
+    "authoritySha256": "5bb1c745645cfe732a431a9dfbe7ab93eccca28270ccf5bb6fd00b0c885ae6d4",
+    "uploadLedgerSha256": "1e0e80de394e4fff4de97f6bdcb508ce8505826eafb4abbb1ed0be95c81ce148",
+    "evidenceSha256": "b26874cbd6ffd039f1b650ec08ab4357ceeecd736a413d6b615470f4bde8d574",
+    "verificationCompletedAt": "2026-08-20T21:45:05.980Z"
+  },
+  "cors": {
+    "allowedOrigin": "https://updates.ocupath.ai",
+    "allowedMethods": [
+      "GET",
+      "HEAD"
+    ],
+    "exposedHeaders": [
+      "Content-Length",
+      "ETag",
+      "Last-Modified"
+    ]
+  },
+  "assets": {
+    "macManual": {
+      "key": "OcupathIF-0.994.1-arm64-mac-standalone.zip",
+      "url": "https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com/OcupathIF-0.994.1-arm64-mac-standalone.zip",
+      "bytes": 1318877911,
+      "sha256": "ed781849227cb59b2851f8b25cf8dc324d4f38eb7b991abfc5b787b376189705"
+    },
+    "windowsInstaller": {
+      "key": "OcupathIF-Setup-0.994.1-x64.exe",
+      "url": "https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com/OcupathIF-Setup-0.994.1-x64.exe",
+      "bytes": 1354705933,
+      "sha256": "ee2801ce9953453fb1982e568b307fe1ee49a71a12d71926c27815581be10e8c"
+    }
+  }
+}

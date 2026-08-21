@@ -41,17 +41,21 @@ export function regionalCosMarkerSha256(marker) {
   return sha256(regionalCosMarkerBody(marker));
 }
 
-function liveSixObjectFailures(authority, liveGate) {
+function liveVerifierFailures(authority, liveGate) {
   const failures = [];
   const evidence = liveGate?.evidence ?? {};
   if (liveGate?.status !== 'GREEN' || evidence.status !== 'PASS') {
     failures.push('live gate did not return GREEN/PASS');
   }
+  const isFullRelease = authority?.objects?.length === 6
+    && authority?.sequencing === 'payload-first-metadata-last';
+  const isManualRotation = authority?.objects?.length === 2
+    && authority?.sequencing === 'manual-payloads-only'
+    && authority.objects.every((object) => object.phase === 'payload');
   if (
-    authority?.objects?.length !== 6
-    || authority?.sequencing !== 'payload-first-metadata-last'
-    || evidence?.objects?.length !== 6
-  ) failures.push('authority or evidence is not the exact six-object transaction');
+    (!isFullRelease && !isManualRotation)
+    || evidence?.objects?.length !== authority?.objects?.length
+  ) failures.push('authority or evidence is not an exact full-release or manual-route transaction');
   if (evidence.authoritySha256 !== cosAuthoritySha256(authority)) {
     failures.push('live evidence authority digest mismatch');
   }
@@ -103,9 +107,9 @@ export function buildRegionalCosMarker({
   if (findPendingFields(manifest).length > 0) {
     throw new Error('Regional marker cannot be built from a manifest with pending fields');
   }
-  const liveFailures = liveSixObjectFailures(authority, liveGate);
+  const liveFailures = liveVerifierFailures(authority, liveGate);
   if (liveFailures.length > 0) {
-    throw new Error(`Regional marker requires a GREEN six-object live COS verifier:\n- ${liveFailures.join('\n- ')}`);
+    throw new Error(`Regional marker requires a GREEN supported live COS verifier:\n- ${liveFailures.join('\n- ')}`);
   }
   requireExactCommitSha(baseReleaseCommitSha, 'base release commit SHA');
   if (!isCanonicalUtcIso(promotedAt, { allowPending: false })) {
@@ -148,8 +152,8 @@ export function validateRegionalCosMarker({
   const cors = marker?.cors ?? {};
   const assets = marker?.assets ?? {};
   const expected = expectedAssets(manifest);
-  const liveFailures = liveSixObjectFailures(authority, liveGate);
-  if (liveFailures.length > 0) failures.push(`live six-object verifier: ${liveFailures.join('; ')}`);
+  const liveFailures = liveVerifierFailures(authority, liveGate);
+  if (liveFailures.length > 0) failures.push(`live COS verifier: ${liveFailures.join('; ')}`);
   if (!exactKeys(marker, [
     'schemaVersion', 'version', 'state', 'generatedBy', 'baseReleaseCommitSha',
     'promotedAt', 'verifier', 'cors', 'assets',

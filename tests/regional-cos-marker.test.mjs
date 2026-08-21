@@ -4,6 +4,7 @@ import test from 'node:test';
 
 import {
   buildCosAuthority,
+  buildManualCosAuthority,
   cosAuthoritySha256,
 } from '../scripts/cos-publication.mjs';
 import {
@@ -86,6 +87,31 @@ test('exact marker is generated only from GREEN six-object live evidence', () =>
   assert.equal(Object.keys(marker.assets).length, 2);
 });
 
+test('published manual routes can be rotated from a GREEN two-object manual verifier', () => {
+  const manifest = finalManifest();
+  const expected = buildManualCosAuthority(manifest);
+  const gate = liveGate(expected);
+  const marker = buildRegionalCosMarker({
+    manifest,
+    authority: expected,
+    liveGate: gate,
+    baseReleaseCommitSha: baseSha,
+    promotedAt: '2026-08-18T12:00:09.000Z',
+  });
+
+  assert.equal(validateRegionalCosMarker({
+    marker,
+    manifest,
+    authority: expected,
+    liveGate: gate,
+    baseReleaseCommitSha: baseSha,
+  }).status, 'GREEN');
+  assert.deepEqual(expected.objects.map((object) => object.key), [
+    manifest.assets.macManual.fileName,
+    manifest.assets.windowsInstaller.fileName,
+  ]);
+});
+
 test('marker rejects HEAD-only same-size wrong bytes and live evidence drift', () => {
   const manifest = finalManifest();
   const expected = authority(manifest);
@@ -119,7 +145,7 @@ test('marker rejects HEAD-only same-size wrong bytes and live evidence drift', (
   }).failures.join('\n'), /verifier evidence digest mismatch/);
 });
 
-test('marker generation refuses RED or non-six-object verifier results', () => {
+test('marker generation refuses RED or unsupported verifier results', () => {
   const manifest = finalManifest();
   const expected = authority(manifest);
   assert.throws(() => buildRegionalCosMarker({
@@ -128,7 +154,7 @@ test('marker generation refuses RED or non-six-object verifier results', () => {
     liveGate: { status: 'RED_STOP_LINE', failures: ['network drift'] },
     baseReleaseCommitSha: baseSha,
     promotedAt: '2026-08-18T12:00:09.000Z',
-  }), /GREEN six-object live COS verifier/);
+  }), /GREEN supported live COS verifier/);
 
   const short = structuredClone(expected);
   short.objects.pop();
@@ -138,5 +164,5 @@ test('marker generation refuses RED or non-six-object verifier results', () => {
     liveGate: liveGate(short),
     baseReleaseCommitSha: baseSha,
     promotedAt: '2026-08-18T12:00:09.000Z',
-  }), /GREEN six-object live COS verifier/);
+  }), /GREEN supported live COS verifier/);
 });

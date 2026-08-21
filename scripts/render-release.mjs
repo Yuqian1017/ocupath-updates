@@ -63,6 +63,12 @@ function renderInstallPage(source) {
   html = replaceRequired(html, /(<p class="filename" data-file-name="windows">)[^<]*(<\/p>)/, `$1${windows.fileName}$2`, 'Windows filename');
   html = replaceRequired(html, /(<code data-sha256="mac">)[^<]*(<\/code>)/, `$1${mac.sha256}$2`, 'Mac SHA-256');
   html = replaceRequired(html, /(<code data-sha256="windows">)[^<]*(<\/code>)/, `$1${windows.sha256}$2`, 'Windows SHA-256');
+  html = replaceRequired(
+    html,
+    /(<h3 id="mac-steps">Install on macOS<\/h3>\s*)<ol>[\s\S]*?<\/ol>/,
+    '$1<ol><li>Open the downloaded DMG.</li><li>Drag OcuPathIF into Applications.</li><li>Open OcuPathIF from Applications.</li></ol>',
+    'Mac DMG installation steps',
+  );
   html = replaceRequired(html, /(<a data-guide-language="en") href="[^"]+"/, `$1 href="${urls.guideEn}"`, 'English guide');
   html = replaceRequired(html, /(<a data-guide-language="zh") href="[^"]+"/, `$1 href="${urls.guideZh}"`, 'Chinese guide');
   return html;

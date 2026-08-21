@@ -7,9 +7,9 @@
     {
       "order": 1,
       "phase": "payload",
-      "key": "OcupathIF-0.994.1-arm64-mac-standalone.zip",
-      "bytes": 1318877911,
-      "sha256": "ed781849227cb59b2851f8b25cf8dc324d4f38eb7b991abfc5b787b376189705"
+      "key": "OcupathIF-0.994.1-arm64-mac.dmg",
+      "bytes": 1321317045,
+      "sha256": "22cced37a84b3935c35270492cf24aab5f6d58477170865fd4d8f794d7bca7f1"
     },
     {
       "order": 2,

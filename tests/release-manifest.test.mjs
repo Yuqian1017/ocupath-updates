@@ -50,6 +50,20 @@ test('a fully frozen staging manifest passes the strict publication contract', (
   });
 });
 
+test('Mac manual distribution requires DMG while direct update retains ZIP', () => {
+  const manifest = finalManifest();
+  manifest.assets.macManual.fileName = `OcupathIF-${manifest.version}-arm64-mac.dmg`;
+  assert.deepEqual(validateReleaseManifest(manifest), {
+    status: 'GREEN',
+    failures: [],
+    pending: [],
+  });
+  assert.match(manifest.assets.macUpdater.fileName, /\.zip$/);
+
+  manifest.assets.macManual.fileName = `OcupathIF-${manifest.version}-arm64-mac-standalone.zip`;
+  assert.match(validateReleaseManifest(manifest).failures.join('\n'), /macManual\.fileName/);
+});
+
 test('manifest derives both packaged-app feed routes and exact release URLs', () => {
   const urls = releaseUrls(staging);
   assert.equal(urls.macFeed, `${staging.origins.public}/direct/darwin-arm64/latest-mac.yml`);

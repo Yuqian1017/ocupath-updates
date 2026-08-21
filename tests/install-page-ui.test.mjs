@@ -133,6 +133,8 @@ assert.doesNotMatch(
 );
 assert.match(html, new RegExp(`<code data-sha256="mac">${manualMacSha256}<\\/code>`), 'Mac checksum must come from the staging manifest');
 assert.match(html, new RegExp(`<code data-sha256="windows">${windowsSha256}<\\/code>`), 'Windows checksum must come from the staging manifest');
+assert.match(html, /Open the downloaded DMG\./, 'Mac installation must begin from the final DMG');
+assert.doesNotMatch(html, /Open the downloaded ZIP\./, 'Mac manual installation must not advertise a ZIP');
 
 const inlineScript = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].at(-1)?.[1] ?? '';
 

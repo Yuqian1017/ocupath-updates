@@ -117,7 +117,7 @@ export function validateReleaseManifest(manifest, { requireFinal = true } = {}) 
   );
 
   const expectedNames = {
-    macManual: `OcupathIF-${version}-arm64-mac-standalone.zip`,
+    macManual: `OcupathIF-${version}-arm64-mac.dmg`,
     macUpdater: `OcupathIF-${version}-arm64-mac.zip`,
     macUpdaterBlockmap: `OcupathIF-${version}-arm64-mac.zip.blockmap`,
     windowsInstaller: `OcupathIF-Setup-${version}-x64.exe`,

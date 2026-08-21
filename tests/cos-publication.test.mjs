@@ -105,7 +105,7 @@ function uploadLedger(expected = authority()) {
 test('COS authority is the exact six-object payload-first metadata-last contract', () => {
   const expected = authority();
   assert.deepEqual(expected.objects.map(({ order, phase, key }) => ({ order, phase, key })), [
-    { order: 1, phase: 'payload', key: 'OcupathIF-0.994.1-arm64-mac-standalone.zip' },
+    { order: 1, phase: 'payload', key: 'OcupathIF-0.994.1-arm64-mac.dmg' },
     { order: 2, phase: 'payload', key: 'OcupathIF-Setup-0.994.1-x64.exe' },
     { order: 3, phase: 'payload', key: 'OcupathIF-0.994.1-arm64-mac.zip' },
     { order: 4, phase: 'payload', key: 'OcupathIF-0.994.1-arm64-mac.zip.blockmap' },
@@ -207,7 +207,7 @@ test('upload ledger and manual website authority stay separate from full updater
   const manual = buildManualCosAuthority(finalManifest());
   assert.equal(manual.sequencing, 'manual-payloads-only');
   assert.deepEqual(manual.objects.map((object) => object.key), [
-    'OcupathIF-0.994.1-arm64-mac-standalone.zip',
+    'OcupathIF-0.994.1-arm64-mac.dmg',
     'OcupathIF-Setup-0.994.1-x64.exe',
   ]);
   assert.equal(validateCosEvidence(manual, evidence(manual), uploadLedger(manual)).status, 'GREEN');

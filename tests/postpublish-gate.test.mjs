@@ -11,7 +11,7 @@ const promotionSha = '2'.repeat(40);
 const regionalMarkerPath = 'ocupathif/regional-cos/v0.994.1.json';
 const publicationBranch = 'release/09931-production-publish-20260818';
 const exactAssets = {
-  'OcupathIF-0.994.1-arm64-mac-standalone.zip': {
+  'OcupathIF-0.994.1-arm64-mac.dmg': {
     size: 101,
     digest: `sha256:${'a'.repeat(64)}`,
   },
@@ -310,12 +310,12 @@ test('postpublish rechecks the exact four release assets and rejects extras', ()
   const wrongDigest = greenState();
   wrongDigest.release.assets[0].digest = `sha256:${'0'.repeat(64)}`;
   assert.deepEqual(evaluatePostpublishGate(wrongDigest).failures, [
-    'release asset bytes mismatch: OcupathIF-0.994.1-arm64-mac-standalone.zip',
+    'release asset bytes mismatch: OcupathIF-0.994.1-arm64-mac.dmg',
   ]);
 
   const incomplete = greenState();
   incomplete.release.assets[0].state = 'starter';
   assert.deepEqual(evaluatePostpublishGate(incomplete).failures, [
-    'release asset incomplete: OcupathIF-0.994.1-arm64-mac-standalone.zip (starter)',
+    'release asset incomplete: OcupathIF-0.994.1-arm64-mac.dmg (starter)',
   ]);
 });

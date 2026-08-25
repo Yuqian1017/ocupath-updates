@@ -16,12 +16,12 @@ const exactAssets = {
     digest: `sha256:${'b'.repeat(64)}`,
   },
   'OcuPathIF_v0.994.1_User_Guide_en.pdf': {
-    size: 2256633,
-    digest: 'sha256:1e99d2b8e6635051e059b741b7a399efa5e6b4605e22e7f85bfcc3ef37227801',
+    size: 2259645,
+    digest: 'sha256:ee985e090628ea1aff2d2950ea4d31a89e2b55d09ea57afc69228cc91761c273',
   },
   'OcuPathIF_v0.994.1_User_Guide_zh.pdf': {
-    size: 2534894,
-    digest: 'sha256:e0974f61bf87184d5209262b1a289a31c742c99486928e4fd707029aad16f996',
+    size: 2541666,
+    digest: 'sha256:4dcc9f2628219122ebff230f3616727bf40014ee425596715f99e3643e625bbd',
   },
 };
 

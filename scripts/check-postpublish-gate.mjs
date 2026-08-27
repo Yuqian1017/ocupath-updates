@@ -181,7 +181,7 @@ try {
   const urls = releaseUrls(manifest);
   const macFeedPath = new URL('../ocupathif/direct/darwin-arm64/latest-mac.yml', import.meta.url);
   const windowsFeedPath = new URL('../ocupathif/direct/win32-x64/latest.yml', import.meta.url);
-  const cosAuthorityPath = fileURLToPath(new URL('../release-manifests/v0.994.1-cos-authority.json', import.meta.url));
+  const cosAuthorityPath = fileURLToPath(new URL('../release-manifests/v0.995.1-cos-authority.json', import.meta.url));
   const cosAuthority = JSON.parse(readFileSync(cosAuthorityPath, 'utf8'));
   const cosUploadLedgerPath = process.env.OCUPATH_COS_UPLOAD_LEDGER_JSON;
   if (!cosUploadLedgerPath) throw new Error('OCUPATH_COS_UPLOAD_LEDGER_JSON is required');
@@ -212,8 +212,8 @@ try {
     { phase: 'postpublish' },
   );
   const windowsCiApi = validateWindowsCiApiState(windowsLoaded.evidence, {
-    run: JSON.parse(run('gh', ['api', 'repos/Yuqian1017/ocupathif_new/actions/runs/32411740699'])),
-    job: JSON.parse(run('gh', ['api', 'repos/Yuqian1017/ocupathif_new/actions/jobs/96563504711'])),
+    run: JSON.parse(run('gh', ['api', 'repos/Yuqian1017/ocupathif_new/actions/runs/33033026058'])),
+    job: JSON.parse(run('gh', ['api', 'repos/Yuqian1017/ocupathif_new/actions/jobs/98389601359'])),
   });
   const windowsEvidence = {
     ...windowsLoaded.result,

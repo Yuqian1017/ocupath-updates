@@ -6,15 +6,15 @@ import { fileURLToPath } from 'node:url';
 import { findPendingFields, isCanonicalUtcIso } from './release-manifest.mjs';
 
 export const DEFAULT_WINDOWS_EVIDENCE_URL = new URL(
-  '../release-evidence/v0.994.1-windows.json',
+  '../release-evidence/v0.995.1-windows.json',
   import.meta.url,
 );
 
-const EXPECTED_BUILD_REVIEW_SHA = 'fbd1788ff5b43bfe12624b9a9984c4f9b90342ed';
-const EXPECTED_PRODUCT_BEHAVIOR_SHA = 'fbd1788ff5b43bfe12624b9a9984c4f9b90342ed';
+const EXPECTED_BUILD_REVIEW_SHA = 'cd567720d5b385de32792e40331fa21b37d234b0';
+const EXPECTED_PRODUCT_BEHAVIOR_SHA = '531ff158c8af73e57bcc122038171c7e5a889a04';
 const EXPECTED_CI_REPOSITORY = 'Yuqian1017/ocupathif_new';
-const EXPECTED_CI_RUN_ID = 32411740699;
-const EXPECTED_CI_JOB_ID = 96563504711;
+const EXPECTED_CI_RUN_ID = 33033026058;
+const EXPECTED_CI_JOB_ID = 98389601359;
 const EXPECTED_CONTROLLER_EVIDENCE_REF = `https://github.com/${EXPECTED_CI_REPOSITORY}/actions/runs/${EXPECTED_CI_RUN_ID}/job/${EXPECTED_CI_JOB_ID}`;
 const EXPECTED_FIXED_SHA_CI_RUN_URL = `https://github.com/${EXPECTED_CI_REPOSITORY}/actions/runs/${EXPECTED_CI_RUN_ID}`;
 const DEFAULT_EVIDENCE_BASE_DIR = fileURLToPath(new URL('../', import.meta.url));
@@ -111,9 +111,9 @@ export function validateWindowsEvidence(evidence, manifest, {
 
   if (
     source.version !== manifest.previousLiveVersion
-    || source.installerFileName !== 'OcupathIF-Setup-0.993.1-x64.exe'
-    || source.installerSizeBytes !== 1354683792
-    || source.installerSha256 !== '58e48850399c377457819b5294539b9fdea0164da13d4ee0a1cc2cb030cabeeb'
+    || source.installerFileName !== 'OcupathIF-Setup-0.994.1-x64.exe'
+    || source.installerSizeBytes !== 1354705933
+    || source.installerSha256 !== 'ee2801ce9953453fb1982e568b307fe1ee49a71a12d71926c27815581be10e8c'
   ) {
     failures.push('Windows source package identity mismatch');
   }
@@ -132,13 +132,13 @@ export function validateWindowsEvidence(evidence, manifest, {
 
   if (
     controller.status !== 'PASS'
-    || controller.passed !== 11
-    || controller.total !== 11
+    || controller.passed !== 12
+    || controller.total !== 12
     || controller.productSourceCommitSha !== target.productSourceCommitSha
     || controller.productBehaviorCommitSha !== EXPECTED_PRODUCT_BEHAVIOR_SHA
     || controller.evidenceRef !== EXPECTED_CONTROLLER_EVIDENCE_REF
   ) {
-    failures.push('Windows controller evidence must be exact 11/11 on the target product SHA');
+    failures.push('Windows controller evidence must be exact 12/12 on the target product SHA');
   }
   if (
     ci.status !== 'PASS'

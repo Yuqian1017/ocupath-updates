@@ -33,13 +33,13 @@ function finalManifest() {
   return manifest;
 }
 
-test('staging manifest freezes the final 0.994.1 packages and guides', () => {
+test('staging manifest freezes the final 0.995.1 packages and guides', () => {
   assert.deepEqual(validateReleaseManifest(staging), {
     status: 'GREEN',
     failures: [],
     pending: [],
   });
-  assert.equal(loadReleaseManifest().version, '0.994.1');
+  assert.equal(loadReleaseManifest().version, '0.995.1');
 });
 
 test('a fully frozen staging manifest passes the strict publication contract', () => {
@@ -123,7 +123,7 @@ test('release target is external exact SHA input and cannot be stored as a mutab
   assert.throws(() => requireExactCommitSha('A'.repeat(40), 'target'), /exact 40-char lowercase SHA/);
 
   const selfReferential = finalManifest();
-  selfReferential.release.targetCommitish = 'v0.994.1';
+  selfReferential.release.targetCommitish = 'v0.995.1';
   assert.match(
     validateReleaseManifest(selfReferential).failures.join('\n'),
     /targetCommitish must not be stored/,

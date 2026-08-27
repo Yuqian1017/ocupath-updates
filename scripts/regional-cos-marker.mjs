@@ -8,8 +8,8 @@ import {
   requireExactCommitSha,
 } from './release-manifest.mjs';
 
-export const REGIONAL_COS_MARKER_PATH = 'ocupathif/regional-cos/v0.994.1.json';
-export const REGIONAL_COS_MARKER_URL_PATH = '/ocupathif/regional-cos/v0.994.1.json';
+export const REGIONAL_COS_MARKER_PATH = 'ocupathif/regional-cos/v0.995.1.json';
+export const REGIONAL_COS_MARKER_URL_PATH = '/ocupathif/regional-cos/v0.995.1.json';
 export const REGIONAL_COS_ORIGIN = 'https://updates.ocupath.ai';
 export const REGIONAL_COS_METHODS = ['GET', 'HEAD'];
 export const REGIONAL_COS_EXPOSED_HEADERS = ['Content-Length', 'ETag', 'Last-Modified'];

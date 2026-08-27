@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "version": "0.995.1",
+  "baseUrl": "https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com",
+  "sequencing": "payload-first-metadata-last",
+  "objects": [
+    {
+      "order": 1,
+      "phase": "payload",
+      "key": "OcupathIF-0.995.1-arm64-mac.dmg",
+      "bytes": 1321479571,
+      "sha256": "431c835d3d7d3165d5ef85751b0f00319af138c41be12ae96afc816b95cf8bd9"
+    },
+    {
+      "order": 2,
+      "phase": "payload",
+      "key": "OcupathIF-Setup-0.995.1-x64.exe",
+      "bytes": 1354728597,
+      "sha256": "993dfea834fc9713f065142daffeea220834c1ceddf1ed32251e66d3dbabb0c1"
+    },
+    {
+      "order": 3,
+      "phase": "payload",
+      "key": "OcupathIF-0.995.1-arm64-mac.zip",
+      "bytes": 1314026031,
+      "sha256": "9de4c9e593a34c4b227bb874cf21834df0815af04ab07bdca662f0d4015ffeb4"
+    },
+    {
+      "order": 4,
+      "phase": "payload",
+      "key": "OcupathIF-0.995.1-arm64-mac.zip.blockmap",
+      "bytes": 1362066,
+      "sha256": "92c11cb85444e0e8a7be146e5f8c637e2b3276a0813cf2a6fdb1b24127b2bd66"
+    },
+    {
+      "order": 5,
+      "phase": "metadata",
+      "key": "latest-mac.yml",
+      "bytes": 504,
+      "sha256": "1973d97e4624ab1635c976b2a9a10bc476819a95b816b3b3d4682a143cc86b98"
+    },
+    {
+      "order": 6,
+      "phase": "metadata",
+      "key": "darwin-arm64/latest-mac.yml",
+      "bytes": 504,
+      "sha256": "1973d97e4624ab1635c976b2a9a10bc476819a95b816b3b3d4682a143cc86b98"
+    }
+  ]
+}

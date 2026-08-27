@@ -106,7 +106,7 @@ outputs.set(new URL('ocupathif/latest.json', root), `${JSON.stringify({
   },
 }, null, 2)}\n`);
 outputs.set(
-  new URL('release-manifests/v0.994.1-manual-cos-authority.json', root),
+  new URL('release-manifests/v0.995.1-manual-cos-authority.json', root),
   `${JSON.stringify(buildManualCosAuthority(manifest), null, 2)}\n`,
 );
 outputs.set(
@@ -119,7 +119,7 @@ if (!websiteOnly) {
     macFeedBody,
   );
   outputs.set(
-    new URL('release-manifests/v0.994.1-cos-authority.json', root),
+    new URL('release-manifests/v0.995.1-cos-authority.json', root),
     `${JSON.stringify(buildCosAuthority(manifest, { darwinArm64: macFeedBody }), null, 2)}\n`,
   );
 }

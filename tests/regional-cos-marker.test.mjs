@@ -34,7 +34,7 @@ function finalManifest() {
 
 function authority(manifest = finalManifest()) {
   return buildCosAuthority(manifest, {
-    darwinArm64: 'version: 0.994.1\nreleaseDate: 2026-08-18T12:00:00.000Z\n',
+    darwinArm64: 'version: 0.995.1\nreleaseDate: 2026-08-18T12:00:00.000Z\n',
   });
 }
 

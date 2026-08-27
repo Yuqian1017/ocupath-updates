@@ -30,8 +30,8 @@ if (!uploadLedgerPath) {
 const repoRoot = fileURLToPath(new URL('../', import.meta.url));
 const authorityPath = fileURLToPath(new URL(
   manualReplacement
-    ? '../release-manifests/v0.994.1-manual-cos-authority.json'
-    : '../release-manifests/v0.994.1-cos-authority.json',
+    ? '../release-manifests/v0.995.1-manual-cos-authority.json'
+    : '../release-manifests/v0.995.1-cos-authority.json',
   import.meta.url,
 ));
 const markerPath = resolve(repoRoot, REGIONAL_COS_MARKER_PATH);

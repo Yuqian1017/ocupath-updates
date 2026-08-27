@@ -6,12 +6,12 @@ import { fileURLToPath } from 'node:url';
 import { isCanonicalUtcIso } from './release-manifest.mjs';
 
 export const DEFAULT_ROLLBACK_AUTHORITY_URL = new URL(
-  '../rollback/v0.993.1/ROLLBACK_AUTHORITY.json',
+  '../rollback/v0.994.1/ROLLBACK_AUTHORITY.json',
   import.meta.url,
 );
 
 const EXPECTED_SEQUENCE = [
-  ['pages', 'ensure_absent', 'ocupathif/regional-cos/v0.994.1.json'],
+  ['pages', 'ensure_absent', 'ocupathif/regional-cos/v0.995.1.json'],
   ['cos', 'restore_body', 'latest-mac.yml'],
   ['cos', 'restore_body', 'darwin-arm64/latest-mac.yml'],
   ['pages', 'restore_body', 'ocupathif/direct/darwin-arm64/latest-mac.yml'],
@@ -61,7 +61,7 @@ export function validateRollbackAuthority(authority, authorityPathOrUrl = DEFAUL
   const baseDir = dirname(authorityPath);
 
   if (authority?.schemaVersion !== 1) failures.push('rollback schemaVersion must be 1');
-  if (authority?.version !== '0.993.1') failures.push('rollback version must be 0.993.1');
+  if (authority?.version !== '0.994.1') failures.push('rollback version must be 0.994.1');
   if (authority?.source !== 'read-only production fetch') failures.push('rollback source mismatch');
   if (authority?.origins?.pages !== 'https://updates.ocupath.ai') failures.push('rollback Pages origin mismatch');
   if (

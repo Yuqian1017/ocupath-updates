@@ -11,10 +11,10 @@ import {
 
 const authority = JSON.parse(readFileSync(DEFAULT_ROLLBACK_AUTHORITY_URL, 'utf8'));
 
-test('frozen 0.993.1 rollback bodies, feed and marker absence, and restore order are exact', () => {
+test('frozen 0.994.1 rollback bodies, feed and marker absence, and restore order are exact', () => {
   assert.deepEqual(validateRollbackAuthority(authority), { status: 'GREEN', failures: [] });
   assert.deepEqual(authority.restoreSteps.map(({ surface, action, key }) => ({ surface, action, key })), [
-    { surface: 'pages', action: 'ensure_absent', key: 'ocupathif/regional-cos/v0.994.1.json' },
+    { surface: 'pages', action: 'ensure_absent', key: 'ocupathif/regional-cos/v0.995.1.json' },
     { surface: 'cos', action: 'restore_body', key: 'latest-mac.yml' },
     { surface: 'cos', action: 'restore_body', key: 'darwin-arm64/latest-mac.yml' },
     { surface: 'pages', action: 'restore_body', key: 'ocupathif/direct/darwin-arm64/latest-mac.yml' },

@@ -107,8 +107,8 @@ test('published manual routes can be rotated from a GREEN two-object manual veri
     baseReleaseCommitSha: baseSha,
   }).status, 'GREEN');
   assert.deepEqual(expected.objects.map((object) => object.key), [
-    manifest.assets.macManual.fileName,
-    manifest.assets.windowsInstaller.fileName,
+    manifest.assets.macManual.cosKey,
+    manifest.assets.windowsInstaller.cosKey,
   ]);
 });
 

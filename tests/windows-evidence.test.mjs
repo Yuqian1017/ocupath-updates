@@ -52,9 +52,9 @@ function localPostEvidenceArtifact(mutate = () => {}) {
       body: feedBody,
       bodySha256: sha256(feedBody),
       version: '0.995.1',
-      path: 'https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com/OcupathIF-Setup-0.995.1-x64.exe',
-      sha512: 'nIBDhK8GzUVLFmh9FgUyuam+47At1o0lT31GbcJQaaRi8ZAdD2E/VjIInDpxUNgU5SnbYgL+U1NwHQUi7ju0Xg==',
-      size: 1354728597,
+      path: `${manifest.origins.cos}/${manifest.assets.windowsInstaller.cosKey}`,
+      sha512: frozen.target.installerSha512,
+      size: frozen.target.installerSizeBytes,
     },
     manualPage: {
       url: 'https://updates.ocupath.ai/ocupathif/install.html',
@@ -62,9 +62,9 @@ function localPostEvidenceArtifact(mutate = () => {}) {
       bodySha256: sha256(manualBody),
     },
     installer: {
-      fileName: 'OcupathIF-Setup-0.995.1-x64.exe',
-      sizeBytes: 1354728597,
-      sha256: '993dfea834fc9713f065142daffeea220834c1ceddf1ed32251e66d3dbabb0c1',
+      fileName: frozen.target.installerFileName,
+      sizeBytes: frozen.target.installerSizeBytes,
+      sha256: frozen.target.installerSha256,
     },
   };
   mutate(artifact);
@@ -84,23 +84,23 @@ function ciApiState() {
   ];
   return {
     run: {
-      id: 33033026058,
+      id: frozen.fixedShaCi.runId,
       repository: { full_name: 'Yuqian1017/ocupathif_new' },
       head_repository: { full_name: 'Yuqian1017/ocupathif_new' },
-      head_sha: 'cd567720d5b385de32792e40331fa21b37d234b0',
+      head_sha: frozen.target.productSourceCommitSha,
       status: 'completed',
       conclusion: 'success',
       path: '.github/workflows/build-windows.yml',
       name: 'Build Windows Standalone',
     },
     job: {
-      id: 98389601359,
-      run_id: 33033026058,
-      head_sha: 'cd567720d5b385de32792e40331fa21b37d234b0',
+      id: frozen.fixedShaCi.jobId,
+      run_id: frozen.fixedShaCi.runId,
+      head_sha: frozen.target.productSourceCommitSha,
       status: 'completed',
       conclusion: 'success',
       name: 'build-win',
-      html_url: 'https://github.com/Yuqian1017/ocupathif_new/actions/runs/33033026058/job/98389601359',
+      html_url: frozen.controllerTests.evidenceRef,
       steps: [
         ...requiredSteps.map((name) => ({ name, conclusion: 'success' })),
         { name: 'Verify Authenticode for direct-update installer', conclusion: 'skipped' },
@@ -117,16 +117,16 @@ test('frozen Windows evidence binds controller and fixed-SHA CI to the exact fin
     proofLabel: 'controller-and-fixed-sha-ci-only',
     nativeExact: false,
   });
-  assert.equal(frozen.target.installerSizeBytes, 1354728597);
-  assert.equal(frozen.target.installerSha256, '993dfea834fc9713f065142daffeea220834c1ceddf1ed32251e66d3dbabb0c1');
+  assert.equal(frozen.target.installerSizeBytes, 1354728823);
+  assert.equal(frozen.target.installerSha256, '13b77a89b27b3e8f5842c30a5ebd05691270d67cb9984eb4cc8a1b0d1e9750f5');
   assert.equal(frozen.fixedShaCi.authenticodeStatus, 'SKIPPED_NATIVE_NOT_AUTHORIZED');
   assert.equal(
     frozen.controllerTests.evidenceRef,
-    'https://github.com/Yuqian1017/ocupathif_new/actions/runs/33033026058/job/98389601359',
+    'https://github.com/Yuqian1017/ocupathif_new/actions/runs/33189887062/job/98912376777',
   );
   assert.equal(
     frozen.fixedShaCi.runUrl,
-    'https://github.com/Yuqian1017/ocupathif_new/actions/runs/33033026058',
+    'https://github.com/Yuqian1017/ocupathif_new/actions/runs/33189887062',
   );
 });
 
@@ -225,7 +225,7 @@ test('Windows post evidenceRef must be a schema-bound local postpublication arti
   const missing = postEvidence('release-evidence/missing.json');
   assert.match(validateWindowsEvidence(missing, manifest, { phase: 'postpublish' }).failures.join('\n'), /unavailable or invalid/);
 
-  const actionsUrl = postEvidence('https://github.com/Yuqian1017/ocupathif_new/actions/runs/33033026058/job/98389601359');
+  const actionsUrl = postEvidence(frozen.controllerTests.evidenceRef);
   assert.match(validateWindowsEvidence(actionsUrl, manifest, {
     phase: 'postpublish',
   }).failures.join('\n'), /local postpublication JSON/);

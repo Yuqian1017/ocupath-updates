@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
   "version": "0.995.1",
-  "releaseDate": "2026-08-27T15:13:06.045Z",
+  "releaseDate": "2026-08-28T17:20:33.000Z",
   "previousLiveVersion": "0.994.1",
   "release": {
     "repository": "Yuqian1017/ocupath-updates",
-    "tagName": "v0.995.1",
-    "draftReleaseId": "377551760"
+    "tagName": "v0.995.1-r2",
+    "draftReleaseId": "378628964"
   },
   "origins": {
     "public": "https://updates.ocupath.ai/ocupathif",
@@ -31,25 +31,29 @@
   "assets": {
     "macManual": {
       "fileName": "OcupathIF-0.995.1-arm64-mac.dmg",
-      "sizeBytes": 1321479571,
-      "sha256": "431c835d3d7d3165d5ef85751b0f00319af138c41be12ae96afc816b95cf8bd9"
+      "sizeBytes": 1322094707,
+      "sha256": "823c693929843ca7728d706d70b547f208528e5b9f56d5261fb4ec4ccf7ee7db",
+      "cosKey": "revisions/v0.995.1-r2/OcupathIF-0.995.1-arm64-mac.dmg"
     },
     "macUpdater": {
       "fileName": "OcupathIF-0.995.1-arm64-mac.zip",
-      "sizeBytes": 1314026031,
-      "sha256": "9de4c9e593a34c4b227bb874cf21834df0815af04ab07bdca662f0d4015ffeb4",
-      "sha512": "iP11T1ewdWsoTHDWpp+bwJ6cQz6XArHYCuzq1fkusH5exLVSfVD/Zh78AsrlZWyOQ3GfHhDj0EPTo8vgyxBkDQ=="
+      "sizeBytes": 1313986838,
+      "sha256": "ecb921c4f5e684276358d8e1703d0eb9b0b0c826bf66a2c048832fdb202f69ea",
+      "sha512": "pXEH3/EPzi40xVgMhZ4WLM+I7DUHy5kasaSTWCyesO2OlHzklKF/qtI0PDq9DePPNcy30zjz8UD34OMVx1crGQ==",
+      "cosKey": "revisions/v0.995.1-r2/OcupathIF-0.995.1-arm64-mac.zip"
     },
     "macUpdaterBlockmap": {
       "fileName": "OcupathIF-0.995.1-arm64-mac.zip.blockmap",
-      "sizeBytes": 1362066,
-      "sha256": "92c11cb85444e0e8a7be146e5f8c637e2b3276a0813cf2a6fdb1b24127b2bd66"
+      "sizeBytes": 1361831,
+      "sha256": "a357d146cded7b34fd30961c637cbbedc2096053e9506207b0271520b4fe67fb",
+      "cosKey": "revisions/v0.995.1-r2/OcupathIF-0.995.1-arm64-mac.zip.blockmap"
     },
     "windowsInstaller": {
       "fileName": "OcupathIF-Setup-0.995.1-x64.exe",
-      "sizeBytes": 1354728597,
-      "sha256": "993dfea834fc9713f065142daffeea220834c1ceddf1ed32251e66d3dbabb0c1",
-      "sha512": "nIBDhK8GzUVLFmh9FgUyuam+47At1o0lT31GbcJQaaRi8ZAdD2E/VjIInDpxUNgU5SnbYgL+U1NwHQUi7ju0Xg=="
+      "sizeBytes": 1354728823,
+      "sha256": "13b77a89b27b3e8f5842c30a5ebd05691270d67cb9984eb4cc8a1b0d1e9750f5",
+      "sha512": "g69+JDOpOceJ5h+rPAzswKbg+ptKpfNwtP+dTyyoXcWh8guzmn+ZB7dkk1LdWClq0QN4EaxwDAFxjJRBY8w6qw==",
+      "cosKey": "revisions/v0.995.1-r2/OcupathIF-Setup-0.995.1-x64.exe"
     },
     "guideEn": {
       "fileName": "OcuPathIF_v0.995.1_User_Guide_en.pdf",

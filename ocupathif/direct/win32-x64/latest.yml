@@ -1,8 +1,8 @@
 version: 0.995.1
 files:
-  - url: https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com/OcupathIF-Setup-0.995.1-x64.exe
-    sha512: nIBDhK8GzUVLFmh9FgUyuam+47At1o0lT31GbcJQaaRi8ZAdD2E/VjIInDpxUNgU5SnbYgL+U1NwHQUi7ju0Xg==
-    size: 1354728597
-path: https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com/OcupathIF-Setup-0.995.1-x64.exe
-sha512: nIBDhK8GzUVLFmh9FgUyuam+47At1o0lT31GbcJQaaRi8ZAdD2E/VjIInDpxUNgU5SnbYgL+U1NwHQUi7ju0Xg==
-releaseDate: '2026-08-27T15:13:06.045Z'
+  - url: https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com/revisions/v0.995.1-r2/OcupathIF-Setup-0.995.1-x64.exe
+    sha512: g69+JDOpOceJ5h+rPAzswKbg+ptKpfNwtP+dTyyoXcWh8guzmn+ZB7dkk1LdWClq0QN4EaxwDAFxjJRBY8w6qw==
+    size: 1354728823
+path: https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com/revisions/v0.995.1-r2/OcupathIF-Setup-0.995.1-x64.exe
+sha512: g69+JDOpOceJ5h+rPAzswKbg+ptKpfNwtP+dTyyoXcWh8guzmn+ZB7dkk1LdWClq0QN4EaxwDAFxjJRBY8w6qw==
+releaseDate: '2026-08-28T17:20:33.000Z'

@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { findPendingFields, isCanonicalUtcIso } from './release-manifest.mjs';
+import { assetCosKey, findPendingFields, isCanonicalUtcIso } from './release-manifest.mjs';
 
 export const DEFAULT_WINDOWS_EVIDENCE_URL = new URL(
   '../release-evidence/v0.995.1-windows.json',
@@ -59,7 +59,7 @@ function validatePostEvidenceRef(ref, post, target, manifest, { evidenceBaseDir 
       || feed.body !== expectedFeedBody
       || feed.bodySha256 !== sha256(expectedFeedBody)
       || feed.version !== target.version
-      || feed.path !== `${manifest.origins.cos}/${target.installerFileName}`
+      || feed.path !== `${manifest.origins.cos}/${assetCosKey(manifest, 'windowsInstaller')}`
       || feed.sha512 !== target.installerSha512
       || feed.size !== target.installerSizeBytes
     ) failures.push('Windows post-publication feed evidence mismatch');

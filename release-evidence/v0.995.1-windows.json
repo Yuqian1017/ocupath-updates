@@ -11,29 +11,29 @@
   },
   "target": {
     "version": "0.995.1",
-    "productSourceCommitSha": "cd567720d5b385de32792e40331fa21b37d234b0",
-    "productBehaviorCommitSha": "531ff158c8af73e57bcc122038171c7e5a889a04",
+    "productSourceCommitSha": "a59dc848e4b408986ab613fb24922b32d1ef51d2",
+    "productBehaviorCommitSha": "c3ce7db8307260b8c479c5c56af7b8cd4693905c",
     "installerFileName": "OcupathIF-Setup-0.995.1-x64.exe",
-    "installerSizeBytes": 1354728597,
-    "installerSha256": "993dfea834fc9713f065142daffeea220834c1ceddf1ed32251e66d3dbabb0c1",
-    "installerSha512": "nIBDhK8GzUVLFmh9FgUyuam+47At1o0lT31GbcJQaaRi8ZAdD2E/VjIInDpxUNgU5SnbYgL+U1NwHQUi7ju0Xg=="
+    "installerSizeBytes": 1354728823,
+    "installerSha256": "13b77a89b27b3e8f5842c30a5ebd05691270d67cb9984eb4cc8a1b0d1e9750f5",
+    "installerSha512": "g69+JDOpOceJ5h+rPAzswKbg+ptKpfNwtP+dTyyoXcWh8guzmn+ZB7dkk1LdWClq0QN4EaxwDAFxjJRBY8w6qw=="
   },
   "controllerTests": {
     "status": "PASS",
     "passed": 12,
     "total": 12,
-    "productSourceCommitSha": "cd567720d5b385de32792e40331fa21b37d234b0",
-    "productBehaviorCommitSha": "531ff158c8af73e57bcc122038171c7e5a889a04",
-    "evidenceRef": "https://github.com/Yuqian1017/ocupathif_new/actions/runs/33033026058/job/98389601359"
+    "productSourceCommitSha": "a59dc848e4b408986ab613fb24922b32d1ef51d2",
+    "productBehaviorCommitSha": "c3ce7db8307260b8c479c5c56af7b8cd4693905c",
+    "evidenceRef": "https://github.com/Yuqian1017/ocupathif_new/actions/runs/33189887062/job/98912376777"
   },
   "fixedShaCi": {
     "status": "PASS",
-    "productSourceCommitSha": "cd567720d5b385de32792e40331fa21b37d234b0",
+    "productSourceCommitSha": "a59dc848e4b408986ab613fb24922b32d1ef51d2",
     "repository": "Yuqian1017/ocupathif_new",
-    "runId": 33033026058,
-    "jobId": 98389601359,
-    "runUrl": "https://github.com/Yuqian1017/ocupathif_new/actions/runs/33033026058",
-    "installerSha256": "993dfea834fc9713f065142daffeea220834c1ceddf1ed32251e66d3dbabb0c1",
+    "runId": 33189887062,
+    "jobId": 98912376777,
+    "runUrl": "https://github.com/Yuqian1017/ocupathif_new/actions/runs/33189887062",
+    "installerSha256": "13b77a89b27b3e8f5842c30a5ebd05691270d67cb9984eb4cc8a1b0d1e9750f5",
     "sourceBoundaryStatus": "PASS",
     "provenanceStatus": "PASS",
     "authenticodeStatus": "SKIPPED_NATIVE_NOT_AUTHORIZED"

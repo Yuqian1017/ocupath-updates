@@ -105,10 +105,10 @@ function uploadLedger(expected = authority()) {
 test('COS authority is the exact six-object payload-first metadata-last contract', () => {
   const expected = authority();
   assert.deepEqual(expected.objects.map(({ order, phase, key }) => ({ order, phase, key })), [
-    { order: 1, phase: 'payload', key: 'OcupathIF-0.995.1-arm64-mac.dmg' },
-    { order: 2, phase: 'payload', key: 'OcupathIF-Setup-0.995.1-x64.exe' },
-    { order: 3, phase: 'payload', key: 'OcupathIF-0.995.1-arm64-mac.zip' },
-    { order: 4, phase: 'payload', key: 'OcupathIF-0.995.1-arm64-mac.zip.blockmap' },
+    { order: 1, phase: 'payload', key: staging.assets.macManual.cosKey },
+    { order: 2, phase: 'payload', key: staging.assets.windowsInstaller.cosKey },
+    { order: 3, phase: 'payload', key: staging.assets.macUpdater.cosKey },
+    { order: 4, phase: 'payload', key: staging.assets.macUpdaterBlockmap.cosKey },
     { order: 5, phase: 'metadata', key: 'latest-mac.yml' },
     { order: 6, phase: 'metadata', key: 'darwin-arm64/latest-mac.yml' },
   ]);
@@ -224,8 +224,8 @@ test('upload ledger and manual website authority stay separate from full updater
   const manual = buildManualCosAuthority(finalManifest());
   assert.equal(manual.sequencing, 'manual-payloads-only');
   assert.deepEqual(manual.objects.map((object) => object.key), [
-    'OcupathIF-0.995.1-arm64-mac.dmg',
-    'OcupathIF-Setup-0.995.1-x64.exe',
+    staging.assets.macManual.cosKey,
+    staging.assets.windowsInstaller.cosKey,
   ]);
   assert.equal(validateCosEvidence(manual, evidence(manual), uploadLedger(manual)).status, 'GREEN');
 

@@ -10,6 +10,7 @@ import {
   regionalPromotionTopology,
   loadReleaseManifest,
   requireExactCommitSha,
+  resolvePublicUrl,
   releaseUrls,
   validateReleaseManifest,
   validateWebsitePublicationManifest,
@@ -80,6 +81,10 @@ test('manifest derives both packaged-app feed routes and exact release URLs', ()
   assert.equal(urls.windowsFeed, `${staging.origins.public}/direct/win32-x64/latest.yml`);
   assert.equal(urls.windowsCos, `${staging.origins.cos}/${staging.assets.windowsInstaller.cosKey}`);
   assert.equal(staging.feeds.win32X64.installMode, 'manual');
+  assert.equal(
+    resolvePublicUrl(staging, '/ocupathif/regional-cos/v0.995.1.json'),
+    'https://updates.ocupath.ai/ocupathif/regional-cos/v0.995.1.json',
+  );
 });
 
 test('same-version replacement uses an immutable revision tag and isolated COS keys', () => {

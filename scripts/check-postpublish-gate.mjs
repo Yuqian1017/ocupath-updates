@@ -25,6 +25,7 @@ import {
   requireExactCommitSha,
   requirePublicationBranch,
   releaseUrls,
+  resolvePublicUrl,
 } from './release-manifest.mjs';
 import { loadWindowsEvidence, validateWindowsCiApiState } from './windows-evidence.mjs';
 
@@ -247,7 +248,10 @@ try {
   const localLatestPage = readFileSync(new URL('../ocupathif/latest.json', import.meta.url), 'utf8');
   const liveInstallPage = fetchTextWithStatus(`${manifest.origins.public}/install.html`);
   const localInstallPage = readFileSync(new URL('../ocupathif/install.html', import.meta.url), 'utf8');
-  const liveRegionalMarker = fetchTextWithStatus(`${manifest.origins.public}${REGIONAL_COS_MARKER_URL_PATH}`);
+  const liveRegionalMarker = fetchTextWithStatus(resolvePublicUrl(
+    manifest,
+    REGIONAL_COS_MARKER_URL_PATH,
+  ));
 
   let transaction = {};
   const transactionSummaryPath = process.env.OCUPATH_PRODUCTION_TRANSACTION_SUMMARY;

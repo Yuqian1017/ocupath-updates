@@ -264,6 +264,10 @@ export function requirePublicationBranch(value) {
   return value;
 }
 
+export function resolvePublicUrl(manifest, rootPath) {
+  return new URL(rootPath, manifest.origins.public).href;
+}
+
 export function releaseUrls(manifest) {
   const tagBase = `https://github.com/${manifest.release.repository}/releases/download/${manifest.release.tagName}`;
   const cosBase = manifest.origins.cos;

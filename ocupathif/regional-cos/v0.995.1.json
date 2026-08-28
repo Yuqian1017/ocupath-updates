@@ -3,13 +3,13 @@
   "version": "0.995.1",
   "state": "PROMOTED",
   "generatedBy": "scripts/generate-regional-cos-marker.mjs",
-  "baseReleaseCommitSha": "13b15c86ea322d4cda1cbf9075b29310671b71dc",
-  "promotedAt": "2026-08-27T17:09:00.422Z",
+  "baseReleaseCommitSha": "3ffbd752a1a79e41cf36ce08ea15965afd7a9395",
+  "promotedAt": "2026-08-28T18:26:13.241Z",
   "verifier": {
-    "authoritySha256": "cdf224c9287e0f813d76695c46513d2fce96fc69857000be9b2eed84d973a376",
-    "uploadLedgerSha256": "d91ce9bcf3351359e0f0c25943a0768de42c97ae7209d45b06af4cbe0cf1f5c9",
-    "evidenceSha256": "f9d442420225519d5fc370aa48155f0727d87c296c3c93c4737a5226d5b166e0",
-    "verificationCompletedAt": "2026-08-27T17:09:00.366Z"
+    "authoritySha256": "991260588b02eec7f75d6a9542f9ebce48cbedc2bedcf76bc96c007c40ddc5e9",
+    "uploadLedgerSha256": "e7f11856af5a00c03cd2bf95cd843dddbe6e46197775db47dbbb24304af5a204",
+    "evidenceSha256": "a948d73208975439b9caf2531466204c693629d7ea52c7323796c43045d5c591",
+    "verificationCompletedAt": "2026-08-28T18:13:00.497Z"
   },
   "cors": {
     "allowedOrigin": "https://updates.ocupath.ai",
@@ -26,15 +26,15 @@
   "assets": {
     "macManual": {
       "key": "OcupathIF-0.995.1-arm64-mac.dmg",
-      "url": "https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com/OcupathIF-0.995.1-arm64-mac.dmg",
-      "bytes": 1321479571,
-      "sha256": "431c835d3d7d3165d5ef85751b0f00319af138c41be12ae96afc816b95cf8bd9"
+      "url": "https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com/revisions/v0.995.1-r2/OcupathIF-0.995.1-arm64-mac.dmg",
+      "bytes": 1322094707,
+      "sha256": "823c693929843ca7728d706d70b547f208528e5b9f56d5261fb4ec4ccf7ee7db"
     },
     "windowsInstaller": {
       "key": "OcupathIF-Setup-0.995.1-x64.exe",
-      "url": "https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com/OcupathIF-Setup-0.995.1-x64.exe",
-      "bytes": 1354728597,
-      "sha256": "993dfea834fc9713f065142daffeea220834c1ceddf1ed32251e66d3dbabb0c1"
+      "url": "https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com/revisions/v0.995.1-r2/OcupathIF-Setup-0.995.1-x64.exe",
+      "bytes": 1354728823,
+      "sha256": "13b77a89b27b3e8f5842c30a5ebd05691270d67cb9984eb4cc8a1b0d1e9750f5"
     }
   }
 }

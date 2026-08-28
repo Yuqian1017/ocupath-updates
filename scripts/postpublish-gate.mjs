@@ -31,6 +31,8 @@ function acceptedRegionalStatus(value) {
 
 export function evaluatePostpublishGate(state) {
   const failures = [];
+  const expectedRegionalMarkerDiffStatus = state.expectedRegionalMarkerDiffStatus ?? 'A';
+  const expectedRegionalMarkerPresentAtBase = state.expectedRegionalMarkerPresentAtBase ?? false;
 
   if (state.liveVersion !== state.expectedVersion) {
     failures.push(`live version mismatch: ${state.liveVersion ?? 'missing'}`);
@@ -52,11 +54,16 @@ export function evaluatePostpublishGate(state) {
     failures.push(`regional promotion parent set mismatch: ${state.regionalPromotionParentShas?.join(',') || 'missing'}`);
   }
   if (JSON.stringify(state.regionalPromotionChangedFiles) !== JSON.stringify([{
-    status: 'A',
+    status: expectedRegionalMarkerDiffStatus,
     path: state.expectedRegionalMarkerPath,
-  }])) failures.push(`regional promotion commit must add only ${state.expectedRegionalMarkerPath}`);
-  if (state.regionalMarkerPresentAtBase !== false) {
-    failures.push('regional marker already existed in the immutable base release commit');
+  }])) {
+    const action = expectedRegionalMarkerDiffStatus === 'M' ? 'modify' : 'add';
+    failures.push(`regional promotion commit must ${action} only ${state.expectedRegionalMarkerPath}`);
+  }
+  if (state.regionalMarkerPresentAtBase !== expectedRegionalMarkerPresentAtBase) {
+    failures.push(expectedRegionalMarkerPresentAtBase
+      ? 'regional marker is missing from the replacement base release commit'
+      : 'regional marker already existed in the immutable base release commit');
   }
   if (state.regionalMarkerEvidence?.status !== 'GREEN') {
     failures.push(`regional marker evidence: ${state.regionalMarkerEvidence?.failures?.join('; ') || 'missing'}`);

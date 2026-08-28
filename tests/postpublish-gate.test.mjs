@@ -79,6 +79,8 @@ function greenState(overrides = {}) {
     regionalPromotionParentShas: [targetSha],
     regionalPromotionChangedFiles: [{ status: 'A', path: regionalMarkerPath }],
     regionalMarkerPresentAtBase: false,
+    expectedRegionalMarkerDiffStatus: 'A',
+    expectedRegionalMarkerPresentAtBase: false,
     expectedRegionalMarkerPath: regionalMarkerPath,
     regionalMarkerEvidence: { status: 'GREEN', failures: [], sha256: 'marker-exact' },
     liveRegionalMarker: {
@@ -291,6 +293,23 @@ test('regional promotion must be the one-marker direct child of the immutable ba
   });
   assert.deepEqual(evaluatePostpublishGate(wrongLiveMarker).failures, [
     'live regional COS marker does not match the promotion commit',
+  ]);
+});
+
+test('same-version replacement accepts a modified marker already present at the base SHA', () => {
+  const replacement = greenState({
+    regionalPromotionChangedFiles: [{ status: 'M', path: regionalMarkerPath }],
+    regionalMarkerPresentAtBase: true,
+    expectedRegionalMarkerDiffStatus: 'M',
+    expectedRegionalMarkerPresentAtBase: true,
+  });
+  assert.deepEqual(evaluatePostpublishGate(replacement), { status: 'GREEN', failures: [] });
+
+  replacement.regionalPromotionChangedFiles = [{ status: 'A', path: regionalMarkerPath }];
+  replacement.regionalMarkerPresentAtBase = false;
+  assert.deepEqual(evaluatePostpublishGate(replacement).failures, [
+    'regional promotion commit must modify only ocupathif/regional-cos/v0.995.1.json',
+    'regional marker is missing from the replacement base release commit',
   ]);
 });
 

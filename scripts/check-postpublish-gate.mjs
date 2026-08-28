@@ -3,6 +3,7 @@
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { runLiveCosGate } from './live-cos-gate.mjs';
@@ -26,7 +27,10 @@ import {
 } from './release-manifest.mjs';
 import { loadWindowsEvidence, validateWindowsCiApiState } from './windows-evidence.mjs';
 
-const repoRoot = fileURLToPath(new URL('../', import.meta.url));
+const scriptRepoRoot = fileURLToPath(new URL('../', import.meta.url));
+const releaseStateRepoRoot = resolve(
+  process.env.OCUPATH_RELEASE_REPO_ROOT || scriptRepoRoot,
+);
 
 function run(command, args, options = {}) {
   return execFileSync(command, args, { encoding: 'utf8', ...options }).trim();
@@ -89,7 +93,7 @@ function remoteTagCommitSha(tagName) {
     'origin',
     `refs/tags/${tagName}`,
     `refs/tags/${tagName}^{}`,
-  ], { cwd: repoRoot });
+  ], { cwd: releaseStateRepoRoot });
   const rows = output.split('\n').filter(Boolean).map((line) => line.split(/\s+/));
   const peeled = rows.find(([, ref]) => ref === `refs/tags/${tagName}^{}`);
   const direct = rows.find(([, ref]) => ref === `refs/tags/${tagName}`);
@@ -100,7 +104,7 @@ function remoteTagCommitSha(tagName) {
 function remoteBranchSha(branch) {
   const output = run('git', [
     'ls-remote', '--heads', 'origin', `refs/heads/${branch}`,
-  ], { cwd: repoRoot });
+  ], { cwd: releaseStateRepoRoot });
   if (!output) return undefined;
   const [sha, ref] = output.split(/\s+/);
   if (ref !== `refs/heads/${branch}`) return undefined;
@@ -109,7 +113,7 @@ function remoteBranchSha(branch) {
 
 function gitObjectExists(spec) {
   try {
-    run('git', ['cat-file', '-e', spec], { cwd: repoRoot });
+    run('git', ['cat-file', '-e', spec], { cwd: releaseStateRepoRoot });
     return true;
   } catch {
     return false;
@@ -117,7 +121,7 @@ function gitObjectExists(spec) {
 }
 
 function changedFiles(fromSha, toSha) {
-  const output = run('git', ['diff', '--name-status', fromSha, toSha], { cwd: repoRoot });
+  const output = run('git', ['diff', '--name-status', fromSha, toSha], { cwd: releaseStateRepoRoot });
   if (!output) return [];
   return output.split('\n').map((line) => {
     const [status, path] = line.split('\t');
@@ -128,7 +132,7 @@ function changedFiles(fromSha, toSha) {
 function commitParents(sha) {
   const [commit, ...parents] = run('git', [
     'rev-list', '--parents', '-n', '1', sha,
-  ], { cwd: repoRoot }).split(/\s+/);
+  ], { cwd: releaseStateRepoRoot }).split(/\s+/);
   if (commit !== sha) throw new Error(`git did not resolve the exact promotion SHA: ${sha}`);
   return parents;
 }
@@ -154,9 +158,9 @@ try {
     manifestPath,
     '--check',
   ]);
-  const localHeadSha = run('git', ['rev-parse', 'HEAD'], { cwd: repoRoot });
-  const localWorktreeClean = run('git', ['status', '--porcelain'], { cwd: repoRoot }) === '';
-  const localBranch = run('git', ['branch', '--show-current'], { cwd: repoRoot });
+  const localHeadSha = run('git', ['rev-parse', 'HEAD'], { cwd: releaseStateRepoRoot });
+  const localWorktreeClean = run('git', ['status', '--porcelain'], { cwd: releaseStateRepoRoot }) === '';
+  const localBranch = run('git', ['branch', '--show-current'], { cwd: releaseStateRepoRoot });
   const remotePublicationBranchSha = remoteBranchSha(expectedPublicationBranch);
   const publishedTagCommitSha = remoteTagCommitSha(manifest.release.tagName);
   const regionalPromotionParentShas = commitParents(expectedRegionalPromotionSha);
@@ -177,7 +181,8 @@ try {
     topologyFailures.push('regional promotion must have exactly one parent and it must be the base SHA');
   }
   if (JSON.stringify(regionalPromotionChangedFiles) !== JSON.stringify(expectedPromotionDiff)) {
-    topologyFailures.push(`regional promotion diff is not the single added marker ${REGIONAL_COS_MARKER_PATH}`);
+    const action = expectedTopology.markerDiffStatus === 'M' ? 'modified' : 'added';
+    topologyFailures.push(`regional promotion diff is not the single ${action} marker ${REGIONAL_COS_MARKER_PATH}`);
   }
   if (regionalMarkerPresentAtBase !== expectedTopology.markerPresentAtBase) {
     topologyFailures.push(expectedTopology.markerPresentAtBase
@@ -273,6 +278,8 @@ try {
     regionalPromotionParentShas,
     regionalPromotionChangedFiles,
     regionalMarkerPresentAtBase,
+    expectedRegionalMarkerDiffStatus: expectedTopology.markerDiffStatus,
+    expectedRegionalMarkerPresentAtBase: expectedTopology.markerPresentAtBase,
     expectedRegionalMarkerPath: REGIONAL_COS_MARKER_PATH,
     regionalMarkerEvidence,
     liveRegionalMarker: {

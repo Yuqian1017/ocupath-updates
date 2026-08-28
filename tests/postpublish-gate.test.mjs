@@ -4,6 +4,7 @@ import test from 'node:test';
 import {
   evaluatePostpublishGate,
   parseUpdaterMetadata,
+  productionUpdaterTransactionStatus,
 } from '../scripts/postpublish-gate.mjs';
 
 const targetSha = '1'.repeat(40);
@@ -133,6 +134,19 @@ sha512: exact-sha512
 `);
 
   assert.equal(metadata.size, 1313793497);
+});
+
+test('only canonical Placement A can supply updater-live transaction evidence', () => {
+  assert.equal(productionUpdaterTransactionStatus({
+    status: 'PASS',
+    transaction: { canonicalPlacementA: true },
+  }), 'PASS');
+  assert.equal(productionUpdaterTransactionStatus({
+    status: 'PASS',
+    transaction: { canonicalPlacementA: false },
+  }), 'PASS_NONCANONICAL');
+  assert.equal(productionUpdaterTransactionStatus({ status: 'RED' }), 'RED');
+  assert.equal(productionUpdaterTransactionStatus(), 'not-run');
 });
 
 test('accepts Mac detection plus Manual Download when automatic update cannot complete', () => {

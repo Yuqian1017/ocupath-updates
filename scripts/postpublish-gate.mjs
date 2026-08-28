@@ -15,6 +15,13 @@ export function parseUpdaterMetadata(body) {
   };
 }
 
+export function productionUpdaterTransactionStatus(transaction = {}) {
+  if (transaction.status !== 'PASS') return transaction.status ?? 'not-run';
+  return transaction.transaction?.canonicalPlacementA === true
+    ? 'PASS'
+    : 'PASS_NONCANONICAL';
+}
+
 function exactRuntimeFeed(feed, expectedVersion) {
   return feed.url === feed.expectedUrl
     && feed.httpStatus === 200

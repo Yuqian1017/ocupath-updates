@@ -10,6 +10,7 @@ import { runLiveCosGate } from './live-cos-gate.mjs';
 import {
   evaluatePostpublishGate,
   parseUpdaterMetadata,
+  productionUpdaterTransactionStatus,
 } from './postpublish-gate.mjs';
 import {
   REGIONAL_COS_MARKER_PATH,
@@ -313,7 +314,7 @@ try {
     productionOldVersion: transaction.fromVersion ?? manifest.previousLiveVersion,
     productionTargetVersion: transaction.toVersion ?? process.env.OCUPATH_PRODUCTION_TARGET_VERSION,
     expectedOldVersion: manifest.previousLiveVersion,
-    productionUpdaterTransaction: transaction.status ?? 'not-run',
+    productionUpdaterTransaction: productionUpdaterTransactionStatus(transaction),
     macUpdateDetection: process.env.OCUPATH_MAC_UPDATE_DETECTION ?? 'not-run',
     macManualFallback: process.env.OCUPATH_MAC_MANUAL_FALLBACK ?? 'not-run',
     automaticRelaunch: transaction.ui?.automaticRelaunchObserved ?? false,

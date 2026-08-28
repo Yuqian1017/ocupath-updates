@@ -224,7 +224,7 @@ try {
   const windowsLoaded = loadWindowsEvidence(
     process.env.OCUPATH_WINDOWS_EVIDENCE_JSON,
     manifest,
-    { phase: 'postpublish' },
+    { phase: 'postpublish', evidenceBaseDir: releaseStateRepoRoot },
   );
   const windowsCi = windowsLoaded.evidence.fixedShaCi;
   const windowsCiApi = validateWindowsCiApiState(windowsLoaded.evidence, {

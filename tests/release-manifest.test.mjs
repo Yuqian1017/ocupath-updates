@@ -166,6 +166,14 @@ test('renderer accepts final bytes and gates still require an external immutable
   assert.match(postResult.failures[0], /OCUPATH_RELEASE_TARGET_SHA/);
 });
 
+test('postpublish resolves Windows evidence from the selected release worktree', () => {
+  const source = readFileSync(postpublishPath, 'utf8');
+  assert.match(
+    source,
+    /\{ phase: 'postpublish', evidenceBaseDir: releaseStateRepoRoot \}/,
+  );
+});
+
 test('Windows feed path and manual install mode cannot drift', () => {
   const wrongPath = finalManifest();
   wrongPath.feeds.win32X64.path = 'direct/win32-x64/missing.yml';

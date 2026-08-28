@@ -53,7 +53,7 @@ function stopForConfiguration(error) {
   process.exitCode = 2;
 }
 
-function runtimeFeedState({ manifest, localPath, liveUrl, expectedAsset }) {
+function runtimeFeedState({ localPath, liveUrl, expectedAsset, expectedPath }) {
   const response = fetchTextWithStatus(liveUrl);
   const metadata = parseUpdaterMetadata(response.body);
   const expectedBody = readFileSync(localPath, 'utf8');
@@ -65,7 +65,7 @@ function runtimeFeedState({ manifest, localPath, liveUrl, expectedAsset }) {
     expectedSha256: createHash('sha256').update(expectedBody).digest('hex'),
     version: metadata.version,
     path: metadata.path,
-    expectedPath: `${manifest.origins.cos}/${expectedAsset.fileName}`,
+    expectedPath,
     sha512: metadata.sha512,
     expectedSha512: expectedAsset.sha512,
     size: metadata.size,
@@ -291,16 +291,16 @@ try {
     },
     productionRuntimeFeeds: {
       darwinArm64: runtimeFeedState({
-        manifest,
         localPath: macFeedPath,
         liveUrl: urls.macFeed,
         expectedAsset: manifest.assets.macUpdater,
+        expectedPath: urls.macUpdaterCos,
       }),
       win32X64: runtimeFeedState({
-        manifest,
         localPath: windowsFeedPath,
         liveUrl: urls.windowsFeed,
         expectedAsset: manifest.assets.windowsInstaller,
+        expectedPath: urls.windowsCos,
       }),
     },
     productionOldVersion: transaction.fromVersion ?? manifest.previousLiveVersion,

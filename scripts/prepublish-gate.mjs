@@ -56,7 +56,11 @@ export function evaluatePrepublishGate(state) {
   if (state.remotePublicationBranchSha !== state.expectedTargetCommitSha) {
     failures.push(`remote publication branch SHA mismatch: ${state.remotePublicationBranchSha ?? 'missing'}`);
   }
-  if (state.regionalMarkerPresent !== false) {
+  if (state.expectedRegionalMarkerPresent === true) {
+    if (state.regionalMarkerPresent !== true) {
+      failures.push('regional COS marker must already exist in the replacement base commit');
+    }
+  } else if (state.regionalMarkerPresent !== false) {
     failures.push('regional COS marker must be absent from the base release commit');
   }
   if (release.draft !== true) failures.push('release is not a draft');

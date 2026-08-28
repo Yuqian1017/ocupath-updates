@@ -11,10 +11,10 @@ import {
 
 const authority = JSON.parse(readFileSync(DEFAULT_ROLLBACK_AUTHORITY_URL, 'utf8'));
 
-test('frozen 0.994.1 rollback bodies, feed and marker absence, and restore order are exact', () => {
+test('frozen 0.995.1-r1 rollback bodies, feeds, marker and restore order are exact', () => {
   assert.deepEqual(validateRollbackAuthority(authority), { status: 'GREEN', failures: [] });
   assert.deepEqual(authority.restoreSteps.map(({ surface, action, key }) => ({ surface, action, key })), [
-    { surface: 'pages', action: 'ensure_absent', key: 'ocupathif/regional-cos/v0.995.1.json' },
+    { surface: 'pages', action: 'restore_body', key: 'ocupathif/regional-cos/v0.995.1.json' },
     { surface: 'cos', action: 'restore_body', key: 'latest-mac.yml' },
     { surface: 'cos', action: 'restore_body', key: 'darwin-arm64/latest-mac.yml' },
     { surface: 'pages', action: 'restore_body', key: 'ocupathif/direct/darwin-arm64/latest-mac.yml' },
@@ -24,7 +24,7 @@ test('frozen 0.994.1 rollback bodies, feed and marker absence, and restore order
   ]);
 });
 
-test('rollback authority rejects order, body hash and marker absence drift', () => {
+test('rollback authority rejects order, body hash and restored marker drift', () => {
   const order = structuredClone(authority);
   [order.restoreSteps[0], order.restoreSteps[1]] = [order.restoreSteps[1], order.restoreSteps[0]];
   assert.match(validateRollbackAuthority(order).failures.join('\n'), /sequence mismatch/);
@@ -38,7 +38,7 @@ test('rollback authority rejects order, body hash and marker absence drift', () 
   assert.match(validateRollbackAuthority(windows).failures.join('\n'), /win32-x64/);
 
   const marker = structuredClone(authority);
-  marker.restoreSteps[0].expectedHttpStatus = 200;
+  marker.restoreSteps[0].expectedHttpStatus = 404;
   assert.match(validateRollbackAuthority(marker).failures.join('\n'), /regional-cos/);
 });
 
@@ -76,7 +76,7 @@ test('pre-mutation live rollback recheck detects capture-to-cutover drift', () =
   windowsDrift[4].sha256 = 'e'.repeat(64);
   assert.match(validateLiveRollbackState(authority, windowsDrift).failures.join('\n'), /win32-x64/);
 
-  const markerAppeared = structuredClone(observations);
-  markerAppeared[0].httpStatus = 200;
-  assert.match(validateLiveRollbackState(authority, markerAppeared).failures.join('\n'), /regional-cos/);
+  const markerDrift = structuredClone(observations);
+  markerDrift[0].sha256 = 'a'.repeat(64);
+  assert.match(validateLiveRollbackState(authority, markerDrift).failures.join('\n'), /regional-cos/);
 });

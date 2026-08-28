@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 
-import { findPendingFields, isCanonicalUtcIso } from './release-manifest.mjs';
+import { assetCosKey, findPendingFields, isCanonicalUtcIso } from './release-manifest.mjs';
 
 function sha256(body) {
   return createHash('sha256').update(body).digest('hex');
@@ -31,7 +31,7 @@ export function buildCosAuthority(manifest, feedBodies) {
       return {
         order: spec.order,
         phase: spec.phase,
-        key: asset.fileName,
+        key: assetCosKey(manifest, spec.assetKey),
         bytes: asset.sizeBytes,
         sha256: asset.sha256,
       };

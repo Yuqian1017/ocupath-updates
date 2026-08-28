@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import {
   DEFAULT_STAGING_MANIFEST_URL,
   isCanonicalUtcIso,
+  regionalPromotionTopology,
   loadReleaseManifest,
   requireExactCommitSha,
   releaseUrls,
@@ -70,6 +71,61 @@ test('manifest derives both packaged-app feed routes and exact release URLs', ()
   assert.equal(urls.windowsFeed, `${staging.origins.public}/direct/win32-x64/latest.yml`);
   assert.equal(urls.windowsCos, `${staging.origins.cos}/${staging.assets.windowsInstaller.fileName}`);
   assert.equal(staging.feeds.win32X64.installMode, 'manual');
+});
+
+test('same-version replacement uses an immutable revision tag and isolated COS keys', () => {
+  const manifest = finalManifest();
+  manifest.release.tagName = `v${manifest.version}-r2`;
+  for (const key of ['macManual', 'windowsInstaller', 'macUpdater', 'macUpdaterBlockmap']) {
+    manifest.assets[key].cosKey = `revisions/${manifest.release.tagName}/${manifest.assets[key].fileName}`;
+  }
+
+  assert.equal(validateReleaseManifest(manifest).status, 'GREEN');
+  const urls = releaseUrls(manifest);
+  assert.equal(
+    urls.macManualGlobal,
+    `https://github.com/${manifest.release.repository}/releases/download/${manifest.release.tagName}/${manifest.assets.macManual.fileName}`,
+  );
+  assert.equal(
+    urls.macManualCos,
+    `${manifest.origins.cos}/${manifest.assets.macManual.cosKey}`,
+  );
+  assert.equal(
+    urls.macUpdaterCos,
+    `${manifest.origins.cos}/${manifest.assets.macUpdater.cosKey}`,
+  );
+
+  delete manifest.assets.macManual.cosKey;
+  assert.match(
+    validateReleaseManifest(manifest).failures.join('\n'),
+    /same-version replacement requires assets\.macManual\.cosKey/,
+  );
+});
+
+test('replacement revision tags are monotonic and initial releases cannot alias revision keys', () => {
+  const badRevision = finalManifest();
+  badRevision.release.tagName = `v${badRevision.version}-r1`;
+  assert.match(validateReleaseManifest(badRevision).failures.join('\n'), /release\.tagName/);
+
+  const initialWithRevisionKey = finalManifest();
+  initialWithRevisionKey.assets.macManual.cosKey = `revisions/v${initialWithRevisionKey.version}-r2/${initialWithRevisionKey.assets.macManual.fileName}`;
+  assert.match(
+    validateReleaseManifest(initialWithRevisionKey).failures.join('\n'),
+    /initial release must not define assets\.macManual\.cosKey/,
+  );
+});
+
+test('regional promotion topology distinguishes initial publication from replacement rotation', () => {
+  assert.deepEqual(regionalPromotionTopology(finalManifest()), {
+    markerPresentAtBase: false,
+    markerDiffStatus: 'A',
+  });
+  const replacement = finalManifest();
+  replacement.release.tagName = `v${replacement.version}-r2`;
+  assert.deepEqual(regionalPromotionTopology(replacement), {
+    markerPresentAtBase: true,
+    markerDiffStatus: 'M',
+  });
 });
 
 test('prepared public files are reproducibly rendered from the pending manifest', () => {

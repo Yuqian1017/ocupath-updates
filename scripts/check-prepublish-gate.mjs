@@ -10,6 +10,7 @@ import { REGIONAL_COS_MARKER_PATH } from './regional-cos-marker.mjs';
 import {
   DEFAULT_STAGING_MANIFEST_URL,
   loadReleaseManifest,
+  isSameVersionReplacement,
   requireExactCommitSha,
   requirePublicationBranch,
   validateWebsitePublicationManifest,
@@ -99,9 +100,10 @@ try {
     manifest,
     { phase: 'prepublish' },
   );
+  const windowsCi = windowsLoaded.evidence.fixedShaCi;
   const windowsCiApi = validateWindowsCiApiState(windowsLoaded.evidence, {
-    run: JSON.parse(run('gh', ['api', 'repos/Yuqian1017/ocupathif_new/actions/runs/33033026058'])),
-    job: JSON.parse(run('gh', ['api', 'repos/Yuqian1017/ocupathif_new/actions/jobs/98389601359'])),
+    run: JSON.parse(run('gh', ['api', `repos/${windowsCi.repository}/actions/runs/${windowsCi.runId}`])),
+    job: JSON.parse(run('gh', ['api', `repos/${windowsCi.repository}/actions/jobs/${windowsCi.jobId}`])),
   });
   const windowsEvidence = {
     ...windowsLoaded.result,
@@ -155,10 +157,13 @@ try {
     },
     remoteTagPresent,
     liveVersion: liveManifest.version,
-    expectedRollbackVersion: manifest.previousLiveVersion,
+    expectedRollbackVersion: isSameVersionReplacement(manifest)
+      ? manifest.version
+      : manifest.previousLiveVersion,
     expectedTagName: manifest.release.tagName,
     expectedTargetCommitSha,
     expectedPublicationBranch,
+    expectedRegionalMarkerPresent: isSameVersionReplacement(manifest),
     expectedAssets: expectedReleaseAssets(manifest),
     rollbackAuthority,
     liveRollbackState,

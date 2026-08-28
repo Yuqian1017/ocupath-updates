@@ -191,6 +191,33 @@ test('Windows CI run and job API provenance must match the frozen source and req
   assert.match(validateWindowsCiApiState(frozen, wrongStep).failures.join('\n'), /required step/);
 });
 
+test('a later fixed-SHA rerun is bound by frozen evidence instead of script constants', () => {
+  const replacement = structuredClone(frozen);
+  const sourceSha = 'c3ce7db8307260b8c479c5c56af7b8cd4693905c';
+  const runId = 33187897703;
+  const jobId = 98905562421;
+  replacement.target.productSourceCommitSha = sourceSha;
+  replacement.target.productBehaviorCommitSha = sourceSha;
+  replacement.controllerTests.productSourceCommitSha = sourceSha;
+  replacement.controllerTests.productBehaviorCommitSha = sourceSha;
+  replacement.controllerTests.evidenceRef = `https://github.com/Yuqian1017/ocupathif_new/actions/runs/${runId}/job/${jobId}`;
+  replacement.fixedShaCi.productSourceCommitSha = sourceSha;
+  replacement.fixedShaCi.runId = runId;
+  replacement.fixedShaCi.jobId = jobId;
+  replacement.fixedShaCi.runUrl = `https://github.com/Yuqian1017/ocupathif_new/actions/runs/${runId}`;
+
+  assert.equal(validateWindowsEvidence(replacement, manifest, { phase: 'prepublish' }).status, 'GREEN');
+
+  const api = ciApiState();
+  api.run.id = runId;
+  api.run.head_sha = sourceSha;
+  api.job.id = jobId;
+  api.job.run_id = runId;
+  api.job.head_sha = sourceSha;
+  api.job.html_url = replacement.controllerTests.evidenceRef;
+  assert.equal(validateWindowsCiApiState(replacement, api).status, 'GREEN');
+});
+
 test('Windows post evidenceRef must be a schema-bound local postpublication artifact', () => {
   const arbitrary = postEvidence('anything.json');
   assert.match(validateWindowsEvidence(arbitrary, manifest, { phase: 'postpublish' }).failures.join('\n'), /release-evidence JSON path/);

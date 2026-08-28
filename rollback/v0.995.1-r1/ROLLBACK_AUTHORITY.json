@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "version": "0.995.1",
+  "releaseRevision": "r1",
+  "source": "read-only production fetch",
+  "capturedAt": "2026-08-28T16:17:31.000Z",
+  "origins": {
+    "pages": "https://updates.ocupath.ai",
+    "cos": "https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com"
+  },
+  "restoreSteps": [
+    {
+      "order": 1,
+      "surface": "pages",
+      "action": "restore_body",
+      "key": "ocupathif/regional-cos/v0.995.1.json",
+      "expectedHttpStatus": 200,
+      "bodyPath": "pages-regional-cos-marker.json",
+      "bytes": 1447,
+      "sha256": "e80e6dae3773715e5741040140b88b42362b226a8faf38a49c538f8925e27eda"
+    },
+    {
+      "order": 2,
+      "surface": "cos",
+      "action": "restore_body",
+      "key": "latest-mac.yml",
+      "expectedHttpStatus": 200,
+      "bodyPath": "cos-latest-mac.yml",
+      "bytes": 504,
+      "sha256": "1973d97e4624ab1635c976b2a9a10bc476819a95b816b3b3d4682a143cc86b98"
+    },
+    {
+      "order": 3,
+      "surface": "cos",
+      "action": "restore_body",
+      "key": "darwin-arm64/latest-mac.yml",
+      "expectedHttpStatus": 200,
+      "bodyPath": "cos-darwin-arm64-latest-mac.yml",
+      "bytes": 504,
+      "sha256": "1973d97e4624ab1635c976b2a9a10bc476819a95b816b3b3d4682a143cc86b98"
+    },
+    {
+      "order": 4,
+      "surface": "pages",
+      "action": "restore_body",
+      "key": "ocupathif/direct/darwin-arm64/latest-mac.yml",
+      "expectedHttpStatus": 200,
+      "bodyPath": "pages-direct-darwin-arm64-latest-mac.yml",
+      "bytes": 504,
+      "sha256": "1973d97e4624ab1635c976b2a9a10bc476819a95b816b3b3d4682a143cc86b98"
+    },
+    {
+      "order": 5,
+      "surface": "pages",
+      "action": "restore_body",
+      "key": "ocupathif/direct/win32-x64/latest.yml",
+      "expectedHttpStatus": 200,
+      "bodyPath": "pages-direct-win32-x64-latest.yml",
+      "bytes": 504,
+      "sha256": "71b0e3265a2e28a8d7852ce83d40153369d9ebcdea57db3bd11b5805cedeb28b"
+    },
+    {
+      "order": 6,
+      "surface": "pages",
+      "action": "restore_body",
+      "key": "ocupathif/latest.json",
+      "expectedHttpStatus": 200,
+      "bodyPath": "pages-latest.json",
+      "bytes": 765,
+      "sha256": "743225ae5b23f7ca351166e9529dc4cb2ba255e1bb365124995127ac859e4417"
+    },
+    {
+      "order": 7,
+      "surface": "pages",
+      "action": "restore_body",
+      "key": "ocupathif/install.html",
+      "expectedHttpStatus": 200,
+      "bodyPath": "pages-install.html",
+      "bytes": 14501,
+      "sha256": "15bf422923a733d6797e7cd819c24c68e05d1c8ec27b1f2528af05a6fa602c58"
+    }
+  ]
+}

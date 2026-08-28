@@ -19,6 +19,7 @@ import {
 import {
   DEFAULT_STAGING_MANIFEST_URL,
   loadReleaseManifest,
+  regionalPromotionTopology,
   requireExactCommitSha,
   requirePublicationBranch,
   releaseUrls,
@@ -161,7 +162,11 @@ try {
   const regionalPromotionParentShas = commitParents(expectedRegionalPromotionSha);
   const regionalPromotionChangedFiles = changedFiles(expectedTargetCommitSha, expectedRegionalPromotionSha);
   const regionalMarkerPresentAtBase = gitObjectExists(`${expectedTargetCommitSha}:${REGIONAL_COS_MARKER_PATH}`);
-  const expectedPromotionDiff = [{ status: 'A', path: REGIONAL_COS_MARKER_PATH }];
+  const expectedTopology = regionalPromotionTopology(manifest);
+  const expectedPromotionDiff = [{
+    status: expectedTopology.markerDiffStatus,
+    path: REGIONAL_COS_MARKER_PATH,
+  }];
   const topologyFailures = [];
   if (localHeadSha !== expectedRegionalPromotionSha) topologyFailures.push('local HEAD is not the regional promotion SHA');
   if (!localWorktreeClean) topologyFailures.push('local updates worktree is dirty');
@@ -174,7 +179,11 @@ try {
   if (JSON.stringify(regionalPromotionChangedFiles) !== JSON.stringify(expectedPromotionDiff)) {
     topologyFailures.push(`regional promotion diff is not the single added marker ${REGIONAL_COS_MARKER_PATH}`);
   }
-  if (regionalMarkerPresentAtBase) topologyFailures.push('regional marker already exists at the base SHA');
+  if (regionalMarkerPresentAtBase !== expectedTopology.markerPresentAtBase) {
+    topologyFailures.push(expectedTopology.markerPresentAtBase
+      ? 'regional marker is missing from the replacement base SHA'
+      : 'regional marker already exists at the initial base SHA');
+  }
   if (topologyFailures.length > 0) {
     throw new Error(`Regional promotion topology is invalid:\n- ${topologyFailures.join('\n- ')}`);
   }
@@ -211,9 +220,10 @@ try {
     manifest,
     { phase: 'postpublish' },
   );
+  const windowsCi = windowsLoaded.evidence.fixedShaCi;
   const windowsCiApi = validateWindowsCiApiState(windowsLoaded.evidence, {
-    run: JSON.parse(run('gh', ['api', 'repos/Yuqian1017/ocupathif_new/actions/runs/33033026058'])),
-    job: JSON.parse(run('gh', ['api', 'repos/Yuqian1017/ocupathif_new/actions/jobs/98389601359'])),
+    run: JSON.parse(run('gh', ['api', `repos/${windowsCi.repository}/actions/runs/${windowsCi.runId}`])),
+    job: JSON.parse(run('gh', ['api', `repos/${windowsCi.repository}/actions/jobs/${windowsCi.jobId}`])),
   });
   const windowsEvidence = {
     ...windowsLoaded.result,

@@ -124,6 +124,23 @@ test('COS authority is the exact six-object payload-first metadata-last contract
   });
 });
 
+test('same-version replacement authority writes payloads to isolated COS object keys', () => {
+  const manifest = finalManifest();
+  manifest.release.tagName = `v${manifest.version}-r2`;
+  for (const key of ['macManual', 'windowsInstaller', 'macUpdater', 'macUpdaterBlockmap']) {
+    manifest.assets[key].cosKey = `revisions/${manifest.release.tagName}/${manifest.assets[key].fileName}`;
+  }
+  const expected = buildCosAuthority(manifest, {
+    darwinArm64: 'version: 0.995.1\nreleaseDate: 2026-08-18T12:00:00.000Z\n',
+  });
+  assert.deepEqual(expected.objects.slice(0, 4).map((object) => object.key), [
+    `revisions/v0.995.1-r2/${manifest.assets.macManual.fileName}`,
+    `revisions/v0.995.1-r2/${manifest.assets.windowsInstaller.fileName}`,
+    `revisions/v0.995.1-r2/${manifest.assets.macUpdater.fileName}`,
+    `revisions/v0.995.1-r2/${manifest.assets.macUpdaterBlockmap.fileName}`,
+  ]);
+});
+
 test('COS evidence rejects extras, byte drift and reordered or simultaneous uploads', () => {
   const expected = authority();
 

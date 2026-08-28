@@ -6,11 +6,11 @@ import { fileURLToPath } from 'node:url';
 import { isCanonicalUtcIso } from './release-manifest.mjs';
 
 export const DEFAULT_ROLLBACK_AUTHORITY_URL = new URL(
-  '../rollback/v0.994.1/ROLLBACK_AUTHORITY.json',
+  '../rollback/v0.995.1-r1/ROLLBACK_AUTHORITY.json',
   import.meta.url,
 );
 
-const EXPECTED_SEQUENCE = [
+const INITIAL_EXPECTED_SEQUENCE = [
   ['pages', 'ensure_absent', 'ocupathif/regional-cos/v0.995.1.json'],
   ['cos', 'restore_body', 'latest-mac.yml'],
   ['cos', 'restore_body', 'darwin-arm64/latest-mac.yml'],
@@ -19,6 +19,10 @@ const EXPECTED_SEQUENCE = [
   ['pages', 'restore_body', 'ocupathif/latest.json'],
   ['pages', 'restore_body', 'ocupathif/install.html'],
 ];
+
+const REPLACEMENT_EXPECTED_SEQUENCE = INITIAL_EXPECTED_SEQUENCE.map((entry, index) => (
+  index === 0 ? ['pages', 'restore_body', 'ocupathif/regional-cos/v0.995.1.json'] : entry
+));
 
 function sha256(body) {
   return createHash('sha256').update(body).digest('hex');
@@ -59,9 +63,16 @@ export function validateRollbackAuthority(authority, authorityPathOrUrl = DEFAUL
     ? fileURLToPath(authorityPathOrUrl)
     : resolve(authorityPathOrUrl);
   const baseDir = dirname(authorityPath);
+  const replacementAuthority = authority?.version === '0.995.1' && authority?.releaseRevision === 'r1';
+  const initialAuthority = authority?.version === '0.994.1' && !Object.hasOwn(authority ?? {}, 'releaseRevision');
+  const expectedSequence = replacementAuthority
+    ? REPLACEMENT_EXPECTED_SEQUENCE
+    : INITIAL_EXPECTED_SEQUENCE;
 
   if (authority?.schemaVersion !== 1) failures.push('rollback schemaVersion must be 1');
-  if (authority?.version !== '0.994.1') failures.push('rollback version must be 0.994.1');
+  if (!replacementAuthority && !initialAuthority) {
+    failures.push('rollback authority identity must be 0.994.1 initial or 0.995.1-r1 replacement');
+  }
   if (authority?.source !== 'read-only production fetch') failures.push('rollback source mismatch');
   if (authority?.origins?.pages !== 'https://updates.ocupath.ai') failures.push('rollback Pages origin mismatch');
   if (
@@ -71,9 +82,9 @@ export function validateRollbackAuthority(authority, authorityPathOrUrl = DEFAUL
   if (!isCanonicalUtcIso(authority?.capturedAt, { allowPending: false })) {
     failures.push('rollback capturedAt must be canonical UTC ISO');
   }
-  if (steps.length !== EXPECTED_SEQUENCE.length) failures.push('rollback restore step count mismatch');
+  if (steps.length !== expectedSequence.length) failures.push('rollback restore step count mismatch');
 
-  EXPECTED_SEQUENCE.forEach(([surface, action, key], index) => {
+  expectedSequence.forEach(([surface, action, key], index) => {
     const step = steps[index];
     if (!step) return;
     if (step.order !== index + 1 || step.surface !== surface || step.action !== action || step.key !== key) {

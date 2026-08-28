@@ -52,6 +52,29 @@ function validBytes(value) {
   return isPendingValue(value) || (Number.isSafeInteger(value) && value > 0);
 }
 
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+export function isSameVersionReplacement(manifest) {
+  const version = manifest?.version;
+  const tagName = manifest?.release?.tagName;
+  if (typeof version !== 'string' || typeof tagName !== 'string') return false;
+  return new RegExp(`^v${escapeRegExp(version)}-r(?:[2-9]|[1-9][0-9]+)$`).test(tagName);
+}
+
+export function assetCosKey(manifest, assetKey) {
+  const asset = manifest?.assets?.[assetKey];
+  return asset?.cosKey || asset?.fileName;
+}
+
+export function regionalPromotionTopology(manifest) {
+  if (isSameVersionReplacement(manifest)) {
+    return { markerPresentAtBase: true, markerDiffStatus: 'M' };
+  }
+  return { markerPresentAtBase: false, markerDiffStatus: 'A' };
+}
+
 export function isCanonicalUtcIso(value, { allowPending = true } = {}) {
   if (allowPending && isPendingValue(value)) return true;
   if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value)) return false;
@@ -71,7 +94,13 @@ export function validateReleaseManifest(manifest, { requireFinal = true } = {}) 
   requireValue(version === '0.995.1', `version must be 0.995.1, got ${version ?? 'missing'}`, failures);
   requireValue(manifest?.previousLiveVersion === '0.994.1', 'previousLiveVersion must be 0.994.1', failures);
   requireValue(manifest?.release?.repository === 'Yuqian1017/ocupath-updates', 'release.repository mismatch', failures);
-  requireValue(manifest?.release?.tagName === `v${version}`, 'release.tagName must match version', failures);
+  const initialTagName = `v${version}`;
+  const replacementRelease = isSameVersionReplacement(manifest);
+  requireValue(
+    manifest?.release?.tagName === initialTagName || replacementRelease,
+    'release.tagName must match version or use a monotonic same-version replacement suffix',
+    failures,
+  );
   requireValue(
     !Object.hasOwn(manifest?.release ?? {}, 'targetCommitish'),
     'release.targetCommitish must not be stored in the manifest; supply OCUPATH_RELEASE_TARGET_SHA',
@@ -131,6 +160,25 @@ export function validateReleaseManifest(manifest, { requireFinal = true } = {}) 
     requireValue(asset.fileName === expectedName, `assets.${key}.fileName mismatch`, failures);
     requireValue(validBytes(asset.sizeBytes), `assets.${key}.sizeBytes is invalid`, failures);
     requireValue(validSha256(asset.sha256), `assets.${key}.sha256 is invalid`, failures);
+  }
+  const cosPayloadKeys = ['macManual', 'windowsInstaller', 'macUpdater', 'macUpdaterBlockmap'];
+  for (const key of cosPayloadKeys) {
+    const asset = assets[key];
+    if (!asset) continue;
+    if (replacementRelease) {
+      const expectedCosKey = `revisions/${manifest.release.tagName}/${asset.fileName}`;
+      requireValue(
+        asset.cosKey === expectedCosKey,
+        `same-version replacement requires assets.${key}.cosKey=${expectedCosKey}`,
+        failures,
+      );
+    } else {
+      requireValue(
+        !Object.hasOwn(asset, 'cosKey'),
+        `initial release must not define assets.${key}.cosKey`,
+        failures,
+      );
+    }
   }
   requireValue(validSha512(assets.macUpdater?.sha512), 'assets.macUpdater.sha512 is invalid', failures);
   requireValue(validSha512(assets.windowsInstaller?.sha512), 'assets.windowsInstaller.sha512 is invalid', failures);
@@ -221,13 +269,14 @@ export function releaseUrls(manifest) {
   const cosBase = manifest.origins.cos;
   const publicBase = manifest.origins.public;
   const assetUrl = (base, key) => `${base}/${manifest.assets[key].fileName}`;
+  const cosAssetUrl = (key) => `${cosBase}/${assetCosKey(manifest, key)}`;
   return {
     installPage: `${publicBase}/install.html`,
     macManualGlobal: assetUrl(tagBase, 'macManual'),
-    macManualCos: assetUrl(cosBase, 'macManual'),
-    macUpdaterCos: assetUrl(cosBase, 'macUpdater'),
+    macManualCos: cosAssetUrl('macManual'),
+    macUpdaterCos: cosAssetUrl('macUpdater'),
     windowsGlobal: assetUrl(tagBase, 'windowsInstaller'),
-    windowsCos: assetUrl(cosBase, 'windowsInstaller'),
+    windowsCos: cosAssetUrl('windowsInstaller'),
     guideEn: assetUrl(tagBase, 'guideEn'),
     guideZh: assetUrl(tagBase, 'guideZh'),
     macFeed: `${publicBase}/${manifest.feeds.darwinArm64.path}`,

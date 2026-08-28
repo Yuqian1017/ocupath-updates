@@ -45,6 +45,7 @@ function greenState(overrides = {}) {
     localBranch: publicationBranch,
     remotePublicationBranchSha: targetSha,
     regionalMarkerPresent: false,
+    expectedRegionalMarkerPresent: false,
     expectedAssets: exactAssets,
     rollbackAuthority: { status: 'GREEN', failures: [] },
     liveRollbackState: { status: 'GREEN', failures: [] },
@@ -146,6 +147,26 @@ test('base release publication requires the regional marker to remain absent', (
   delete missing.regionalMarkerPresent;
   assert.deepEqual(evaluatePrepublishGate(missing).failures, [
     'regional COS marker must be absent from the base release commit',
+  ]);
+});
+
+test('same-version replacement requires the prior regional marker and current live version', () => {
+  const replacement = greenState({
+    regionalMarkerPresent: true,
+    expectedRegionalMarkerPresent: true,
+    liveVersion: '0.995.1',
+    expectedRollbackVersion: '0.995.1',
+    expectedTagName: 'v0.995.1-r2',
+    release: {
+      ...greenState().release,
+      tagName: 'v0.995.1-r2',
+    },
+  });
+  assert.deepEqual(evaluatePrepublishGate(replacement), { status: 'GREEN', failures: [] });
+
+  replacement.regionalMarkerPresent = false;
+  assert.deepEqual(evaluatePrepublishGate(replacement).failures, [
+    'regional COS marker must already exist in the replacement base commit',
   ]);
 });
 

@@ -10,14 +10,12 @@ export const DEFAULT_WINDOWS_EVIDENCE_URL = new URL(
   import.meta.url,
 );
 
-const EXPECTED_BUILD_REVIEW_SHA = 'cd567720d5b385de32792e40331fa21b37d234b0';
-const EXPECTED_PRODUCT_BEHAVIOR_SHA = '531ff158c8af73e57bcc122038171c7e5a889a04';
 const EXPECTED_CI_REPOSITORY = 'Yuqian1017/ocupathif_new';
-const EXPECTED_CI_RUN_ID = 33033026058;
-const EXPECTED_CI_JOB_ID = 98389601359;
-const EXPECTED_CONTROLLER_EVIDENCE_REF = `https://github.com/${EXPECTED_CI_REPOSITORY}/actions/runs/${EXPECTED_CI_RUN_ID}/job/${EXPECTED_CI_JOB_ID}`;
-const EXPECTED_FIXED_SHA_CI_RUN_URL = `https://github.com/${EXPECTED_CI_REPOSITORY}/actions/runs/${EXPECTED_CI_RUN_ID}`;
 const DEFAULT_EVIDENCE_BASE_DIR = fileURLToPath(new URL('../', import.meta.url));
+
+function isExactCommitSha(value) {
+  return typeof value === 'string' && /^[a-f0-9]{40}$/.test(value);
+}
 
 function sha256(body) {
   return createHash('sha256').update(body).digest('hex');
@@ -98,6 +96,8 @@ export function validateWindowsEvidence(evidence, manifest, {
   const reachability = evidence?.updateReachability ?? {};
   const observation = reachability.automaticInstallObservation ?? {};
   const post = evidence?.postPublication ?? {};
+  const expectedControllerRef = `https://github.com/${EXPECTED_CI_REPOSITORY}/actions/runs/${ci.runId}/job/${ci.jobId}`;
+  const expectedRunUrl = `https://github.com/${EXPECTED_CI_REPOSITORY}/actions/runs/${ci.runId}`;
 
   if (evidence?.schemaVersion !== 1) failures.push('Windows evidence schemaVersion must be 1');
   const pendingScope = structuredClone(evidence ?? {});
@@ -126,8 +126,11 @@ export function validateWindowsEvidence(evidence, manifest, {
   ) {
     failures.push('Windows target package identity mismatch');
   }
-  if (target.productSourceCommitSha !== EXPECTED_BUILD_REVIEW_SHA) {
-    failures.push('Windows target productSourceCommitSha must match the frozen build-review SHA');
+  if (!isExactCommitSha(target.productSourceCommitSha)) {
+    failures.push('Windows target productSourceCommitSha must be an exact frozen build-review SHA');
+  }
+  if (!isExactCommitSha(target.productBehaviorCommitSha)) {
+    failures.push('Windows target productBehaviorCommitSha must be an exact frozen product SHA');
   }
 
   if (
@@ -135,8 +138,8 @@ export function validateWindowsEvidence(evidence, manifest, {
     || controller.passed !== 12
     || controller.total !== 12
     || controller.productSourceCommitSha !== target.productSourceCommitSha
-    || controller.productBehaviorCommitSha !== EXPECTED_PRODUCT_BEHAVIOR_SHA
-    || controller.evidenceRef !== EXPECTED_CONTROLLER_EVIDENCE_REF
+    || controller.productBehaviorCommitSha !== target.productBehaviorCommitSha
+    || controller.evidenceRef !== expectedControllerRef
   ) {
     failures.push('Windows controller evidence must be exact 12/12 on the target product SHA');
   }
@@ -144,9 +147,11 @@ export function validateWindowsEvidence(evidence, manifest, {
     ci.status !== 'PASS'
     || ci.productSourceCommitSha !== target.productSourceCommitSha
     || ci.repository !== EXPECTED_CI_REPOSITORY
-    || ci.runId !== EXPECTED_CI_RUN_ID
-    || ci.jobId !== EXPECTED_CI_JOB_ID
-    || ci.runUrl !== EXPECTED_FIXED_SHA_CI_RUN_URL
+    || !Number.isSafeInteger(ci.runId)
+    || ci.runId <= 0
+    || !Number.isSafeInteger(ci.jobId)
+    || ci.jobId <= 0
+    || ci.runUrl !== expectedRunUrl
     || ci.installerSha256 !== target.installerSha256
     || ci.sourceBoundaryStatus !== 'PASS'
     || ci.provenanceStatus !== 'PASS'
@@ -199,8 +204,10 @@ export function validateWindowsCiApiState(evidence, apiState) {
   const targetSha = evidence?.target?.productSourceCommitSha;
   const run = apiState?.run ?? {};
   const job = apiState?.job ?? {};
+  const ci = evidence?.fixedShaCi ?? {};
+  const expectedControllerRef = `https://github.com/${EXPECTED_CI_REPOSITORY}/actions/runs/${ci.runId}/job/${ci.jobId}`;
   if (
-    run.id !== EXPECTED_CI_RUN_ID
+    run.id !== ci.runId
     || run.repository?.full_name !== EXPECTED_CI_REPOSITORY
     || run.head_repository?.full_name !== EXPECTED_CI_REPOSITORY
     || run.head_sha !== targetSha
@@ -212,13 +219,13 @@ export function validateWindowsCiApiState(evidence, apiState) {
     failures.push('Windows CI run API identity/provenance mismatch');
   }
   if (
-    job.id !== EXPECTED_CI_JOB_ID
-    || job.run_id !== EXPECTED_CI_RUN_ID
+    job.id !== ci.jobId
+    || job.run_id !== ci.runId
     || job.head_sha !== targetSha
     || job.status !== 'completed'
     || job.conclusion !== 'success'
     || job.name !== 'build-win'
-    || job.html_url !== EXPECTED_CONTROLLER_EVIDENCE_REF
+    || job.html_url !== expectedControllerRef
   ) {
     failures.push('Windows CI job API identity/provenance mismatch');
   }

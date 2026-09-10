@@ -54,10 +54,10 @@
   "postPublication": {
     "sourceVersion": "0.995.1",
     "targetVersion": "0.997.1",
-    "liveFeedStatus": "__PENDING_WINDOWS_LIVE_FEED_STATUS__",
-    "manualPageStatus": "__PENDING_WINDOWS_MANUAL_PAGE_STATUS__",
-    "exactInstallerBytesStatus": "__PENDING_WINDOWS_EXACT_INSTALLER_BYTES_STATUS__",
+    "liveFeedStatus": "PASS",
+    "manualPageStatus": "PASS",
+    "exactInstallerBytesStatus": "PASS",
     "evidenceLevel": "live-feed-browser-and-artifact-parsed",
-    "evidenceRef": "__PENDING_WINDOWS_POSTPUBLICATION_EVIDENCE_REF__"
+    "evidenceRef": "release-evidence/v0.997.1-windows-postpublication.json"
   }
 }

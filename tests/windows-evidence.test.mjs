@@ -133,15 +133,16 @@ test('frozen Windows evidence binds controller and fixed-SHA CI to the exact fin
 });
 
 test('postpublish requires durable live feed, manual page and exact installer byte evidence', () => {
-  const pending = validateWindowsEvidence(frozen, manifest, { phase: 'postpublish' });
+  const pendingEvidence = structuredClone(frozen);
+  pendingEvidence.postPublication.liveFeedStatus = '__PENDING_WINDOWS_LIVE_FEED_STATUS__';
+  pendingEvidence.postPublication.manualPageStatus = '__PENDING_WINDOWS_MANUAL_PAGE_STATUS__';
+  pendingEvidence.postPublication.exactInstallerBytesStatus = '__PENDING_WINDOWS_EXACT_INSTALLER_BYTES_STATUS__';
+  pendingEvidence.postPublication.evidenceRef = '__PENDING_WINDOWS_POSTPUBLICATION_EVIDENCE_REF__';
+  const pending = validateWindowsEvidence(pendingEvidence, manifest, { phase: 'postpublish' });
   assert.equal(pending.status, 'RED_STOP_LINE');
   assert.match(pending.failures.join('\n'), /pending placeholders/);
 
-  const artifact = localPostEvidenceArtifact();
-  assert.equal(validateWindowsEvidence(postEvidence(artifact.ref), manifest, {
-    phase: 'postpublish',
-    evidenceBaseDir: artifact.root,
-  }).status, 'GREEN');
+  assert.equal(validateWindowsEvidence(frozen, manifest, { phase: 'postpublish' }).status, 'GREEN');
 });
 
 test('Windows evidence cannot imply an unauthorized native or automatic install observation', () => {

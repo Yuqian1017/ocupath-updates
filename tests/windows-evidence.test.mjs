@@ -7,6 +7,7 @@ import test from 'node:test';
 
 import {
   DEFAULT_STAGING_MANIFEST_URL,
+  releaseUrls,
 } from '../scripts/release-manifest.mjs';
 import {
   DEFAULT_WINDOWS_EVIDENCE_URL,
@@ -16,6 +17,7 @@ import {
 
 const manifest = JSON.parse(readFileSync(DEFAULT_STAGING_MANIFEST_URL, 'utf8'));
 const frozen = JSON.parse(readFileSync(DEFAULT_WINDOWS_EVIDENCE_URL, 'utf8'));
+const urls = releaseUrls(manifest);
 
 function postEvidence(evidenceRef = '__PENDING_WINDOWS_POSTPUBLICATION_EVIDENCE_REF__') {
   const evidence = structuredClone(frozen);
@@ -41,8 +43,8 @@ function localPostEvidenceArtifact(mutate = () => {}) {
   writeFileSync(join(root, 'ocupathif', 'install.html'), manualBody);
   const artifact = {
     schemaVersion: 1,
-    sourceVersion: '0.994.1',
-    targetVersion: '0.995.1',
+    sourceVersion: manifest.previousLiveVersion,
+    targetVersion: manifest.version,
     evidenceLevel: 'live-feed-browser-and-artifact-parsed',
     observedAt: '2026-08-18T18:00:00.000Z',
     artifactParsedAt: '2026-08-18T18:00:01.000Z',
@@ -51,8 +53,8 @@ function localPostEvidenceArtifact(mutate = () => {}) {
       httpStatus: 200,
       body: feedBody,
       bodySha256: sha256(feedBody),
-      version: '0.995.1',
-      path: `${manifest.origins.cos}/${manifest.assets.windowsInstaller.cosKey}`,
+      version: manifest.version,
+      path: urls.windowsFeedArtifact,
       sha512: frozen.target.installerSha512,
       size: frozen.target.installerSizeBytes,
     },
@@ -117,16 +119,16 @@ test('frozen Windows evidence binds controller and fixed-SHA CI to the exact fin
     proofLabel: 'controller-and-fixed-sha-ci-only',
     nativeExact: false,
   });
-  assert.equal(frozen.target.installerSizeBytes, 1354728823);
-  assert.equal(frozen.target.installerSha256, '13b77a89b27b3e8f5842c30a5ebd05691270d67cb9984eb4cc8a1b0d1e9750f5');
+  assert.equal(frozen.target.installerSizeBytes, manifest.assets.windowsInstaller.sizeBytes);
+  assert.equal(frozen.target.installerSha256, manifest.assets.windowsInstaller.sha256);
   assert.equal(frozen.fixedShaCi.authenticodeStatus, 'SKIPPED_NATIVE_NOT_AUTHORIZED');
   assert.equal(
     frozen.controllerTests.evidenceRef,
-    'https://github.com/Yuqian1017/ocupathif_new/actions/runs/33189887062/job/98912376777',
+    `https://github.com/Yuqian1017/ocupathif_new/actions/runs/${frozen.fixedShaCi.runId}/job/${frozen.fixedShaCi.jobId}`,
   );
   assert.equal(
     frozen.fixedShaCi.runUrl,
-    'https://github.com/Yuqian1017/ocupathif_new/actions/runs/33189887062',
+    `https://github.com/Yuqian1017/ocupathif_new/actions/runs/${frozen.fixedShaCi.runId}`,
   );
 });
 

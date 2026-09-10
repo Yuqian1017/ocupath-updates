@@ -31,17 +31,17 @@ https://updates.ocupath.ai/ocupathif/bootstrap-target/darwin-arm64/latest-mac.ym
 ```
 
 The packaged application appends its platform directory to the public `direct`
-base. Those public metadata files point at exact package bytes in the approved
-Hong Kong COS bucket. Publication proof must fetch the public packaged-app
-route, compare it with the locally rendered feed, and verify the named COS
-object independently.
+base. For releases with `publication.assetHost="github"`, those public metadata
+files point at exact GitHub Release assets. For COS-hosted releases, those public
+metadata files point at exact package bytes in the approved Hong Kong COS bucket
+and publication proof must verify the named COS object independently.
 
-All package bytes named by the platform feeds are served from the approved Hong Kong COS bucket. Large customer packages are not stored in this repository.
+Large customer packages are not stored in this repository.
 
-Publication files are generated from `release-manifests/v0.995.1-staging.json`:
+Publication files are generated from `release-manifests/v0.997.1-staging.json`:
 
 ```text
-node scripts/render-release.mjs release-manifests/v0.995.1-staging.json
+node scripts/render-release.mjs release-manifests/v0.997.1-staging.json
 ```
 
 The renderer and publication gates stop while any `__PENDING_*__` field remains.

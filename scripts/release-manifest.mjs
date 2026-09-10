@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 
 export const DEFAULT_STAGING_MANIFEST_URL = new URL(
-  '../release-manifests/v0.995.1-staging.json',
+  '../release-manifests/v0.997.1-staging.json',
   import.meta.url,
 );
 
@@ -63,6 +63,10 @@ export function isSameVersionReplacement(manifest) {
   return new RegExp(`^v${escapeRegExp(version)}-r(?:[2-9]|[1-9][0-9]+)$`).test(tagName);
 }
 
+export function publicationAssetHost(manifest) {
+  return manifest?.publication?.assetHost || 'cos';
+}
+
 export function assetCosKey(manifest, assetKey) {
   const asset = manifest?.assets?.[assetKey];
   return asset?.cosKey || asset?.fileName;
@@ -91,8 +95,8 @@ export function validateReleaseManifest(manifest, { requireFinal = true } = {}) 
   const assets = manifest?.assets ?? {};
 
   requireValue(manifest?.schemaVersion === 1, 'schemaVersion must be 1', failures);
-  requireValue(version === '0.995.1', `version must be 0.995.1, got ${version ?? 'missing'}`, failures);
-  requireValue(manifest?.previousLiveVersion === '0.994.1', 'previousLiveVersion must be 0.994.1', failures);
+  requireValue(version === '0.997.1', `version must be 0.997.1, got ${version ?? 'missing'}`, failures);
+  requireValue(manifest?.previousLiveVersion === '0.995.1', 'previousLiveVersion must be 0.995.1', failures);
   requireValue(manifest?.release?.repository === 'Yuqian1017/ocupath-updates', 'release.repository mismatch', failures);
   const initialTagName = `v${version}`;
   const replacementRelease = isSameVersionReplacement(manifest);
@@ -113,13 +117,30 @@ export function validateReleaseManifest(manifest, { requireFinal = true } = {}) 
     failures,
   );
   requireValue(
-    JSON.stringify(manifest?.publication?.githubAssetKeys) === JSON.stringify([
+    ['cos', 'github'].includes(publicationAssetHost(manifest)),
+    'publication.assetHost must be cos or github',
+    failures,
+  );
+  const expectedGithubAssetKeys = publicationAssetHost(manifest) === 'github'
+    ? [
+        'macManual',
+        'windowsInstaller',
+        'guideEn',
+        'guideZh',
+        'macUpdater',
+        'macUpdaterBlockmap',
+      ]
+    : [
       'macManual',
       'windowsInstaller',
       'guideEn',
       'guideZh',
-    ]),
-    'publication.githubAssetKeys must name the exact four release assets',
+    ];
+  requireValue(
+    JSON.stringify(manifest?.publication?.githubAssetKeys) === JSON.stringify(expectedGithubAssetKeys),
+    publicationAssetHost(manifest) === 'github'
+      ? 'publication.githubAssetKeys must name the exact six GitHub-hosted release assets'
+      : 'publication.githubAssetKeys must name the exact four release assets',
     failures,
   );
   requireValue(
@@ -222,6 +243,17 @@ export function validateWebsitePublicationManifest(manifest) {
     'assets.guideZh.sizeBytes',
     'assets.guideZh.sha256',
   ]);
+  if (publicationAssetHost(manifest) === 'github') {
+    for (const path of [
+      'assets.macUpdater.sizeBytes',
+      'assets.macUpdater.sha256',
+      'assets.macUpdater.sha512',
+      'assets.macUpdaterBlockmap.sizeBytes',
+      'assets.macUpdaterBlockmap.sha256',
+    ]) {
+      requiredPaths.add(path);
+    }
+  }
   const websitePending = base.pending.filter((path) => requiredPaths.has(path));
   const failures = [...base.failures];
   if (websitePending.length > 0) failures.push(`pending website publication fields: ${websitePending.join(', ')}`);
@@ -270,13 +302,18 @@ export function releaseUrls(manifest) {
   const publicBase = manifest.origins.public;
   const assetUrl = (base, key) => `${base}/${manifest.assets[key].fileName}`;
   const cosAssetUrl = (key) => `${cosBase}/${assetCosKey(manifest, key)}`;
+  const hostedAssetUrl = (key) => (publicationAssetHost(manifest) === 'github'
+    ? assetUrl(tagBase, key)
+    : cosAssetUrl(key));
   return {
     installPage: `${publicBase}/install.html`,
     macManualGlobal: assetUrl(tagBase, 'macManual'),
     macManualCos: cosAssetUrl('macManual'),
     macUpdaterCos: cosAssetUrl('macUpdater'),
+    macUpdaterArtifact: hostedAssetUrl('macUpdater'),
     windowsGlobal: assetUrl(tagBase, 'windowsInstaller'),
     windowsCos: cosAssetUrl('windowsInstaller'),
+    windowsFeedArtifact: hostedAssetUrl('windowsInstaller'),
     guideEn: assetUrl(tagBase, 'guideEn'),
     guideZh: assetUrl(tagBase, 'guideZh'),
     macFeed: `${publicBase}/${manifest.feeds.darwinArm64.path}`,

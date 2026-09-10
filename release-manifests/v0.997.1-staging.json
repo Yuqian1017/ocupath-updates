@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "version": "0.997.1",
+  "releaseDate": "2026-09-10T16:29:30.000Z",
+  "previousLiveVersion": "0.995.1",
+  "release": {
+    "repository": "Yuqian1017/ocupath-updates",
+    "tagName": "v0.997.1",
+    "draftReleaseId": "386475544"
+  },
+  "origins": {
+    "public": "https://updates.ocupath.ai/ocupathif",
+    "cos": "https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com"
+  },
+  "publication": {
+    "assetHost": "github",
+    "githubAssetKeys": [
+      "macManual",
+      "windowsInstaller",
+      "guideEn",
+      "guideZh",
+      "macUpdater",
+      "macUpdaterBlockmap"
+    ],
+    "cosObjects": [
+      { "order": 1, "phase": "payload", "assetKey": "macManual" },
+      { "order": 2, "phase": "payload", "assetKey": "windowsInstaller" },
+      { "order": 3, "phase": "payload", "assetKey": "macUpdater" },
+      { "order": 4, "phase": "payload", "assetKey": "macUpdaterBlockmap" },
+      { "order": 5, "phase": "metadata", "key": "latest-mac.yml", "feedKey": "darwinArm64" },
+      { "order": 6, "phase": "metadata", "key": "darwin-arm64/latest-mac.yml", "feedKey": "darwinArm64" }
+    ]
+  },
+  "assets": {
+    "macManual": {
+      "fileName": "OcupathIF-0.997.1-arm64-mac.dmg",
+      "sizeBytes": 1322252512,
+      "sha256": "f13705eec2955b40d0b592a4eed5b485af518cb7b63ac16ae4dc54d489c713f0"
+    },
+    "macUpdater": {
+      "fileName": "OcupathIF-0.997.1-arm64-mac.zip",
+      "sizeBytes": 1314034238,
+      "sha256": "5c891a0a8c424c37831188a8576c434f4d9389521c383cc32737f208183e27bf",
+      "sha512": "QsHgAu0ZKzNN9wYApsGKUMMrNTT1t4IouaqCx1oViYUXYqvRyAOnopyP369QHObt8269itpe55QaogRmmk0/5g=="
+    },
+    "macUpdaterBlockmap": {
+      "fileName": "OcupathIF-0.997.1-arm64-mac.zip.blockmap",
+      "sizeBytes": 1362033,
+      "sha256": "51995ef844730a1d617ef7193ca6baf669cc8f22150db0b531fc8aa4c1b3df5d"
+    },
+    "windowsInstaller": {
+      "fileName": "OcupathIF-Setup-0.997.1-x64.exe",
+      "sizeBytes": 1343030369,
+      "sha256": "7b6763580a87ce592875f2edfb00a599fd9dbd2614b35a953a0079828101c3bd",
+      "sha512": "FdqSmtYjyMYnxC+cE+7nHR5pJK8Ned69mHMAi5BWZ1MxigROtLzGssCDRioRiU6YA86d8GdV3kEweCBhPtQFfQ=="
+    },
+    "guideEn": {
+      "fileName": "OcuPathIF_v0.997.1_User_Guide_en.pdf",
+      "sizeBytes": 2261633,
+      "sha256": "9cade0f200319887902571c0feed4c7f37850a29d4b46589adf0b3f162ac866a"
+    },
+    "guideZh": {
+      "fileName": "OcuPathIF_v0.997.1_User_Guide_zh.pdf",
+      "sizeBytes": 2547474,
+      "sha256": "44369e419595ce370162bc9e65644592e49ab80394eebd47ae7be0765848b125"
+    }
+  },
+  "feeds": {
+    "darwinArm64": {
+      "path": "direct/darwin-arm64/latest-mac.yml",
+      "installMode": "in_app"
+    },
+    "win32X64": {
+      "path": "direct/win32-x64/latest.yml",
+      "installMode": "manual"
+    }
+  }
+}

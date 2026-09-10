@@ -31,6 +31,9 @@ function finalManifest() {
   manifest.assets.macUpdater.sha512 = Buffer.alloc(64, 1).toString('base64');
   manifest.assets.macUpdaterBlockmap.sizeBytes = 104;
   manifest.assets.macUpdaterBlockmap.sha256 = 'd'.repeat(64);
+  manifest.assets.windowsInstaller.sizeBytes = 105;
+  manifest.assets.windowsInstaller.sha256 = 'e'.repeat(64);
+  manifest.assets.windowsInstaller.sha512 = Buffer.alloc(64, 2).toString('base64');
   return manifest;
 }
 
@@ -43,13 +46,13 @@ function initialManifest() {
   return manifest;
 }
 
-test('staging manifest freezes the final 0.995.1 packages and guides', () => {
+test('staging manifest freezes the final 0.997.1 packages and guides', () => {
   assert.deepEqual(validateReleaseManifest(staging), {
     status: 'GREEN',
     failures: [],
     pending: [],
   });
-  assert.equal(loadReleaseManifest().version, '0.995.1');
+  assert.equal(loadReleaseManifest().version, '0.997.1');
 });
 
 test('a fully frozen staging manifest passes the strict publication contract', () => {
@@ -78,12 +81,20 @@ test('manifest derives both packaged-app feed routes and exact release URLs', ()
   const urls = releaseUrls(staging);
   assert.equal(urls.macFeed, `${staging.origins.public}/direct/darwin-arm64/latest-mac.yml`);
   assert.equal(urls.windowsFeed, `${staging.origins.public}/direct/win32-x64/latest.yml`);
-  assert.equal(urls.windowsCos, `${staging.origins.cos}/${staging.assets.windowsInstaller.cosKey}`);
+  assert.equal(urls.windowsCos, `${staging.origins.cos}/${staging.assets.windowsInstaller.cosKey ?? staging.assets.windowsInstaller.fileName}`);
+  assert.equal(
+    urls.windowsFeedArtifact,
+    staging.publication.assetHost === 'github' ? urls.windowsGlobal : urls.windowsCos,
+  );
   assert.equal(staging.feeds.win32X64.installMode, 'manual');
 });
 
 test('same-version replacement uses an immutable revision tag and isolated COS keys', () => {
   const manifest = finalManifest();
+  manifest.release.tagName = `v${manifest.version}-r2`;
+  for (const key of ['macManual', 'windowsInstaller', 'macUpdater', 'macUpdaterBlockmap']) {
+    manifest.assets[key].cosKey = `revisions/${manifest.release.tagName}/${manifest.assets[key].fileName}`;
+  }
 
   assert.equal(validateReleaseManifest(manifest).status, 'GREEN');
   const urls = releaseUrls(manifest);
@@ -95,10 +106,7 @@ test('same-version replacement uses an immutable revision tag and isolated COS k
     urls.macManualCos,
     `${manifest.origins.cos}/${manifest.assets.macManual.cosKey}`,
   );
-  assert.equal(
-    urls.macUpdaterCos,
-    `${manifest.origins.cos}/${manifest.assets.macUpdater.cosKey}`,
-  );
+  assert.equal(urls.macUpdaterCos, `${manifest.origins.cos}/${manifest.assets.macUpdater.cosKey}`);
 
   delete manifest.assets.macManual.cosKey;
   assert.match(
@@ -126,6 +134,10 @@ test('regional promotion topology distinguishes initial publication from replace
     markerDiffStatus: 'A',
   });
   const replacement = finalManifest();
+  replacement.release.tagName = `v${replacement.version}-r2`;
+  for (const key of ['macManual', 'windowsInstaller', 'macUpdater', 'macUpdaterBlockmap']) {
+    replacement.assets[key].cosKey = `revisions/${replacement.release.tagName}/${replacement.assets[key].fileName}`;
+  }
   assert.deepEqual(regionalPromotionTopology(replacement), {
     markerPresentAtBase: true,
     markerDiffStatus: 'M',
@@ -138,7 +150,7 @@ test('prepared public files are reproducibly rendered from the pending manifest'
     '--allow-pending',
     '--check',
   ], { encoding: 'utf8' });
-  assert.match(output, /checked 6 publication files/);
+  assert.match(output, /checked 5 publication files/);
 });
 
 test('renderer accepts final bytes and gates still require an external immutable target', () => {
@@ -147,7 +159,7 @@ test('renderer accepts final bytes and gates still require an external immutable
     '--check',
   ], { encoding: 'utf8' });
   assert.equal(render.status, 0);
-  assert.match(render.stdout, /checked 6 publication files/);
+  assert.match(render.stdout, /checked 5 publication files/);
 
   const gate = spawnSync(process.execPath, [
     prepublishPath,
@@ -219,7 +231,7 @@ test('SHA-512 and releaseDate accept only canonical publication encodings', () =
 test('publication object sets are exact and payload-first', () => {
   const extraAsset = finalManifest();
   extraAsset.publication.githubAssetKeys.push('macUpdater');
-  assert.match(validateReleaseManifest(extraAsset).failures.join('\n'), /exact four release assets/);
+  assert.match(validateReleaseManifest(extraAsset).failures.join('\n'), /exact six GitHub-hosted release assets/);
 
   const wrongOrder = finalManifest();
   [wrongOrder.publication.cosObjects[0], wrongOrder.publication.cosObjects[4]] = [
@@ -229,8 +241,10 @@ test('publication object sets are exact and payload-first', () => {
   assert.match(validateReleaseManifest(wrongOrder).failures.join('\n'), /exact six payload-first/);
 });
 
-test('website publication can proceed with manual packages while updater artifacts remain pending', () => {
-  const website = structuredClone(staging);
+test('COS-hosted website publication can proceed with manual packages while updater artifacts remain pending', () => {
+  const website = finalManifest();
+  website.publication.assetHost = 'cos';
+  website.publication.githubAssetKeys = ['macManual', 'windowsInstaller', 'guideEn', 'guideZh'];
   website.assets.macUpdater.sizeBytes = '__PENDING_MAC_UPDATER_SIZE_BYTES__';
   website.assets.macUpdater.sha256 = '__PENDING_MAC_UPDATER_SHA256__';
   website.assets.macUpdater.sha512 = '__PENDING_MAC_UPDATER_SHA512__';
@@ -243,4 +257,15 @@ test('website publication can proceed with manual packages while updater artifac
   });
   assert.equal(validateReleaseManifest(website).status, 'RED_STOP_LINE');
   assert.match(validateReleaseManifest(website).failures.join('\n'), /macUpdater/);
+});
+
+test('GitHub-hosted website publication waits for updater artifacts because the direct feed uses release assets', () => {
+  const website = finalManifest();
+  website.assets.macUpdater.sizeBytes = '__PENDING_MAC_UPDATER_SIZE_BYTES__';
+  website.assets.macUpdater.sha256 = '__PENDING_MAC_UPDATER_SHA256__';
+  website.assets.macUpdater.sha512 = '__PENDING_MAC_UPDATER_SHA512__';
+  website.assets.macUpdaterBlockmap.sizeBytes = '__PENDING_MAC_UPDATER_BLOCKMAP_SIZE_BYTES__';
+  website.assets.macUpdaterBlockmap.sha256 = '__PENDING_MAC_UPDATER_BLOCKMAP_SHA256__';
+  assert.equal(validateWebsitePublicationManifest(website).status, 'RED_STOP_LINE');
+  assert.match(validateWebsitePublicationManifest(website).failures.join('\n'), /macUpdater/);
 });

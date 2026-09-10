@@ -35,6 +35,9 @@ function finalManifest() {
   manifest.assets.macUpdater.sha512 = Buffer.alloc(64, 1).toString('base64');
   manifest.assets.macUpdaterBlockmap.sizeBytes = 103;
   manifest.assets.macUpdaterBlockmap.sha256 = 'c'.repeat(64);
+  manifest.assets.windowsInstaller.sizeBytes = 104;
+  manifest.assets.windowsInstaller.sha256 = 'd'.repeat(64);
+  manifest.assets.windowsInstaller.sha512 = Buffer.alloc(64, 2).toString('base64');
   return manifest;
 }
 
@@ -105,10 +108,10 @@ function uploadLedger(expected = authority()) {
 test('COS authority is the exact six-object payload-first metadata-last contract', () => {
   const expected = authority();
   assert.deepEqual(expected.objects.map(({ order, phase, key }) => ({ order, phase, key })), [
-    { order: 1, phase: 'payload', key: staging.assets.macManual.cosKey },
-    { order: 2, phase: 'payload', key: staging.assets.windowsInstaller.cosKey },
-    { order: 3, phase: 'payload', key: staging.assets.macUpdater.cosKey },
-    { order: 4, phase: 'payload', key: staging.assets.macUpdaterBlockmap.cosKey },
+    { order: 1, phase: 'payload', key: staging.assets.macManual.cosKey ?? staging.assets.macManual.fileName },
+    { order: 2, phase: 'payload', key: staging.assets.windowsInstaller.cosKey ?? staging.assets.windowsInstaller.fileName },
+    { order: 3, phase: 'payload', key: staging.assets.macUpdater.cosKey ?? staging.assets.macUpdater.fileName },
+    { order: 4, phase: 'payload', key: staging.assets.macUpdaterBlockmap.cosKey ?? staging.assets.macUpdaterBlockmap.fileName },
     { order: 5, phase: 'metadata', key: 'latest-mac.yml' },
     { order: 6, phase: 'metadata', key: 'darwin-arm64/latest-mac.yml' },
   ]);
@@ -134,10 +137,10 @@ test('same-version replacement authority writes payloads to isolated COS object 
     darwinArm64: 'version: 0.995.1\nreleaseDate: 2026-08-18T12:00:00.000Z\n',
   });
   assert.deepEqual(expected.objects.slice(0, 4).map((object) => object.key), [
-    `revisions/v0.995.1-r2/${manifest.assets.macManual.fileName}`,
-    `revisions/v0.995.1-r2/${manifest.assets.windowsInstaller.fileName}`,
-    `revisions/v0.995.1-r2/${manifest.assets.macUpdater.fileName}`,
-    `revisions/v0.995.1-r2/${manifest.assets.macUpdaterBlockmap.fileName}`,
+    `revisions/v0.997.1-r2/${manifest.assets.macManual.fileName}`,
+    `revisions/v0.997.1-r2/${manifest.assets.windowsInstaller.fileName}`,
+    `revisions/v0.997.1-r2/${manifest.assets.macUpdater.fileName}`,
+    `revisions/v0.997.1-r2/${manifest.assets.macUpdaterBlockmap.fileName}`,
   ]);
 });
 
@@ -224,8 +227,8 @@ test('upload ledger and manual website authority stay separate from full updater
   const manual = buildManualCosAuthority(finalManifest());
   assert.equal(manual.sequencing, 'manual-payloads-only');
   assert.deepEqual(manual.objects.map((object) => object.key), [
-    staging.assets.macManual.cosKey,
-    staging.assets.windowsInstaller.cosKey,
+    staging.assets.macManual.cosKey ?? staging.assets.macManual.fileName,
+    staging.assets.windowsInstaller.cosKey ?? staging.assets.windowsInstaller.fileName,
   ]);
   assert.equal(validateCosEvidence(manual, evidence(manual), uploadLedger(manual)).status, 'GREEN');
 

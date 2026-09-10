@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "version": "0.997.1",
+  "baseUrl": "https://ocupathif-downloads-hk-1466317075.cos.ap-hongkong.myqcloud.com",
+  "sequencing": "manual-payloads-only",
+  "objects": [
+    {
+      "order": 1,
+      "phase": "payload",
+      "key": "OcupathIF-0.997.1-arm64-mac.dmg",
+      "bytes": 1322252512,
+      "sha256": "f13705eec2955b40d0b592a4eed5b485af518cb7b63ac16ae4dc54d489c713f0"
+    },
+    {
+      "order": 2,
+      "phase": "payload",
+      "key": "OcupathIF-Setup-0.997.1-x64.exe",
+      "bytes": 1343030369,
+      "sha256": "7b6763580a87ce592875f2edfb00a599fd9dbd2614b35a953a0079828101c3bd"
+    }
+  ]
+}

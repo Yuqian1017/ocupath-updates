@@ -28,10 +28,10 @@ if (!uploadLedgerPath) {
 }
 
 const repoRoot = fileURLToPath(new URL('../', import.meta.url));
+const manifestSource = process.env.OCUPATH_RELEASE_STAGING_MANIFEST || DEFAULT_STAGING_MANIFEST_URL;
+const manifest = loadReleaseManifest(manifestSource);
 const authorityPath = fileURLToPath(new URL(
-  manualReplacement
-    ? '../release-manifests/v0.995.1-manual-cos-authority.json'
-    : '../release-manifests/v0.995.1-cos-authority.json',
+  `../release-manifests/v${manifest.version}-${manualReplacement ? 'manual-cos-authority' : 'cos-authority'}.json`,
   import.meta.url,
 ));
 const markerPath = resolve(repoRoot, REGIONAL_COS_MARKER_PATH);
@@ -56,8 +56,6 @@ if (manualReplacement) {
   }
 }
 
-const manifestSource = process.env.OCUPATH_RELEASE_STAGING_MANIFEST || DEFAULT_STAGING_MANIFEST_URL;
-const manifest = loadReleaseManifest(manifestSource);
 const authority = JSON.parse(readFileSync(authorityPath, 'utf8'));
 const expectedAuthority = manualReplacement
   ? buildManualCosAuthority(manifest)

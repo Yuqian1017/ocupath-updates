@@ -80,8 +80,9 @@ function updaterFeed(asset, artifactUrl) {
 
 const outputs = new Map();
 const installPath = new URL('ocupathif/install.html', root);
-const macFeedBody = updaterFeed(manifest.assets.macUpdater, urls.macUpdaterCos);
-const windowsFeedBody = updaterFeed(manifest.assets.windowsInstaller, urls.windowsCos);
+const macFeedBody = updaterFeed(manifest.assets.macUpdater, urls.macUpdaterArtifact);
+const windowsFeedBody = updaterFeed(manifest.assets.windowsInstaller, urls.windowsFeedArtifact);
+const githubHosted = manifest.publication?.assetHost === 'github';
 outputs.set(installPath, renderInstallPage(readFileSync(installPath, 'utf8')));
 outputs.set(new URL('ocupathif/latest.json', root), `${JSON.stringify({
   schemaVersion: 1,
@@ -106,20 +107,22 @@ outputs.set(new URL('ocupathif/latest.json', root), `${JSON.stringify({
   },
 }, null, 2)}\n`);
 outputs.set(
-  new URL('release-manifests/v0.995.1-manual-cos-authority.json', root),
+  new URL(`release-manifests/v${manifest.version}-manual-cos-authority.json`, root),
   `${JSON.stringify(buildManualCosAuthority(manifest), null, 2)}\n`,
 );
 outputs.set(
   new URL('ocupathif/direct/win32-x64/latest.yml', root),
   windowsFeedBody,
 );
-if (!websiteOnly) {
+if (!websiteOnly || githubHosted) {
   outputs.set(
     new URL('ocupathif/direct/darwin-arm64/latest-mac.yml', root),
     macFeedBody,
   );
+}
+if (!websiteOnly && !githubHosted) {
   outputs.set(
-    new URL('release-manifests/v0.995.1-cos-authority.json', root),
+    new URL(`release-manifests/v${manifest.version}-cos-authority.json`, root),
     `${JSON.stringify(buildCosAuthority(manifest, { darwinArm64: macFeedBody }), null, 2)}\n`,
   );
 }

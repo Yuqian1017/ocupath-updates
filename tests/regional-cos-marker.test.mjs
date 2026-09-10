@@ -29,6 +29,9 @@ function finalManifest() {
   manifest.assets.macUpdater.sha512 = Buffer.alloc(64, 1).toString('base64');
   manifest.assets.macUpdaterBlockmap.sizeBytes = 103;
   manifest.assets.macUpdaterBlockmap.sha256 = 'c'.repeat(64);
+  manifest.assets.windowsInstaller.sizeBytes = 104;
+  manifest.assets.windowsInstaller.sha256 = 'd'.repeat(64);
+  manifest.assets.windowsInstaller.sha512 = Buffer.alloc(64, 2).toString('base64');
   return manifest;
 }
 
@@ -107,8 +110,8 @@ test('published manual routes can be rotated from a GREEN two-object manual veri
     baseReleaseCommitSha: baseSha,
   }).status, 'GREEN');
   assert.deepEqual(expected.objects.map((object) => object.key), [
-    manifest.assets.macManual.cosKey,
-    manifest.assets.windowsInstaller.cosKey,
+    manifest.assets.macManual.cosKey ?? manifest.assets.macManual.fileName,
+    manifest.assets.windowsInstaller.cosKey ?? manifest.assets.windowsInstaller.fileName,
   ]);
 });
 

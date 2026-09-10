@@ -3,10 +3,10 @@ import { readFileSync } from 'node:fs';
 import { resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { assetCosKey, findPendingFields, isCanonicalUtcIso } from './release-manifest.mjs';
+import { findPendingFields, isCanonicalUtcIso, releaseUrls } from './release-manifest.mjs';
 
 export const DEFAULT_WINDOWS_EVIDENCE_URL = new URL(
-  '../release-evidence/v0.995.1-windows.json',
+  '../release-evidence/v0.997.1-windows.json',
   import.meta.url,
 );
 
@@ -40,6 +40,7 @@ function validatePostEvidenceRef(ref, post, target, manifest, { evidenceBaseDir 
     const artifact = JSON.parse(readFileSync(artifactPath, 'utf8'));
     const expectedFeedUrl = `${manifest.origins.public}/${manifest.feeds.win32X64.path}`;
     const expectedManualUrl = `${manifest.origins.public}/install.html`;
+    const expectedInstallerPath = releaseUrls(manifest).windowsFeedArtifact;
     const expectedFeedBody = readFileSync(resolve(root, 'ocupathif', manifest.feeds.win32X64.path), 'utf8');
     const expectedManualBody = readFileSync(resolve(root, 'ocupathif', 'install.html'), 'utf8');
     const feed = artifact?.feed ?? {};
@@ -59,7 +60,7 @@ function validatePostEvidenceRef(ref, post, target, manifest, { evidenceBaseDir 
       || feed.body !== expectedFeedBody
       || feed.bodySha256 !== sha256(expectedFeedBody)
       || feed.version !== target.version
-      || feed.path !== `${manifest.origins.cos}/${assetCosKey(manifest, 'windowsInstaller')}`
+      || feed.path !== expectedInstallerPath
       || feed.sha512 !== target.installerSha512
       || feed.size !== target.installerSizeBytes
     ) failures.push('Windows post-publication feed evidence mismatch');
@@ -111,9 +112,9 @@ export function validateWindowsEvidence(evidence, manifest, {
 
   if (
     source.version !== manifest.previousLiveVersion
-    || source.installerFileName !== 'OcupathIF-Setup-0.994.1-x64.exe'
-    || source.installerSizeBytes !== 1354705933
-    || source.installerSha256 !== 'ee2801ce9953453fb1982e568b307fe1ee49a71a12d71926c27815581be10e8c'
+    || source.installerFileName !== 'OcupathIF-Setup-0.995.1-x64.exe'
+    || source.installerSizeBytes !== 1354728823
+    || source.installerSha256 !== '13b77a89b27b3e8f5842c30a5ebd05691270d67cb9984eb4cc8a1b0d1e9750f5'
   ) {
     failures.push('Windows source package identity mismatch');
   }

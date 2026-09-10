@@ -18,14 +18,17 @@ const urls = releaseUrls(stagingManifest);
 const escaped = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 assert.match(macFeed, new RegExp(`^version: ${escaped(stagingManifest.version)}$`, 'm'));
-assert.match(macFeed, new RegExp(`url: ${escaped(urls.macUpdaterCos)}`));
+assert.match(macFeed, new RegExp(`url: ${escaped(urls.macUpdaterArtifact)}`));
 assert.match(macFeed, new RegExp(`sha512: ${escaped(stagingManifest.assets.macUpdater.sha512)}`));
 assert.match(macFeed, new RegExp(`size: ${escaped(stagingManifest.assets.macUpdater.sizeBytes)}`));
-assert.doesNotMatch(macFeed, /github\.com|0\.97\.[12]/);
+if (stagingManifest.publication.assetHost !== 'github') {
+  assert.doesNotMatch(macFeed, /github\.com/);
+}
+assert.doesNotMatch(macFeed, /0\.97\.[12]/);
 
 assert.equal(existsSync(windowsFeedPath), true, 'Windows update detection feed must exist');
 assert.match(windowsFeed, new RegExp(`^version: ${escaped(stagingManifest.version)}$`, 'm'));
-assert.match(windowsFeed, new RegExp(`url: ${escaped(urls.windowsCos)}`));
+assert.match(windowsFeed, new RegExp(`url: ${escaped(urls.windowsFeedArtifact)}`));
 assert.match(windowsFeed, new RegExp(`sha512: ${escaped(stagingManifest.assets.windowsInstaller.sha512)}`));
 assert.match(windowsFeed, new RegExp(`size: ${escaped(stagingManifest.assets.windowsInstaller.sizeBytes)}`));
 assert.equal(
@@ -57,8 +60,8 @@ assert.equal(manualManifest.packages['darwin-arm64'].sha256, stagingManifest.ass
 assert.equal(manualManifest.packages['darwin-arm64'].sizeBytes, stagingManifest.assets.macManual.sizeBytes);
 assert.notEqual(
   urls.macManualCos,
-  urls.macUpdaterCos,
-  'manual customer ZIP and updater ZIP have different bytes and must use distinct COS object keys',
+  urls.macUpdaterArtifact,
+  'manual customer package and updater ZIP have different bytes and must use distinct artifact routes',
 );
 assert.equal(manualManifest.packages['win32-x64'].kind, 'manual_page');
 assert.equal(manualManifest.packages['win32-x64'].url, urls.installPage);
